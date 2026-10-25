@@ -40,3 +40,15 @@ Targeted fixture tests cover exact binding and tamper refusal, actor-context
 capture, separate diagnosis/search/evaluation policy, original gates, historical
 corpus scores, reference behavior and holdout isolation. These are engineering
 checks; only a later real provider attempt can establish a learning gain.
+
+A later observed amendment attempt exposed another evidence gap: the model
+submitted an explicitly replaced source alongside its replacement in an
+obligation mutation, but the opaque tool error was interpreted as infrastructure
+failure. Checker v3 adds a narrow `known_replaced_source_used_in_mutation`
+observation. It requires an earlier captured case's explicit replacement lineage,
+an earlier read of that exact replacement/version, and a mutation of the same
+case citing the old reference. It does not infer lineage from document prose,
+compare unrelated version numbers, or treat a stale obligation read as a defect.
+The signal cites exact captured tool pointers and the captured policy. It leaves
+financial correctness, procedure attribution, mutation effects and the cause of
+an opaque error unassessed. No historical trace/result or attempt budget changes.

@@ -15,7 +15,7 @@ from typing import Any
 from .decision_contract import OUTPUT_CONTRACT, validate_decision_shape
 from .tool_schemas import schema_for
 
-CHECKER_VERSION = "finance-trace-contract-signals-v2"
+CHECKER_VERSION = "finance-trace-contract-signals-v3"
 OPERATION_CONTRACT_VERSION = "finance-operation-stages-v1"
 _POLICY_ID = "synthetic-organization-finance-policy-v1"
 _LEGACY_RULE_DIGESTS = {
@@ -89,11 +89,88 @@ def _policy_binding(policy: Any) -> tuple[dict, dict[str, int], dict[str, str]] 
     return {"id":policy["id"],"version":1,"rule_sha256":dict(rule_digests)},indices,registry["rule_roles"]
 
 
+
+def _replaced_source_mutation_signals(events: list, *, indices: dict, rule_roles: dict) -> list[dict]:
+    """Observe only prior trusted replacement metadata and document reads.
+
+    A stale obligation read is not a defect. Higher document version numbers do
+    not establish lineage. No document prose or later read repairs the evidence
+    available before a mutation, and an opaque tool failure has no inferred cause.
+    """
+    if not isinstance(events, list) or len(events) > 128:
+        return []
+    cases, documents, signals = {}, {}, []
+    for event_index, event in enumerate(events):
+        if not isinstance(event, dict):
+            continue
+        name, value = event.get("name"), event.get("result")
+        pointer = f"/trace/tool_events/{event_index}"
+        successful_read = isinstance(value, dict) and value.get("status") not in ("failed", "blocked", "error")
+        if name == "get_case" and successful_read and isinstance(value.get("id"), str):
+            case_id = value["id"]
+            cases.pop(case_id, None)
+            data = value.get("data")
+            if not isinstance(data, dict) or not isinstance(data.get("change_impact"), dict):
+                continue
+            impact = data["change_impact"]
+            old, new = impact.get("replaces_source_id"), impact.get("source_id")
+            if impact.get("reason") != "document_revised" or not all(isinstance(key, str) and key for key in (old, new)) or old == new:
+                continue
+            source_refs = data.get("source_refs")
+            if not isinstance(source_refs, list):
+                continue
+            matched = {}
+            for ref in source_refs:
+                if isinstance(ref, dict) and isinstance(ref.get("id"), str) and ref.get("id") in {old, new} and type(ref.get("version")) is int and ref["version"] > 0:
+                    if ref["id"] in matched:
+                        matched = {}
+                        break
+                    matched[ref["id"]] = ref["version"]
+            if len(matched) == 2 and matched[new] > matched[old]:
+                cases[case_id] = {"old": old, "new": new, "old_version": matched[old],
+                                  "new_version": matched[new], "pointer": pointer + "/result/data/change_impact"}
+        elif name == "read_document" and successful_read:
+            if isinstance(value.get("id"), str) and type(value.get("version")) is int and value["version"] > 0:
+                documents[value["id"]] = (value["version"], pointer + "/result")
+        elif name == "propose_obligation_update":
+            arguments = event.get("arguments")
+            if not isinstance(arguments, dict) or not isinstance(arguments.get("case_id"), str):
+                continue
+            lineage = cases.get(arguments["case_id"])
+            if lineage is None:
+                continue
+            read = documents.get(lineage["new"])
+            if read is None or read[0] != lineage["new_version"]:
+                continue
+            refs = arguments.get("source_refs")
+            if not isinstance(refs, list):
+                continue
+            for ref_index, ref in enumerate(refs):
+                if not isinstance(ref, dict) or ref.get("id") != lineage["old"] or type(ref.get("version")) is not int or ref["version"] != lineage["old_version"]:
+                    continue
+                submitted = pointer + f"/arguments/source_refs/{ref_index}"
+                operation = "/trace/contract_signals/operation_contract/operations/propose_obligation_update"
+                rule = rule_roles["prepare"]
+                policy_pointer = f"/immutable_policy/rules/{indices[rule]}"
+                signals.append({
+                    "code": "known_replaced_source_used_in_mutation", "pointer": submitted,
+                    "source_ref": {"id": lineage["old"], "version": lineage["old_version"]},
+                    "observed_replacement_ref": {"id": lineage["new"], "version": lineage["new_version"]},
+                    "observation": "The attempted obligation update cites a source explicitly replaced in an earlier captured case read, after the actor read its replacement. This is a source-selection observation, not a financial correctness or procedure-defect verdict.",
+                    "tool_failure_cause": "not_assessed", "mutation_effect": "not_assessed",
+                    "evidence_pointers": [submitted, lineage["pointer"], read[1] + "/id", read[1] + "/version", operation, policy_pointer],
+                    "trusted_refs": [{"kind": "operation_contract", "id": "propose_obligation_update", "version": 1, "pointer": operation},
+                                     {"kind": "policy", "id": rule, "version": 1, "pointer": policy_pointer}],
+                })
+    return signals
+
+
 def trace_contract_signals(
     output: Any,
     *,
     protected_policy: dict | None,
     current_source_refs: list[dict] | None = None,
+    captured_tool_events: list[dict] | None = None,
     operation_contract_version: str = OPERATION_CONTRACT_VERSION,
 ) -> dict:
     """Return JSON observations; attach as trace['contract_signals'] for review.
@@ -165,7 +242,9 @@ def trace_contract_signals(
                     *[f"/immutable_policy/rules/{indices[rule]}" for rule in rules]],
                 "trusted_refs":[{"kind":"operation_contract","id":operation,"version":1,"pointer":operation_pointer},
                     *[{"kind":"policy","id":rule,"version":1,"pointer":f"/immutable_policy/rules/{indices[rule]}"} for rule in rules]]})
+    if captured_tool_events is not None:
+        result["signals"].extend(_replaced_source_mutation_signals(captured_tool_events, indices=indices, rule_roles=rule_roles))
     result["status"]="review_required" if result["signals"] or result["reference_issues"] else "observed"
     result["source_reference_check"]="not_supplied" if sources is None else "current_inventory_checked"
-    result["coverage"]="declared premature destination/human-approval pairs and supporting reference versions only"
+    result["coverage"]="declared premature destination/human-approval pairs, supporting reference versions, and previously observed explicit replacement used in an obligation mutation only"
     return result

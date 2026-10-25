@@ -14,6 +14,7 @@ import httpx
 from app.models.providers import ModelConfig, ModelError
 
 from .hermes import FinanceTools
+from .tool_errors import safe_tool_failure
 from .tool_schemas import schema_for
 
 MAX_BYTES = 2_000_000
@@ -181,8 +182,7 @@ class FinanceBridge:
                         # JSON-native results, while rejecting unserializable tool data.
                         json.dumps(response, allow_nan=False)
                     except Exception as error:  # noqa: BLE001 -- never export exception text.
-                        response = {"status": "failed", "error": "finance_tool_error",
-                                    "error_type": type(error).__name__}
+                        response = safe_tool_failure(error)
                 event = self.clean({"name": name, "arguments": arguments, "result": response})
                 self.events.append(event)
             result = {"content": [{"type": "text", "text": json.dumps(event["result"])}],

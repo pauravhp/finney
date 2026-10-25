@@ -6,11 +6,21 @@ from urllib.parse import quote, urlsplit
 
 import httpx
 
+# Exact application-owned SQL messages only. Provider text is never retained;
+# a known rejection becomes a fixed token, not an exception/body passthrough.
+_FINANCE_DOMAIN_ERRORS = {
+    ("23514", "source reference missing, stale or outside run"): "source_reference_not_current",
+    ("23514", "current versioned source references required"): "source_references_required",
+    ("23514", "invalid source references"): "source_references_invalid",
+}
+FINANCE_DOMAIN_REASONS = frozenset(_FINANCE_DOMAIN_ERRORS.values())
+
 
 class SupabaseError(RuntimeError):
-    def __init__(self, status: int, code: str = "provider_error"):
+    def __init__(self, status: int, code: str = "provider_error", *, domain_reason: str | None = None):
         self.status = status
         self.code = code
+        self.domain_reason = domain_reason if status == 400 and domain_reason in FINANCE_DOMAIN_REASONS else None
         # Do not expose raw response bodies, request URLs, tokens or source text.
         super().__init__(f"Supabase request failed ({status}, {code})")
 
@@ -48,11 +58,21 @@ class SupabaseClient:
         # the server committed. The caller resumes using its durable idempotency key.
         response = await self._http.request(method, path, **kwargs)
         if response.is_error:
+            reason = None
             try:
-                code = str(response.json().get("code", "provider_error"))
+                body = response.json()
+                code = str(body.get("code", "provider_error"))
+                message = body.get("message")
+                if (method == "POST" and path == "/rest/v1/rpc/finance_kernel_call"
+                        and response.status_code == 400 and isinstance(message, str)):
+                    reason = _FINANCE_DOMAIN_ERRORS.get((code, message))
             except (ValueError, AttributeError):
                 code = "provider_error"
-            raise SupabaseError(response.status_code, code if re.fullmatch(r"[\w-]{1,64}", code) else "provider_error")
+            raise SupabaseError(
+                response.status_code,
+                code if re.fullmatch(r"[\w-]{1,64}", code) else "provider_error",
+                domain_reason=reason,
+            )
         return response
 
     async def rpc(self, name: str, arguments: dict[str, Any]) -> Any:

@@ -97,3 +97,33 @@ candidate, evaluator, cases and gates will be frozen before inference. No patch,
 score adjustment, repeat-until-pass run or manual activation is justified by a
 demo deadline. Results will be appended here whether the attempt promotes,
 rejects, or stops before candidate creation.
+
+## 7. Amended evidence revealed a learning-evidence failure
+
+The next quiet-host operating review correctly recorded the synthetic Harbor AV
+invoice at USD 480.00. Diagnosis returned `no_defect`; it generated no patch and
+opened no holdouts. The amended invoice correctly changed the model's conclusion
+to USD 420.00, but its mutation cited both the original and superseding source.
+The database refused that update, so the actual recorded liability stayed at
+USD 480.00. The actor disclosed this failure rather than claiming a successful write.
+
+The tool exposed only a generic `SupabaseError`. Diagnosis consequently called it
+an infrastructure problem and again produced no patch. This was a substantive
+evidence-quality gap: the rejection of stale operative evidence had become
+indistinguishable from an unavailable provider. The prior trace and its incorrect
+diagnostic interpretation remain intact.
+
+The repair exposes only exact allowlisted domain-rejection tokens and fixed
+recovery guidance, never raw database response bodies. Both runtimes receive the
+same feedback. A separate deterministic signal observes an explicitly replaced
+source used in a later mutation, with pointers to earlier captured case lineage,
+replacement reads and submitted arguments. It does not infer the cause of an
+opaque failure or force a procedure-defect verdict.
+
+The run had reached its existing three-attempt limit. The owner explicitly approved
+one new learning phase capped at 96 calls, raising the private run's total reserved
+call limit from 1,000 to 1,100 and attempt limit from three to four. The authenticated
+budget update retained all 904 consumed call reservations and all three attempts.
+No old attempt was reset, no dataset was relabeled, and no promotion gate changed.
+The next operating review recovers the still-unresolved amendment and creates its
+own new trace. Fresh transfer cases remain unopened at this checkpoint.

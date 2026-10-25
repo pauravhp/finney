@@ -229,6 +229,7 @@ async def run_job(
             trace["contract_signals"] = trace_contract_signals(
                 trace.get("output"), protected_policy=observed_policy,
                 current_source_refs=list(observed_sources.values()) or None,
+                captured_tool_events=trace.get("tool_events"),
             )
             trace["policy_provenance"] = {
                 "status": "captured_runtime_context" if observed_policy is not None else "not_captured",
