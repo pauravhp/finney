@@ -1,3 +1,7 @@
+The public landing now uses `/landing-v7.html`, the original standalone v7 export,
+with navigation-only wiring in `/landing-v7-links.js`. The older adapted landing
+assets below are retained but are no longer the public landing entry.
+
 # Finney approved brand assets
 
 Transferred from the owner-approved Organizer’s Desk v7.0 design. The landing

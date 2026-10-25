@@ -1,4 +1,3 @@
-import { Landing } from "@/components/landing";
 import { redirect } from "next/navigation";
 
 export default async function Home({
@@ -20,5 +19,6 @@ export default async function Home({
     }
     redirect(`/desk${query.size ? `?${query}` : ""}`);
   }
-  return <Landing />;
+  // Normal visits are rewritten to the standalone document before this route.
+  redirect("/landing-v7.html");
 }

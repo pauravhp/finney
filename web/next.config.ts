@@ -2,6 +2,14 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   poweredByHeader: false,
+  // Serve the approved standalone document, without application CSS or hydration.
+  async rewrites() {
+    return { beforeFiles: [{
+      source: "/",
+      missing: ["organization_id", "run_id", "auth_error", "signin"].map(key => ({ type: "query" as const, key })),
+      destination: "/landing-v7.html",
+    }], afterFiles: [], fallback: [] };
+  },
   async headers() {
     return [
       {
