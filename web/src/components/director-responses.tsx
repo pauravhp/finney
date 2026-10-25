@@ -2,37 +2,37 @@ import { ReadableText } from "@/components/readable-text";
 
 type Reply = Record<string, unknown> & { message: string };
 
-export function currentReplyParts(message: string, collapseLong: boolean) {
-  const boundary = message.match(/\r?\n[ \t]*\r?\n/);
-  if (
-    !collapseLong ||
-    message.length <= 900 ||
-    boundary?.index === undefined ||
-    !message.slice(0, boundary.index).trim()
-  )
-    return null;
-  return {
-    lead: message.slice(0, boundary.index),
-    rest: message.slice(boundary.index),
-  };
+export const RESPONSE_DETAILS_MARKER = "\n\nDetails:\n";
+
+// Only an explicitly authored boundary may hide supplementary explanation.
+// The legacy flag remains accepted by callers, but never truncates legacy text.
+export function currentReplyParts(
+  message: string,
+  _legacyCollapseLong?: boolean,
+) {
+  const boundary = message.indexOf(RESPONSE_DETAILS_MARKER);
+  if (boundary < 0) return null;
+  const lead = message.slice(0, boundary);
+  const rest = message.slice(boundary + RESPONSE_DETAILS_MARKER.length);
+  if (!lead.trim() || !rest.trim()) return null;
+  return { lead, rest };
 }
 
-function ReplyText({
-  message,
-  collapseLong,
-}: {
-  message: string;
-  collapseLong: boolean;
-}) {
-  const parts = currentReplyParts(message, collapseLong);
+function ReplyText({ message }: { message: string }) {
+  const parts = currentReplyParts(message);
   if (!parts)
-    return <ReadableText className="director-response-text" text={message} />;
+    return (
+      <ReadableText
+        className="director-response-text director-response-primary"
+        text={message}
+      />
+    );
   return (
     <div className="director-response-text">
-      <ReadableText text={parts.lead} />
+      <ReadableText className="director-response-primary" text={parts.lead} />
       <details className="record-details reply-full-response">
-        <summary>Read full response</summary>
-        <ReadableText text={parts.rest} />
+        <summary>Details</summary>
+        <ReadableText className="director-response-details" text={parts.rest} />
       </details>
     </div>
   );
@@ -41,7 +41,6 @@ function ReplyText({
 export function DirectorResponses({
   responses,
   heading = "Finney’s replies",
-  collapseLong = false,
 }: {
   responses: unknown;
   heading?: string;
@@ -70,7 +69,7 @@ export function DirectorResponses({
               : `${String(reply.actor_trace_id ?? reply.job_id ?? "reply")}:${index}`
           }
         >
-          <ReplyText message={reply.message} collapseLong={collapseLong} />
+          <ReplyText message={reply.message} />
         </article>
       ))}
     </section>

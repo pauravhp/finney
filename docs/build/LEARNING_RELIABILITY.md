@@ -225,3 +225,21 @@ required; no result is clipped and no hard sentence/length gate is added. This i
 an engineering prompt revision, not a measured learned gain. It again invalidates
 the preceding preflight's protected-runtime binding. No new inference, restart or
 learning attempt was performed to implement it; live verification is separate.
+
+### Primary outcome with optional Details
+
+The owner's next refinement makes the primary financial answer one or two short
+sentences, sufficient on its own. Material unpaid status, uncertainty, missing
+approval or failure must remain in that primary answer. A useful, supported
+explanation may follow the exact separator `\n\nDetails:\n` in the existing
+`explanation` or director-message string, for the UI to expose behind Details.
+There are no new response-schema fields and no client/server clipping of earlier
+outputs. A long reply followed by a summary is explicitly not the convention.
+
+Changes and differences require observed prior/current records; completed actions
+require successful tool evidence. The instructions do not contain demo values or
+invented savings, duplicate handling or outcomes. Local tests verify that both a
+plain answer and an answer with Details retain the existing structured decision,
+blockers and provenance contract. Prompt/context hashes change again, invalidating
+older preflight receipts. No learning, inference, restart or commit accompanied
+this engineering refinement; real invoice/reimbursement verification is separate.

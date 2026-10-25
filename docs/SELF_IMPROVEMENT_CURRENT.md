@@ -5,7 +5,9 @@ to concise personal-agent prose. It does not change financial authority, output
 validation or promotion gates. Those runtime/context changes invalidate the prior
 preflight receipt: a newly matched preflight is required before another learning
 study. Historical results below remain historical; no study was resumed for the
-UI release. See [companion tutorial](build/COMPANION_TUTORIAL.md).
+UI release. The subsequent [primary-response refinement](build/PRIMARY_RESPONSE.md)
+uses concise generation with explicit expandable explanation in the same stored
+string, without changing the decision schema or financial authority.
 
 Current deployed runtime: OpenCode + Harness2, with **Claude Sonnet 5.5** for the
 finance actor, reasoning reviewer, editor and OCR. Jev remains a separate judge.

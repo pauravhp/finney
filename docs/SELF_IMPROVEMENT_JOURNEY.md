@@ -261,3 +261,18 @@ correct USD 420/unpaid facts. Original outputs and the initially failed browser 
 assertion are preserved separately from the successful follow-up. These are UI and
 prompt engineering changes, not a learned promotion. Prior preflight bindings are
 stale and fresh final holdouts remain unopened.
+
+
+### Financial outcome as the primary response
+
+The owner clarified that a concise financial consequence must replace the long
+main answer, not become another card. The existing response strings now support
+an explicit optional Details section; no decision-schema or authority change was
+needed. Unmarked old outputs are never automatically truncated. New hosted reviews
+confirmed the same invoice changed from USD 480 to USD 420 and one USD 87 organizer
+obligation was recorded without payment. A recovered tool error remains captured.
+The invoice primary was 29 words/two sentences; reimbursement initially 52 words/three
+sentences still overexplained future routing. A stage-relevance clarification then
+produced a 46-word read-only answer retaining material uncertainty, still in three
+sentences. This is a measured presentation limit, not a forced pass or learned
+promotion. See [exact verification](build/PRIMARY_RESPONSE.md).

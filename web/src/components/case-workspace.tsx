@@ -5,7 +5,6 @@ import { ArrowLeft, ArrowRight, FileText, LoaderCircle } from "lucide-react";
 import { browserSupabase } from "@/lib/supabase/browser";
 import {
   displayRecord,
-  formatMoney,
   textValue,
   type FinanceSnapshot,
 } from "@/lib/contracts";
@@ -192,8 +191,8 @@ export function caseBlockerNotes(
 ): BlockerNote[] {
   if (!Array.isArray(values)) return [];
   // Only the visible answer can replace a duplicate note. A caveat hidden in
-  // Read full response must not silently remove a meaningful payment condition.
-  const visible = currentReplyParts(explanation, true)?.lead ?? explanation;
+  // Details must not silently remove a meaningful payment condition.
+  const visible = currentReplyParts(explanation)?.lead ?? explanation;
   const wording: Record<string, string> = {
     payer_identity: "Confirm who paid and whom the event owes.",
     source_documents:
@@ -281,7 +280,6 @@ export function CaseWorkspace({
   const [selected, setSelected] = useState("");
   const source = sources.find((source) => source.id === selected) ?? sources[0];
   const finding = record(item.data.finding);
-  const action = record(finding.proposed_action);
   const responses = Array.isArray(item.data.director_responses)
     ? item.data.director_responses.filter(
         (value) =>
@@ -316,10 +314,6 @@ export function CaseWorkspace({
     failed: "I need a hand.",
     completed: "Here’s what I found.",
   }[state];
-  const amount =
-    typeof action.amount_minor === "string" && /^\d+$/.test(action.amount_minor)
-      ? action.amount_minor
-      : null;
   const noun = /invoice/i.test(item.title)
     ? "invoice"
     : /receipt|reimbursement/i.test(item.title)
@@ -329,9 +323,59 @@ export function CaseWorkspace({
     finding.blocking_requirements,
     typeof finding.explanation === "string" ? finding.explanation : "",
   );
+  const documents = (
+    <div className="live-case-evidence">
+      {sources.length > 1 && (
+        <nav className="live-source-tabs" aria-label="Case documents">
+          {sources.map((row, index) => (
+            <button
+              key={textValue(row.id)}
+              data-source-id={textValue(row.id)}
+              data-source-version={textValue(row.version)}
+              aria-pressed={source?.id === row.id}
+              onClick={() => setSelected(textValue(row.id))}
+            >
+              {superseded.includes(row.id)
+                ? `Previous ${noun}`
+                : index === 0
+                  ? noun.charAt(0).toUpperCase() + noun.slice(1)
+                  : sourceDisplayTitle(row, item.title)}
+            </button>
+          ))}
+        </nav>
+      )}
+      {source ? (
+        <SourcePaper
+          key={`${textValue(source.id)}:${textValue(source.version)}`}
+          source={source}
+          snapshot={snapshot}
+          caseTitle={item.title}
+        />
+      ) : (
+        <section className="source-paper-live">
+          <h2>No document attached</h2>
+          <p>Add an invoice or receipt to get started.</p>
+        </section>
+      )}
+    </div>
+  );
+  const addDocument = (
+    <details className="case-evidence-action">
+      <summary>Add a document</summary>
+      {evidenceForm}
+    </details>
+  );
+  const clarification =
+    typeof finding.clarification === "string"
+      ? finding.clarification.trim()
+      : "";
+  const visibleExplanation =
+    typeof finding.explanation === "string"
+      ? (currentReplyParts(finding.explanation)?.lead ?? finding.explanation)
+      : "";
   return (
     <section
-      className="live-case-workspace companion-case-workspace"
+      className={`live-case-workspace companion-case-workspace ${hasResult ? "has-result" : ""}`}
       data-case-state={state}
     >
       <header className="live-case-heading">
@@ -344,44 +388,12 @@ export function CaseWorkspace({
         </div>
       </header>
       <div className="live-case-layout">
-        <div className="live-case-evidence">
-          {sources.length > 1 && (
-            <nav className="live-source-tabs" aria-label="Case documents">
-              {sources.map((row, index) => (
-                <button
-                  key={textValue(row.id)}
-                  data-source-id={textValue(row.id)}
-                  data-source-version={textValue(row.version)}
-                  aria-pressed={source?.id === row.id}
-                  onClick={() => setSelected(textValue(row.id))}
-                >
-                  {superseded.includes(row.id)
-                    ? `Previous ${noun}`
-                    : index === 0
-                      ? noun.charAt(0).toUpperCase() + noun.slice(1)
-                      : sourceDisplayTitle(row, item.title)}
-                </button>
-              ))}
-            </nav>
-          )}
-          {source ? (
-            <SourcePaper
-              key={`${textValue(source.id)}:${textValue(source.version)}`}
-              source={source}
-              snapshot={snapshot}
-              caseTitle={item.title}
-            />
-          ) : (
-            <section className="source-paper-live">
-              <h2>No document attached</h2>
-              <p>Add an invoice or receipt to get started.</p>
-            </section>
-          )}
-          <details className="case-evidence-action">
-            <summary>Add a document</summary>
-            {evidenceForm}
-          </details>
-        </div>
+        {!hasResult && (
+          <div className="case-review-sources">
+            {documents}
+            {addDocument}
+          </div>
+        )}
         <aside
           className="live-case-decision companion-case-panel"
           aria-label="Finney’s work"
@@ -417,31 +429,15 @@ export function CaseWorkspace({
                 collapseLong
               />
             )}
-          {hasResult && !newerResponse && amount !== null && (
-            <dl className="case-amount">
-              <div>
-                <dt>Proposed amount</dt>
-                <dd>
-                  {formatMoney(
-                    amount,
-                    textValue(action.currency, snapshot.run.currency),
-                  )}
-                </dd>
-              </div>
-              {Boolean(
-                action.payee || action.recipient || action.destination,
-              ) && (
-                <div>
-                  <dt>To</dt>
-                  <dd>
-                    {textValue(
-                      action.payee ?? action.recipient ?? action.destination,
-                    )}
-                  </dd>
-                </div>
-              )}
-            </dl>
-          )}
+          {hasResult &&
+            !newerResponse &&
+            clarification &&
+            !visibleExplanation.includes(clarification) && (
+              <ReadableText
+                className="case-clarification"
+                text={clarification}
+              />
+            )}
           {hasResult &&
             !newerResponse &&
             blockerNotes.map((note) => (
@@ -513,6 +509,15 @@ export function CaseWorkspace({
             </details>
           )}
         </aside>
+        {hasResult && (
+          <div className="case-result-sources">
+            <details className="case-source-disclosure">
+              <summary>View documents</summary>
+              {documents}
+            </details>
+            {addDocument}
+          </div>
+        )}
       </div>
     </section>
   );
