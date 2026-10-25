@@ -11,6 +11,9 @@ from app.improvement.harness2_search import (
 )
 from app.models import ModelError
 
+pytest.importorskip("harness2", reason="install the learning extra for upstream integration tests")
+
+
 BASE = "# Expenses\n\n## Investigation procedure\n\nRead the case and link current sources before proposing a financial next step.\n\n## Authority boundary\n\nNever approve or execute payments.\n"
 
 

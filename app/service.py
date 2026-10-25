@@ -30,6 +30,13 @@ class IntegratedTools:
     def scope(self):
         return self.finance.scope
 
+    async def claim_corpus_holdout(self, *, experiment_id: str, dataset_sha256: str, candidate_sha256: str):
+        """Trusted coordinator-only claim; absent from actor tool dispatch/allowlists."""
+        return await self.db.rpc("claim_finance_learning_holdout", {
+            **self.scope.params(), "p_experiment_id": experiment_id,
+            "p_dataset_sha256": dataset_sha256, "p_candidate_sha256": candidate_sha256,
+        })
+
     def for_evaluation(self, snapshot: dict):
         # Evaluations receive only the snapshot-bound kernel, without live intake.
         return self.finance.for_evaluation(snapshot)
@@ -363,11 +370,19 @@ async def dispatch_job(
             if outcome.get("status") == "completed":
                 from app.finance.workflows import queue_automatic_improvement
 
-                outcome["automatic_improvement"] = await queue_automatic_improvement(db, job, outcome)
+                outcome["automatic_improvement"] = await queue_automatic_improvement(
+                    db, job, outcome,
+                    **({"suite_id": "organizer-expenses-corpus-online-v1"}
+                       if settings.finance_improvement_method == "harness2" else {}),
+                )
         elif command == "review_case" and outcome.get("improvement_eligible") is True:
             from app.finance.workflows import queue_automatic_improvement
 
-            outcome["automatic_improvement"] = await queue_automatic_improvement(db, job, outcome)
+            outcome["automatic_improvement"] = await queue_automatic_improvement(
+                db, job, outcome,
+                **({"suite_id": "organizer-expenses-corpus-online-v1"}
+                   if settings.finance_improvement_method == "harness2" else {}),
+            )
         return outcome
     except ConnectionRequired:
         return {"status": "blocked", "reason": "connector_authorization_required"}

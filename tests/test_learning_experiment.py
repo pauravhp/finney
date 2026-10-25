@@ -11,6 +11,8 @@ from app.finance.types import Scope
 from app.improvement.benchmark import HostedExperiment
 from app.improvement.dataset import FinanceDataset
 
+pytest.importorskip("harness2", reason="install the learning extra for upstream integration tests")
+
 SECRET = "fixture-secret-never-export"
 PROCEDURE = (
     "Inspect current source versions, actual payer and remaining liability before "
@@ -117,7 +119,7 @@ def fixture_experiment(monkeypatch, tmp_path, *, heldout_claimed=True, changed=T
                     "evidence": {"api_calls": 1, "usage": {"fixture": True}}}
 
     class Editor:
-        def __init__(self, config):
+        def __init__(self, config, **kwargs):
             self.config = config
 
         async def complete(self, system, prompt):
@@ -134,7 +136,7 @@ def fixture_experiment(monkeypatch, tmp_path, *, heldout_claimed=True, changed=T
 
     monkeypatch.setattr("app.improvement.benchmark.HermesActor", Actor)
     monkeypatch.setattr("app.runtime.opencode.OpenCodeActor", Actor)
-    monkeypatch.setattr("app.improvement.benchmark.GenerativeModel", Editor)
+    monkeypatch.setattr("app.improvement.benchmark.OpenCodeEditor", Editor)
     settings = SimpleNamespace(
         finance_model_api_key=SimpleNamespace(get_secret_value=lambda: SECRET),
         finance_model="fixture-model", finance_model_base_url="https://fixture.invalid",

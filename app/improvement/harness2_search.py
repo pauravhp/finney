@@ -16,8 +16,11 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-from app.improvement.engine import EDIT_END, EDIT_START, replace_procedure
+from app.improvement.engine import EDIT_END, EDIT_START, READ_TOOLS, replace_procedure
 from app.models import ModelError
+from app.resources import resource_path
+from app.runtime.opencode import output_schema
+from app.runtime.tool_schemas import schema_for
 
 HARNESS2_REVISION = "1cfe254e8d25b15f37048c3730134686abe60335"
 
@@ -87,6 +90,14 @@ class FinanceHarnessAdapter:
                 raise ValueError("unsafe case identity")
             if set(packet) & {"expected", "ground_truth", "answers", "score", "protected"}:
                 raise ValueError("protected answers in public packet")
+            # Public execution contracts are environmental evidence, not answer
+            # keys. The editor needs them to recognize invalid action/ref shapes.
+            packet["execution_contract"] = {
+                "output_schema": output_schema("finance"),
+                "readonly_tools": [schema_for(name) for name in sorted(READ_TOOLS)],
+                "runtime_guide": resource_path("skills/finance/runtime-guide.md").read_text(),
+                "effects_enabled": False,
+            }
             path = self.task_files(key)
             path.mkdir(parents=True, exist_ok=True)
             (path / "packet.json").write_text(json.dumps(packet, indent=2))
@@ -149,6 +160,9 @@ class FinanceHarnessAdapter:
             trajectory.append("[ACTION] " + json.dumps(event.get("name", event.get("tool", ""))))
             trajectory.append("[OBSERVATION] " + json.dumps(event))
         trajectory.append("[ERROR] " + str(result.get("error", "none")))
+        if result.get("contract_observations") is not None:
+            trajectory.append("[OBSERVATION] Trusted execution-contract checks (not answer grading): "
+                              + json.dumps(result["contract_observations"]))
         trajectory.append("[OBSERVATION] " + json.dumps(result.get("output")))
         (run_dir / "trajectory.md").write_text("\n".join(trajectory))
         (run_dir / "answer.json").write_text(json.dumps({
@@ -240,6 +254,13 @@ def make_proposer(channel, model, loop, budget: SearchBudget, *, on_result=None,
                               wall_s=time.perf_counter()-started, channel="finney-bounded-model-api")
                 self._calls.append(reply)
                 return reply
+            except ModelError as exc:
+                if on_result:
+                    diagnostic = {"status": "blocked", "error_code": exc.code,
+                                  "provider_status": exc.status,
+                                  "private_diagnostic": getattr(exc, "private_diagnostic", None)}
+                    asyncio.run_coroutine_threadsafe(on_result(label, diagnostic), loop).result(30)
+                raise ProposerError(f"bounded editor failed: {exc.code}", attempts=1) from None
             except Exception as exc:  # noqa: BLE001 -- preserve safe upstream error boundary
                 raise ProposerError(f"bounded editor failed: {type(exc).__name__}", attempts=1) from None
 
@@ -279,6 +300,6 @@ async def run_harness_search(*, root: Path, packets: dict[str, dict], baseline: 
             candidate = (path / "harnesses" / label / "systemprompt.md").read_text()
         results.append({"case_id": case_id, "search": row, "candidate": candidate})
     return {"harness2_revision": HARNESS2_REVISION, "method": "upstream-propose-probe-compose-reflect",
-            "editor_transport": "finney-bounded-model-api", "executor": "opencode",
+            "editor_transport": type(model).__name__, "executor": "opencode",
             "budget": {"limit": budget.limit, "used_upper_bound": budget.used},
             "results": results, "activation": "not_requested"}

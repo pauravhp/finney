@@ -30,6 +30,8 @@ ELIGIBLE_FAILURES = frozenset({
 SCHEMA_ERRORS = frozenset({
     "decision", "explanation", "sources", "clarification", "proposed_action",
     "blocking_requirements", "blocker", "blocker_refs", "blocker_ref",
+    "action_evidence_refs",
+    "proposed_action_kind",
 })
 
 

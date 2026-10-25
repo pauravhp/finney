@@ -6,6 +6,12 @@ Supabase, with a Next.js browser workspace. Hermes performs scoped agent work;
 Jev reviews actual traces. Payment support uses Coinbase Wallet MCP and Base
 Sepolia test funds, with exact-action human approvals and receipt verification.
 
+The [OpenCode + Harness2 integration](docs/HARNESS2_LEARNING.md) adds a pinned
+alternative actor, a reviewed 24-case synthetic finance corpus, and real
+Propose–Probe–Compose experiments. Both runtimes use the same finance controls.
+Learning results are measured and stored; a selected candidate is not assumed
+to be an improvement.
+
 The app never substitutes a fake successful Gmail intake, payment, model call,
 or improvement. Missing access is visible as blocked. See
 [validation and current limits](docs/VALIDATION.md) for what has actually been

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Literal
 from uuid import UUID
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     finance_hermes_source: str = ""
     finance_hermes_python: str = ""
     finance_actor_runtime: Literal["hermes", "opencode"] = "hermes"
+    finance_improvement_method: Literal["single_patch", "harness2"] = "single_patch"
     finance_opencode_binary: str = ""
     google_client_id: str = ""
     google_client_secret: SecretStr = SecretStr("")
@@ -51,6 +52,12 @@ class Settings(BaseSettings):
     finance_auto_intake_batch_size: int = Field(20, ge=1, le=100)
     finance_state_dir: Path = Path(".state")
     finance_event_timezone: str = "America/Vancouver"
+
+    @model_validator(mode="after")
+    def validate_improvement_runtime(self):
+        if self.finance_improvement_method == "harness2" and self.finance_actor_runtime != "opencode":
+            raise ValueError("harness2 requires finance_actor_runtime=opencode")
+        return self
 
     @property
     def backend_key(self) -> str:

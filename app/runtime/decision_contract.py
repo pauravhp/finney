@@ -1,6 +1,14 @@
 """Neutral decision representation; it does not define financial permissions."""
 
 OUTPUT_CONTRACT = "finance-decision-v2"
+PREPARED_ACTIONS = ("pay_vendor", "reimburse_organizer", "investigate", "no_action")
+EVIDENCE_REFS_SCHEMA = {
+    "type": "array", "items": {
+        "type": "object", "properties": {"id": {"type": "string"},
+            "version": {"type": "integer", "minimum": 1}},
+        "required": ["id", "version"], "additionalProperties": False,
+    },
+}
 STAGES = ("obligation_recording", "approval_request", "execution", "settlement_claim")
 REQUIREMENTS = (
     "payer_identity",
@@ -35,6 +43,17 @@ def validate_decision_shape(output: dict) -> None:
         and not isinstance(output["proposed_action"], dict)
     ):
         raise ValueError("proposed_action")
+    action = output["proposed_action"]
+    if isinstance(action, dict) and action.get("action") not in PREPARED_ACTIONS:
+        raise ValueError("proposed_action_kind")
+    if isinstance(action, dict) and "evidence_refs" in action:
+        refs = action["evidence_refs"]
+        if not isinstance(refs, list) or any(
+            not isinstance(ref, dict) or not isinstance(ref.get("id"), str)
+            or type(ref.get("version")) is not int or ref["version"] < 1
+            for ref in refs
+        ):
+            raise ValueError("action_evidence_refs")
     blockers = output.get("blocking_requirements")
     if not isinstance(blockers, list) or len(blockers) > 100:
         raise ValueError("blocking_requirements")

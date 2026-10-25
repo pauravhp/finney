@@ -2,8 +2,9 @@
 
 The optional actor uses the actual OpenCode **1.19.4** headless server, not a
 direct-model substitute. The model stays the caller's `ModelConfig`, including
-Claude Sonnet 4.6 and the initial 1,600 output-token cap for comparison with the
-Hermes baseline. Changing the actor does not replace the finance kernel, source
+Claude Sonnet 4.6 and the normal worker's 1,600 output-token cap. The frozen
+comparison uses 2,400 output tokens for both actors, recorded in its manifest.
+Changing the actor does not replace the finance kernel, source
 contracts, approval gates, evaluation gates, mailbox connector or persistence.
 
 ## Install the app-owned pin

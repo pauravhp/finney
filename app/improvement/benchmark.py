@@ -24,9 +24,10 @@ from app.improvement.harness2_search import (
     run_harness_search,
     verify_harness2,
 )
-from app.models import GenerativeModel, ModelConfig, ModelError
+from app.models import ModelConfig, ModelError
 from app.resources import resource_path
 from app.runtime.hermes import HermesActor, HermesActorError
+from app.runtime.opencode_editor import OpenCodeEditor
 from app.storage.supabase import SupabaseClient
 
 
@@ -84,7 +85,8 @@ class HostedExperiment:
             "opencode": OpenCodeActor(self.config, binary=settings.finance_opencode_binary or None,
                                       max_iterations=iterations, timeout_seconds=180),
         }
-        self.model = GenerativeModel(replace(self.config, max_tokens=3500))
+        self.model = OpenCodeEditor(replace(self.config, max_tokens=3500),
+                                    binary=settings.finance_opencode_binary or None)
         self.baseline = resource_path("skills/finance/organizer-expenses.md").read_text()
         self.guide = resource_path("skills/finance/runtime-guide.md").read_text()
         self.rows, self.receipts = [], []
@@ -130,6 +132,9 @@ class HostedExperiment:
                 allowed_tools=READ_TOOLS | {"get_budget_plan"}, policy=snapshot["immutable_policy"],
                 max_model_calls=self.iterations)
             result.setdefault("status", "completed")
+            if isinstance(result.get("output", {}).get("proposed_action"), dict):
+                result["contract_observations"] = await scoped.call("validate_prepared_decision", {
+                    "decision": result["output"]["proposed_action"]})
         except HermesActorError as error:
             private = error.private_diagnostic
             # Private full failed trace is a durable artifact; failures are also
@@ -176,6 +181,15 @@ class HostedExperiment:
         if any(cid not in self.dataset.case_ids("development") for cid in dev):
             raise ValueError("search restricted to development cases")
         frozen = {"experiment_id": self.id, "dataset_manifest": self.dataset.manifest,
+            "code_sha256": {str(p.relative_to(Path(__file__).resolve().parents[2])):
+                hashlib.sha256(p.read_bytes()).hexdigest()
+                for p in (Path(__file__), Path(__file__).with_name("harness2_search.py"),
+                          Path(__file__).with_name("dataset.py"), Path(__file__).with_name("engine.py"),
+                          Path(__file__).resolve().parents[1] / "runtime/opencode.py",
+                          Path(__file__).resolve().parents[1] / "runtime/opencode_bridge.py",
+                          Path(__file__).resolve().parents[1] / "runtime/opencode_editor.py",
+                          Path(__file__).resolve().parents[1] / "runtime/hermes.py",
+                          Path(__file__).resolve().parents[1] / "runtime/decision_contract.py")},
             "development_ids": dev, "validation_ids": validation,
             "repetitions": repetitions, "actor_model": self.config.model,
             "actor_max_tokens": self.config.max_tokens, "actor_iterations": self.iterations,
@@ -215,7 +229,11 @@ class HostedExperiment:
         await self.save("search", search)
         candidate = search["results"][-1]["candidate"]
         if not candidate or candidate == self.baseline:
-            return await self.finish("no_changed_candidate", search=search)
+            errors = [stage.get("error") for row in search["results"]
+                for mode in row["search"].get("modes", {}).values()
+                for stage in mode.get("stages", []) if stage.get("error")]
+            return await self.finish("blocked_editor_search" if errors else "no_changed_candidate",
+                                     search=search, search_errors=errors)
         # Candidate is fixed before any validation answers are consulted.
         await self.save("candidate", {"content": candidate, "sha256": hashlib.sha256(candidate.encode()).hexdigest()})
         artifact = await self.tools.call("put_artifact", {"name": f"organizer-expenses-harness2-{self.id}.md",

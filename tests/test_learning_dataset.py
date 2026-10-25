@@ -124,7 +124,9 @@ class CorpusTests(unittest.TestCase):
         for version in (True,1.0,'1',0):
             with self.subTest(version=version):
                 output=self.output('fc-001');output['proposed_action']['evidence_refs'][0]['version']=version
-                self.assertIn('invalid_evidence_refs',self.score('fc-001',output)['errors'])
+                scored=self.score('fc-001',output)
+                self.assertIn('invalid_structured_decision',scored['errors'])
+                self.assertEqual(scored['diagnostic'],'action_evidence_refs')
         output=self.output('fc-005');output['finance_report']['settled_cash_minor']=999999
         self.assertIn('unexpected_report_fields',self.score('fc-005',output)['correctness_errors'])
 

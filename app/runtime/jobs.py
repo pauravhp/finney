@@ -152,7 +152,11 @@ async def run_job(
             )
         gateway_key = settings.ai_gateway_api_key.get_secret_value()
         if command == "evaluate_improvement":
-            from app.improvement.engine import ImprovementEngine
+            from app.improvement.engine import (
+                HARNESS2_MAX_MODEL_CALLS,
+                MAX_MODEL_CALLS,
+                ImprovementEngine,
+            )
             from app.improvement.suites import organizer_expense_suite
 
             request = improvement_review_request(job)
@@ -193,9 +197,13 @@ async def run_job(
                         raise ModelError("runtime_context_artifact_hash_mismatch")
                 except (KeyError, TypeError, ValueError):
                     raise ModelError("runtime_context_artifact_invalid") from None
+            from app.improvement.corpus_online import CORPUS_ONLINE_SUITE_ID, CorpusEvaluationTools
             from app.models import GenerativeModel
             from app.runtime.trace_contract import trace_contract_signals
-
+            if payload.get("suite_id") == CORPUS_ONLINE_SUITE_ID:
+                if settings.finance_improvement_method != "harness2":
+                    raise ModelError("online_corpus_requires_harness2")
+                tools = CorpusEvaluationTools(tools, getattr(tools, "claim_corpus_holdout", None))
             suite = organizer_expense_suite(tools, payload.get("suite_id", ""))
             snapshot = await tools.call("get_finance_snapshot", {})
             latest_sources = {}
@@ -209,7 +217,22 @@ async def run_job(
                 trace.get("output"), protected_policy=suite.policy,
                 current_source_refs=[{"id": row["id"], "version": row["version"]} for row in latest_sources.values()],
             )
-            engine = ImprovementEngine(actor, GenerativeModel(config), JevClient(gateway_key))
+            reviewer = GenerativeModel(config)
+            candidate_search = None
+            if settings.finance_improvement_method == "harness2":
+                from dataclasses import replace
+
+                from app.improvement.harness2_candidate import make_harness2_candidate_search
+                from app.runtime.opencode_editor import OpenCodeEditor
+                if settings.finance_actor_runtime != "opencode":
+                    raise ModelError("harness2_requires_opencode_actor")
+                editor = OpenCodeEditor(replace(config, max_tokens=3500),
+                                        binary=settings.finance_opencode_binary or None)
+                candidate_search = make_harness2_candidate_search(actor, editor)
+            engine = ImprovementEngine(
+                actor, reviewer, JevClient(gateway_key),
+                **({"candidate_search": candidate_search} if candidate_search else {}),
+            )
             result = await engine.run(
                 trace=trace,
                 baseline=current,
@@ -218,6 +241,7 @@ async def run_job(
                 tools=tools,
                 attempt_id=job_id,
                 fixed_context=fixed_context,
+                max_model_calls=HARNESS2_MAX_MODEL_CALLS if candidate_search else MAX_MODEL_CALLS,
             )
             # Rejection is a completed evaluation outcome, not a fabricated success.
             return {

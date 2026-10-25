@@ -17,6 +17,7 @@ from .hermes import FinanceTools
 from .tool_schemas import schema_for
 
 MAX_BYTES = 2_000_000
+MAX_PROVIDER_ERROR_BYTES = 65_536
 
 
 def redact(value: Any, secret_values: tuple[str, ...]) -> Any:
@@ -52,6 +53,7 @@ class FinanceBridge:
         self.calls: list[dict] = []
         self.failure_code: str | None = None
         self.original_structured_response: str | None = None
+        self._private_provider_error: dict | None = None
         self.server: asyncio.Server | None = None
         self.url = ""
         self._tasks: set[asyncio.Task] = set()
@@ -238,6 +240,7 @@ class FinanceBridge:
                     if response.status_code != 200:
                         self.failure_code = "provider_http_error"
                         receipt["status"] = "failed"
+                        await self._capture_provider_error(response)
                         return self._provider_error(self.failure_code)
                     chunks, total = [], 0
                     async for chunk in response.aiter_bytes():
@@ -257,6 +260,42 @@ class FinanceBridge:
                 self.failure_code = error.code if isinstance(error, ModelError) else "provider_transport_error"
                 receipt["status"] = "failed"
                 return self._provider_error(self.failure_code)
+
+    async def _capture_provider_error(self, response: httpx.Response) -> None:
+        """Read a finite error prefix; only the parent actor's private diagnostic gets it."""
+        chunks, total, read_error = [], 0, None
+        try:
+            async for chunk in response.aiter_bytes(chunk_size=4096):
+                remaining = MAX_PROVIDER_ERROR_BYTES + 1 - total
+                chunks.append(chunk[:remaining])
+                total += min(len(chunk), remaining)
+                if total > MAX_PROVIDER_ERROR_BYTES:
+                    break
+        except (httpx.HTTPError, OSError) as error:
+            read_error = type(error).__name__
+        finally:
+            raw = b"".join(chunks)
+            text = raw[:MAX_PROVIDER_ERROR_BYTES].decode("utf-8", errors="replace")
+            if len(raw) > MAX_PROVIDER_ERROR_BYTES or read_error:
+                # A bounded prefix can end in the middle of a known credential.
+                for secret in (self.config.api_key, self.token):
+                    for size in range(min(len(secret), len(text)), 0, -1):
+                        if text.endswith(secret[:size]):
+                            text = text[:-size] + "[REDACTED]"
+                            break
+            cleaned = self.clean(text)
+            encoded = cleaned.encode("utf-8")
+            body = encoded[:MAX_PROVIDER_ERROR_BYTES].decode("utf-8", errors="ignore")
+            self._private_provider_error = {
+                "http_status": response.status_code,
+                "body": body, "body_bytes": len(body.encode("utf-8")),
+                "truncated": len(raw) > MAX_PROVIDER_ERROR_BYTES or len(encoded) > MAX_PROVIDER_ERROR_BYTES,
+                "read_error_type": read_error,
+            }
+
+    @property
+    def private_provider_error(self) -> dict | None:
+        return copy.deepcopy(self._private_provider_error)
 
     @staticmethod
     def _provider_error(code: str) -> tuple[int, str, bytes]:
