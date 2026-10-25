@@ -1,8 +1,10 @@
 # Acceptance evidence
 
-## Current completion pass — October 24, 2026 Pacific
+## Frozen baseline acceptance — October 25, 2026 Pacific
 
-Sixteen hosted migrations are applied. Latest complete Python run:639 tests plus
+The tested Hermes baseline is public commit `13ed80d` and uses migrations001–016.
+Subsequent OpenCode + Harness2 integration is owned separately. Latest complete
+baseline Python run:639 tests plus
 28 subtests; Ruff passed. Web:48 unit tests, production build/TypeScript and15
 desktop/mobile browser checks passed, with11 explicit skips (ten optional Auth
 fixtures and one desktop-only exclusion). Independent Impeccable review closed its
@@ -21,7 +23,8 @@ the public repository; these summaries distinguish real execution from fixtures.
 | Actual Ask Finney form → director-message worker | Passed after separating conversational responses from financial decisions; provider text/provenance rendered, financial records unchanged | `DIRECTOR_CONVERSATIONS.md` |
 | Fresh frozen financial review after trace-contract observer | Blocked: three blockers had no supporting references; Jev/reviewer/evaluation never ran, no retry or promotion | Private observed-phase summary |
 | Coinbase official OAuth client registration | Succeeded; owner consent/token/wallet/funding/settlement pending | `coinbase-oauth.md`; invitation stays in private state |
-| Public Vercel deployment / anonymous visitor access | Not performed | Hosting credentials and anonymous Auth/anti-abuse configuration remain open |
+| Vercel authenticated baseline | Passed at [finney-beta.vercel.app](https://finney-beta.vercel.app): actual password login, director membership, scoped snapshot and Gmail status; unauthenticated scope requests denied | Private hosted-browser receipt; deployed source `13ed80d` |
+| Anonymous visitor entry / public signup confirmation | Not verified; guest entry remains disabled | Anonymous Auth/anti-abuse and confirmation/callback checks remain separate |
 
 The actual empty Gmail label is connected and scheduled through isolated Hermes.
 No nonempty live mail intake is claimed. Personal Hermes remains independent.
