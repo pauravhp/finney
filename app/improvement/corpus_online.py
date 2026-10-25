@@ -69,6 +69,9 @@ class CorpusEvaluationTools:
     missing candidate hash never calls the native holdout and never runs transfer.
     No dynamic attribute delegation exposes DB/connector handles to actors.
     """
+    suite_id = CORPUS_ONLINE_SUITE_ID
+    manifest_sha256 = MANIFEST_SHA256
+
     def __init__(self, tools: object, global_claim: Callable[..., Awaitable[dict]]):
         if not callable(global_claim):
             raise ModelError("trusted_corpus_holdout_claim_required")
@@ -98,7 +101,7 @@ class CorpusEvaluationTools:
             self._candidate_hash = candidate_hash
             return saved
         if name == "claim_improvement_holdout":
-            if arguments.get("suite_id") != CORPUS_ONLINE_SUITE_ID:
+            if arguments.get("suite_id") != self.suite_id:
                 raise ModelError("corpus_holdout_suite_mismatch")
             if self._candidate_hash is None:
                 raise ModelError("corpus_candidate_hash_required")
@@ -110,11 +113,11 @@ class CorpusEvaluationTools:
                 raise ModelError("corpus_attempt_identity_required") from None
             self._transfer_claim_started = True
             global_claim = await self._global_claim(
-                experiment_id=attempt, dataset_sha256=MANIFEST_SHA256,
+                experiment_id=attempt, dataset_sha256=self.manifest_sha256,
                 candidate_sha256=self._candidate_hash,
             )
             if not isinstance(global_claim, dict) or global_claim.get("claimed") is not True:
                 raise ModelError("corpus_final_partition_already_consumed")
             native = await self._tools.call(name, arguments)
-            return {**native, "corpus_holdout_claim": global_claim, "dataset_sha256": MANIFEST_SHA256}
+            return {**native, "corpus_holdout_claim": global_claim, "dataset_sha256": self.manifest_sha256}
         return await self._tools.call(name, arguments)

@@ -278,6 +278,7 @@ class LocalLearningLifecycle(unittest.IsolatedAsyncioTestCase):
     async def test_fixture_full_loop_then_next_job_load_and_rollback(self):
         result, port, baseline, actor, reviewer, suite = await self.attempt()
         self.assertEqual(result["status"], "promoted")
+        self.assertIsNone(reviewer.prompts[0]["immutable_policy"])
         self.assertEqual(result["reason"], "equal_correctness_fewer_tool_calls")
         self.assertEqual(len(result["rows"]), 8)
         self.assertTrue(result["metrics"]["transfer_executed"])
@@ -426,6 +427,7 @@ class LocalLearningLifecycle(unittest.IsolatedAsyncioTestCase):
             ]
         )
         fixed = descriptor["fixed_context"]
+        self.assertEqual(descriptor["immutable_policy"]["id"], "finney-runtime-operations-v1")
         self.assertEqual(
             fixed["prefix"] + DEFAULT_SKILL.read_text() + fixed["suffix"], normal_context
         )
@@ -444,6 +446,9 @@ class LocalLearningLifecycle(unittest.IsolatedAsyncioTestCase):
             evaluated = await run_job(job, port, settings=settings)
         self.assertEqual(evaluated["improvement"]["status"], "promoted")
         diagnosis_input = reviewer.prompts[0]
+        self.assertEqual(diagnosis_input["immutable_policy"], descriptor["immutable_policy"])
+        self.assertNotEqual(diagnosis_input["immutable_policy"], suite.policy)
+        self.assertEqual(diagnosis_input["trace"]["policy_provenance"]["status"], "captured_runtime_context")
         self.assertIn("contract_signals", diagnosis_input["trace"])
         self.assertEqual(diagnosis_input["trace"]["contract_signals"]["procedure_defect"], "not_assessed")
         self.assertNotIn("contract_signals", port.traces[observed["trace"]["id"]]["payload"])
@@ -456,6 +461,8 @@ class LocalLearningLifecycle(unittest.IsolatedAsyncioTestCase):
             if "evaluation-inputs" in name
         )
         self.assertEqual(manifest["fixed_runtime_context"], fixed)
+        self.assertEqual(manifest["observed_trace_policy"], descriptor["immutable_policy"])
+        self.assertEqual(manifest["immutable_policy"], suite.policy)
 
     async def test_director_budget_message_has_bundle_provenance_without_expense_optimization(self):
         from app.runtime.jobs import automatic_improvement_request, ensure_baseline

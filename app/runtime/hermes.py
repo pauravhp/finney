@@ -17,6 +17,7 @@ from uuid import uuid4
 from app.models.providers import ModelConfig, ModelError
 
 from .decision_contract import OUTPUT_CONTRACT, validate_decision_shape
+from .tool_errors import safe_tool_failure
 
 APP_ROOT = Path(__file__).resolve().parents[2]
 PIN = json.loads((Path(__file__).parent / "hermes-lock.json").read_text())
@@ -382,11 +383,7 @@ class HermesActor:
                             try:
                                 result = await tools.call(name, arguments)
                             except Exception as error:  # noqa: BLE001 -- tool boundaries return safe typed failure data.
-                                result = {
-                                    "status": "failed",
-                                    "error": "finance_tool_error",
-                                    "error_type": type(error).__name__,
-                                }
+                                result = safe_tool_failure(error)
                         events.append({"name": name, "arguments": arguments, "result": result})
                         await send({"type": "tool_result", "result": result})
                     elif message.get("type") == "result":

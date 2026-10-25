@@ -26,6 +26,10 @@ def organizer_expense_suite(tools: object, suite_id: str) -> ProtectedSuite:
     from .corpus_online import CORPUS_ONLINE_SUITE_ID, corpus_online_suite
     from .fresh import FRESH_SUITE_ID, fresh_transfer_suite
     from .multidoc import MULTIDOC_SUITE_ID, multidocument_suite
+    from .promotion_suite import PROMOTION_SUITE_ID, promotion_suite
+
+    if suite_id == PROMOTION_SUITE_ID:
+        return promotion_suite(tools)
 
     if suite_id == CORPUS_ONLINE_SUITE_ID:
         return corpus_online_suite(tools)

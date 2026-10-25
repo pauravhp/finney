@@ -57,7 +57,7 @@ test("a real SDK session response triggers a fresh authenticated-page navigation
       });
     } else await route.abort();
   });
-  await page.route("http://127.0.0.1:3317/", async (route) => {
+  await page.route("http://127.0.0.1:3317/desk", async (route) => {
     if (sessionReturned && route.request().isNavigationRequest())
       await route.fulfill({
         status: 200,
@@ -66,7 +66,7 @@ test("a real SDK session response triggers a fresh authenticated-page navigation
       });
     else await route.continue();
   });
-  await page.goto("/");
+  await page.goto("/desk");
   await enterCredentials(page);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(
@@ -117,7 +117,7 @@ test("email sign-in uses the SDK password grant and contains credential errors",
       });
     } else await route.abort();
   });
-  await page.goto("/");
+  await page.goto("/desk");
   await expect(
     page.getByRole("heading", { name: "Your event. Your team's decisions." }),
   ).toBeVisible();
@@ -191,7 +191,7 @@ test("signup with no session stays pending confirmation and cannot open finance 
       });
     } else await route.abort();
   });
-  await page.goto("/");
+  await page.goto("/desk");
   await page
     .getByRole("button", { name: "New here? Create an account" })
     .click();
@@ -241,7 +241,7 @@ test("unconfirmed account and failed callback give an actionable next step", asy
       json: { code: "email_not_confirmed", msg: "Email not confirmed" },
     });
   });
-  await page.goto("/?auth_error=1");
+  await page.goto("/desk?auth_error=1");
   await expect(page.locator(".signin-panel").getByRole("alert")).toContainText(
     "confirmation link could not finish",
   );
@@ -265,7 +265,7 @@ test("email delivery restrictions remain recoverable without claiming an account
       json: { code: "over_email_send_rate_limit", msg: "Rate limit exceeded" },
     });
   });
-  await page.goto("/");
+  await page.goto("/desk");
   await page
     .getByRole("button", { name: "New here? Create an account" })
     .click();

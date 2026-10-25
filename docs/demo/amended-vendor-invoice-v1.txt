@@ -1,0 +1,7 @@
+SYNTHETIC DEMO DOCUMENT — no real purchase, approval, payment or settlement.
+
+Harbor AV invoice HAV-DEMO-204, revision 1.
+Event equipment hire: USD 480.00. The event is the buyer and Harbor AV is the vendor.
+Equipment was delivered; this is an unpaid invoice, not an organizer reimbursement.
+No personal card payment or event payment has been made. No payment destination
+is provided in this document. Recording a reported payable is not payment approval.

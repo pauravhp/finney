@@ -94,7 +94,7 @@ async function mount(
     }
     return route.abort();
   });
-  await page.goto("/");
+  await page.goto("/desk");
   await page.setContent(
     '<!doctype html><html><head></head><body><div id="root"></div></body></html>',
   );

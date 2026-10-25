@@ -43,7 +43,8 @@ class DocumentService:
 
     async def ingest(self, content: bytes, *, filename: str, content_type: str,
                      external_id: str, parent_source_id: str | None = None,
-                     retry_extraction: bool = False) -> dict[str, Any]:
+                     retry_extraction: bool = False,
+                     expected_current_source_id: str | None = None) -> dict[str, Any]:
         if not isinstance(content, bytes) or not content or len(content) > self.limits.max_bytes:
             raise ValueError("document must contain 1 to configured maximum bytes")
         if not isinstance(external_id, str) or not 1 <= len(external_id) <= 512:
@@ -74,6 +75,14 @@ class DocumentService:
                     and latest["metadata"].get("extraction_policy_sha256") == policy_hash
                     and latest["metadata"].get("content_type") == content_type
                     and latest["metadata"].get("parent_source_id") == parent_source_id)
+        # Bind an amendment to the exact source observed by its submitter, using
+        # the same read that chooses the next version. An outer preflight alone
+        # races a concurrent revision and could turn a stale request into v+2.
+        # Only an exact extraction replay may recover after the source persisted.
+        if expected_current_source_id is not None and (
+            latest is None or latest["id"] != expected_current_source_id and not same
+        ):
+            raise FinanceError("document_revision_changed_reload_case")
         version = int(latest["version"]) if same else int(latest["version"]) + 1 if latest else 1
         external_hash = hashlib.sha256(identity.encode()).hexdigest()
         raw_path = f"{self.prefix}{external_hash}/{version}/{digest}/original"

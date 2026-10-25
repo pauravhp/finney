@@ -194,7 +194,7 @@ def make_harness2_candidate_search(actor: OpenCodeActor, model: object):
         baseline_content: str,
         tools: object,
         fixed_context: dict | None,
-        policy: dict,
+        policy: dict | None,
         reserve_calls,
         remaining_budget: int,
     ) -> dict:

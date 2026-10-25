@@ -1,0 +1,9 @@
+SYNTHETIC DEMO DOCUMENT — no real purchase, approval, payment or settlement.
+
+Harbor AV invoice HAV-DEMO-204, revision 2, issued after revision 1.
+Harbor AV confirms a USD 60.00 equipment-return credit against the original
+USD 480.00 invoice. The revised invoice total and unpaid balance are USD 420.00.
+This replacement supersedes revision 1 for the amount due; it is the SAME purchase,
+not an additional invoice. The event remains the buyer and Harbor AV the vendor.
+No organizer paid personally. No payment has been made and no payment destination
+is supplied. This amendment does not grant budget or payment approval.

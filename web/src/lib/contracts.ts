@@ -2,6 +2,16 @@ import { z } from "zod";
 
 export const uuid = z.uuid();
 export const scopeSchema = z.object({ organization_id: uuid, run_id: uuid });
+export const uploadLinkSchema = z
+  .object({
+    case_id: uuid.optional(),
+    replaces_source_id: uuid.optional(),
+  })
+  .strict()
+  .refine((value) => !value.replaces_source_id || Boolean(value.case_id), {
+    message: "Choose a case before replacing its source.",
+    path: ["case_id"],
+  });
 const record = z.record(z.string(), z.unknown());
 const money = z
   .string()

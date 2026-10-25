@@ -1,0 +1,40 @@
+{
+  "dataset_id": "finney-finance-promotion-v1",
+  "schema_version": 1,
+  "authored_at": "2026-10-25",
+  "case_count": 4,
+  "split_counts": {
+    "development": 0,
+    "validation": 2,
+    "heldout": 2
+  },
+  "hash_algorithm": "sha256",
+  "entries": [
+    {
+      "path": "packets/fp-001.json",
+      "sha256": "6202736047439bc522c257ebc12128ab531426dfa3c938a1a211e52f5f6f404f",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fp-002.json",
+      "sha256": "f8765cf492d932457e3dd82748d0dfcd4f868b5ce8d9dff937b21cf7dc3c759c",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fp-003.json",
+      "sha256": "c3aba618cc47e2aa12e10075325b3509b9ea5b5ae8e12eb7bf733348b420fcbe",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fp-004.json",
+      "sha256": "9c269f950fbf978d363ef8c41a258b8116af40d1bd0aa310c24044f117d0a4e1",
+      "audience": "source_packet"
+    },
+    {
+      "path": "protected/ground_truth.json",
+      "sha256": "2bd4fc4a74eed1e9dd61142e10389a15f45b7cda936a77c423bfc4a3c5ffd0d1",
+      "audience": "evaluator_only"
+    }
+  ],
+  "manifest_content_sha256": "d7e9b6863877a21d79c302d24659f788721fbeef98593bcaf11d25a9aa23d8ab"
+}

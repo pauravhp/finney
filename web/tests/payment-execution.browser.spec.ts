@@ -49,7 +49,7 @@ test("pending Wallet approval exposes a safe link and queues reconciliation of e
       json: { status: "queued", job_id: "TEST-ONLY-job" },
     });
   });
-  await page.goto("/");
+  await page.goto("/desk");
   await page.setContent(
     '<!doctype html><html><body><div id="root"></div><p id="queue-status" role="status"></p></body></html>',
   );

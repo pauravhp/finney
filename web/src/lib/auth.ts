@@ -42,5 +42,5 @@ export function financeReturnPath(search: string): string {
     )
       scoped.set(key, value);
   }
-  return scoped.size === 2 ? `/?${scoped}` : "/";
+  return scoped.size === 2 ? `/desk?${scoped}` : "/desk";
 }

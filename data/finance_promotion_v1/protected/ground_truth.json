@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "dataset_id": "finney-finance-promotion-v1",
+  "provenance": "New synthetic combinations authored before any model attempt; independently AI reviewed for arithmetic, source precedence, stages and kernel shape. No field-validation claim.",
+  "cases": {
+    "fp-001": {
+      "action": "reimburse_organizer",
+      "amount_minor": 15600,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "be1b220c-dce3-5284-8b55-9df9b5bc3fbd",
+          "version": 1
+        },
+        {
+          "id": "02c6693c-7ddc-5ba2-a56f-ed2afe9c5113",
+          "version": 1
+        },
+        {
+          "id": "f1d77760-059f-5cc8-b14a-9a185c1cc207",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ]
+      ],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ]
+      ],
+      "report_checks": {},
+      "recipient_name": "Morgan Ives"
+    },
+    "fp-002": {
+      "action": "pay_vendor",
+      "amount_minor": 69000,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "186ffc98-b56b-5e24-aa34-3846b72bd676",
+          "version": 2
+        },
+        {
+          "id": "ef31fc25-8509-5fe8-9dc1-02362d511383",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ]
+      ],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ]
+      ],
+      "report_checks": {},
+      "recipient_name": "Bayline Rigging"
+    },
+    "fp-003": {
+      "action": "reimburse_organizer",
+      "amount_minor": 26700,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "7717aab2-43c2-52e6-84cd-fcee8e644ee9",
+          "version": 1
+        },
+        {
+          "id": "7a5af355-ca2d-54cb-b019-de9ac5c60e2c",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ]
+      ],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ]
+      ],
+      "report_checks": {},
+      "recipient_name": "Priya Chen"
+    },
+    "fp-004": {
+      "action": "no_action",
+      "amount_minor": null,
+      "currency": null,
+      "required_source_refs": [
+        {
+          "id": "6f66a499-f8c2-526c-81bb-c2cdd943d889",
+          "version": 1
+        },
+        {
+          "id": "0b57044d-b32c-523d-af30-f27a7c7d76bc",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [],
+      "report_checks": {}
+    }
+  }
+}

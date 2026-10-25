@@ -41,7 +41,12 @@ def main() -> None:
                 )
             )
             stage = "import"
-            from decision_contract import DECISION_CLASSIFICATION_PATTERN, REQUIREMENTS, STAGES
+            from decision_contract import (
+                BLOCKER_SEMANTICS,
+                DECISION_CLASSIFICATION_PATTERN,
+                REQUIREMENTS,
+                STAGES,
+            )
             from run_agent import AIAgent
             from tool_schemas import schema_for
             from tools.registry import registry
@@ -92,8 +97,8 @@ def main() -> None:
                 "and supporting_refs (nonempty array of {kind:policy|source,id,version}). Represent blockers structurally; do not invent a policy or a source reference. "
                 "When present, proposed_action has action (pay_vendor/reimburse_organizer/investigate/no_action), "
                 "amount_minor (exact integer if financial), currency, evidence_refs (array of {id,version}). "
-                "A required clarification is a valid outcome. Evidence gaps must remain visible.\n\nProcedure:\n"
-                + request["skill"]
+                "A required clarification is a valid outcome. Evidence gaps must remain visible.\n\n"
+                + BLOCKER_SEMANTICS + "\n\nProcedure:\n" + request["skill"]
             )
             if mode == "finance" and request.get("policy"):
                 system += (

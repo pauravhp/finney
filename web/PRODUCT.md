@@ -8,49 +8,44 @@ web
 
 ## Stack
 
-User-selected Next.js dashboard for Vercel, Supabase Postgres/Auth/Storage/Realtime,
-and a durable Hermes worker on the existing host.
+Next.js on Vercel, Supabase Auth/Postgres/Storage/Realtime, and a durable finance
+worker running app-owned OpenCode + Harness2. Pinned Hermes helpers provide Gmail.
 
 ## Users
 
-Hackathon directors and finance members reviewing budgets, commitments, evidence,
-approvals, reports, and the agent's measured procedure improvements.
+Hackathon directors and finance members who need to understand budgets, inspect
+obligations and evidence, respond to approval requests, and ask the agent to work.
 
 ## Product Purpose
 
-Connect financial decisions to their source evidence and make actual execution,
-uncertainty, human authority, and measured agent improvement inspectable.
+Finney is a finance teammate for event organizers. It investigates source records,
+keeps work and uncertainty inspectable, and proposes procedure improvements that
+must pass independent evaluation before activation.
 
 ## Capabilities and Constraints
 
-All financial records persist in scoped Supabase records. Browser clients cannot
-write financial state directly. Each event defaults to two distinct eligible
-payment approvers. Its director can select director-only approval or two-person
-approval; changing policy invalidates pending payment proposals and approvals.
-Members use Supabase email/password accounts; self-service sign-up waits for
-email confirmation when required. Email delivery is a project-owner setup concern.
-The director separately connects the shared event Gmail mailbox through isolated
-Hermes. Unknown financial positions stay unknown. Demo state
-is isolated by organization and run. No public deployment is authorized here.
+The browser reads scoped live state and queues work through authenticated APIs.
+It cannot directly approve on someone’s behalf, change financial balances, or
+promote a learned candidate. Directors retain approval authority under the event’s
+versioned policy. Unknown values and rejected learning attempts remain visible.
+The landing uses disclosed financial illustrations; `/desk` is the actual app.
 
 ## Brand Commitments
 
-The user pins an original Luma-inspired luminous, premium star/glow direction.
-Functional screens come first; full polish and elaborate motion come later.
-The user explicitly asks not to repeat settled design interviews.
+Use the owner-approved Organizer’s Desk v7: Albert Sans, mint/ink/white, pale green
+working surfaces, colored landing folders and the animated receipt character.
+Preserve the approved design instead of inventing another direction.
 
 ## Evidence on Hand
 
-The shared contracts and locked build plan define intended behavior. No live
-Supabase, Gmail, payment, or improvement result is established by this UI build.
+Operating and learning acceptance are documented in `../docs/build/`. The design
+illustration is not a measured promotion. The first evaluated candidate improved
+validation but failed final heldout evaluation and remained inactive.
 
 ## Product Principles
 
-- Put source evidence beside financial decisions.
-- Keep authority and exact action versions explicit.
-- Show provider failures and missing setup truthfully.
-- Demonstrate improvement through per-case measurements.
-
-## Open Decisions
-
-Final visual polish and production deployment remain outside this implementation.
+- Keep financial decisions connected to the records and policy behind them.
+- Let the director ask a new question without waiting for background work to end.
+- Ask for approval at the appropriate stage and respect a refusal.
+- Show queued work, completed effects and uncertain results distinctly.
+- Make learned changes earn activation through the unchanged protected gates.

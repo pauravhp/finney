@@ -17,6 +17,7 @@ from .failure_intake import (
     rejected_review_improvement_request,
 )
 from .hermes import FinanceTools, HermesActor
+from .operation_policy import runtime_operation_policy
 from .skills import runtime_skill_context
 
 if TYPE_CHECKING:
@@ -180,6 +181,7 @@ async def run_job(
             if trace.get("skill_version") != skill_version:
                 raise ModelError("trace_baseline_version_is_not_active")
             fixed_context = None
+            observed_policy = None
             if trace.get("runtime_context_artifact"):
                 context_artifact = await tools.call(
                     "read_artifact",
@@ -193,6 +195,9 @@ async def run_job(
                 try:
                     descriptor = json.loads(context_artifact["content"])
                     fixed_context = descriptor["fixed_context"]
+                    observed_policy = descriptor.get("immutable_policy")
+                    if observed_policy is not None and not isinstance(observed_policy, dict):
+                        raise ModelError("runtime_policy_artifact_invalid")
                     reconstructed = fixed_context["prefix"] + skill + fixed_context["suffix"]
                     if (
                         hashlib.sha256(reconstructed.encode()).hexdigest()
@@ -202,25 +207,34 @@ async def run_job(
                 except (KeyError, TypeError, ValueError):
                     raise ModelError("runtime_context_artifact_invalid") from None
             from app.improvement.corpus_online import CORPUS_ONLINE_SUITE_ID, CorpusEvaluationTools
+            from app.improvement.promotion_suite import PROMOTION_SUITE_ID, PromotionEvaluationTools
             from app.models import GenerativeModel
             from app.runtime.trace_contract import trace_contract_signals
-            if payload.get("suite_id") == CORPUS_ONLINE_SUITE_ID:
+            if payload.get("suite_id") in {CORPUS_ONLINE_SUITE_ID, PROMOTION_SUITE_ID}:
                 if settings.finance_improvement_method != "harness2":
                     raise ModelError("online_corpus_requires_harness2")
-                tools = CorpusEvaluationTools(tools, getattr(tools, "claim_corpus_holdout", None))
+                adapter = PromotionEvaluationTools if payload.get("suite_id") == PROMOTION_SUITE_ID else CorpusEvaluationTools
+                tools = adapter(tools, getattr(tools, "claim_corpus_holdout", None))
             suite = organizer_expense_suite(tools, payload.get("suite_id", ""))
-            snapshot = await tools.call("get_finance_snapshot", {})
-            latest_sources = {}
-            for source in snapshot.get("source_items", []):
-                identity = source.get("external_id") or source.get("id")
-                if identity and source.get("version", 0) > latest_sources.get(identity, {}).get("version", 0):
-                    latest_sources[identity] = source
-            # Coordinator-derived observations augment this new review context;
-            # the original stored actor trace and historical outcome are untouched.
+            # Check only the policy and source versions actually available during
+            # this trace. An evaluation suite cannot retroactively authorize the
+            # operating decision, and later source changes cannot rewrite it.
+            observed_sources = {}
+            for event in trace.get("tool_events", []):
+                if not isinstance(event, dict) or event.get("name") != "read_document":
+                    continue
+                source = event.get("result")
+                if isinstance(source, dict) and isinstance(source.get("id"), str) and type(source.get("version")) is int:
+                    observed_sources[source["id"]] = {"id": source["id"], "version": source["version"]}
             trace["contract_signals"] = trace_contract_signals(
-                trace.get("output"), protected_policy=suite.policy,
-                current_source_refs=[{"id": row["id"], "version": row["version"]} for row in latest_sources.values()],
+                trace.get("output"), protected_policy=observed_policy,
+                current_source_refs=list(observed_sources.values()) or None,
+                captured_tool_events=trace.get("tool_events"),
             )
+            trace["policy_provenance"] = {
+                "status": "captured_runtime_context" if observed_policy is not None else "not_captured",
+                "evaluation_policy_is_not_observed_policy": True,
+            }
             reviewer = GenerativeModel(config)
             candidate_search = None
             if settings.finance_improvement_method == "harness2":
@@ -245,6 +259,7 @@ async def run_job(
                 tools=tools,
                 attempt_id=job_id,
                 fixed_context=fixed_context,
+                observed_policy=observed_policy,
                 max_model_calls=HARNESS2_MAX_MODEL_CALLS if candidate_search else MAX_MODEL_CALLS,
             )
             # Rejection is a completed evaluation outcome, not a fabricated success.
@@ -268,12 +283,13 @@ async def run_job(
         if command == "director_message":
             routing = {**routing, "improvement_eligible": False, "mutable_skill_name": None,
                        "response_contract": "finance-director-response-v1"}
+        observed_policy = runtime_operation_policy()
         context_artifact = await tools.call(
             "put_artifact",
             {
                 "name": f"runtime-context-{job_id}.json",
                 "content": json.dumps(
-                    {"routing": routing, "fixed_context": fixed_context}, sort_keys=True
+                    {"routing": routing, "fixed_context": fixed_context, "immutable_policy": observed_policy}, sort_keys=True
                 ),
                 "content_type": "application/json",
                 "idempotency_key": f"job:{job_id}:runtime-context",
@@ -298,7 +314,7 @@ async def run_job(
             "case_provenance": {"id": case.get("id"), "version": case.get("version")}
             if isinstance(case, dict) else None,
         }
-        result = await actor.run({"command_type": command, "payload": payload}, context, tools)
+        result = await actor.run({"command_type": command, "payload": payload}, context, tools, policy=observed_policy)
         diagnostic = result.pop("private_diagnostic", None)
         if diagnostic is not None:
             result["diagnostic_artifact"] = await tools.call("put_artifact", {
