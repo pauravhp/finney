@@ -103,30 +103,33 @@ export function PaymentExecution({
               ? "Wallet approval and chain confirmation remain separate from the event’s human approvals. A pending request is not a confirmed payment."
               : "After the event’s approvals are complete, queue the exact testnet payment. Coinbase Wallet may require a separate confirmation."}
       </p>
-      <dl className="action-facts">
-        <div>
-          <dt>Proposal</dt>
-          <dd>{proposal.id}</dd>
-        </div>
-        {payment && (
+      <details className="payment-references">
+        <summary>Payment references</summary>
+        <dl className="action-facts">
           <div>
-            <dt>Payment</dt>
-            <dd>{payment.id}</dd>
+            <dt>Proposal</dt>
+            <dd>{proposal.id}</dd>
           </div>
-        )}
-        {latest && (
-          <div>
-            <dt>Latest job</dt>
-            <dd>{latest.id}</dd>
-          </div>
-        )}
-        {payment?.provider_reference && (
-          <div>
-            <dt>Provider reference</dt>
-            <dd>{payment.provider_reference}</dd>
-          </div>
-        )}
-      </dl>
+          {payment && (
+            <div>
+              <dt>Payment</dt>
+              <dd>{payment.id}</dd>
+            </div>
+          )}
+          {latest && (
+            <div>
+              <dt>Latest job</dt>
+              <dd>{latest.id}</dd>
+            </div>
+          )}
+          {payment?.provider_reference && (
+            <div>
+              <dt>Provider reference</dt>
+              <dd>{payment.provider_reference}</dd>
+            </div>
+          )}
+        </dl>
+      </details>
       {latest?.reason && payment?.status !== "confirmed" && (
         <p className="muted">
           Recorded reason: {latest.reason.replaceAll("_", " ")}

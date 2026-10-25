@@ -99,6 +99,16 @@ Sonnet 5.5 was enabled only after that 4.6 phase and active jobs finished. Actua
 native actor, editor and OCR smokes passed. One ordinary case-scoped director
 request also completed on 5.5 through the hosted UI and real worker. These establish
 operating compatibility on an exposed case, not an accuracy benchmark or a learned
-gain. Keep all historical 4.6 results labeled 4.6. A future 5.5 learning phase needs
-its own model-matched baseline and explicitly allocated attempt budget; no 5.5
-learning attempt has run.
+gain. Keep all historical 4.6 results labeled 4.6. The owner has now authorized
+further learning work and expanded the private test allocation, preserving all
+earlier reservations and promotion gates. A future 5.5 learning phase still needs
+its own model-matched baseline and a verified runtime preflight; no 5.5 learning
+attempt has run.
+
+The new quiet-host 5.5 runtime preflight has now completed: both exposed
+development cases returned valid, financially correct answers, three provider
+calls each. It reserved 16 calls once and observed six; no final case was opened.
+The new configuration uses 8,192 output tokens, a 90-second provider timeout and
+240-second actor timeout. That proves completion for these two cases, not general
+accuracy or a learned improvement. The normal learning path now verifies its
+private, scope/context/model-bound receipt before diagnosis or suite construction.

@@ -253,8 +253,10 @@ async def dispatch_job(
 
             if payload.get("source") == "demo_bundle":
                 from app.demo import seed_demo_bundle
+                from app.guided_demo import GUIDED_SCENARIO_VERSION, seed_guided_scenario
 
-                outcome = await seed_demo_bundle(settings, tools, db, job)
+                seed = seed_guided_scenario if payload.get("bundle_version") == GUIDED_SCENARIO_VERSION else seed_demo_bundle
+                outcome = await seed(settings, tools, db, job)
                 for item in outcome["source_results"]:
                     if item.get("review_required"):
                         await ensure_review(item)

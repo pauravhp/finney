@@ -184,4 +184,37 @@ calls. It identified the obsolete USD 480.00 finding and explicitly distinguishe
 an unsupported allocation prerequisite from the actual approval-request contract.
 That is a useful operating baseline on an already exposed case. It does not turn
 the 4.6 experiments into 5.5 evidence or count as learned improvement. No further
-learning attempt or budget extension has been taken.
+learning attempt or budget extension had been taken at that checkpoint.
+
+## 10. Repairing the testing environment and the demo experience
+
+The owner correctly questioned whether an unscored candidate invocation had a
+valid testing environment. The latest candidate has no completed result, so that
+failure cannot establish financial ineffectiveness. The earlier three search
+probes exhausted their 1,600-token output allowance; the later candidate's exact
+failure remains unknown. These are separate observations, and the historical
+blocked outcome remains intact.
+
+Further learning is now authorized without the previous one-extra-phase budget
+restriction. The private test run's operational allocation increased from 1,100
+calls/four attempts to 10,000 calls/100 attempts, preserving its existing 1,040/four
+reservations. Public usage caps and promotion requirements remain unchanged.
+The next study must first establish model-matched runtime completion on already
+exposed development cases. Runtime validity and financial correctness are reported
+separately; an infrastructure repair is not learned improvement.
+
+In parallel, the owner rejected the information-heavy demo UI. The new design
+starts from a coherent fictional mid-event situation, with immutable documents,
+cash, commitments and an unpaid sponsor pledge. Subsequent agent actions and
+director decisions execute through the real application. The walkthrough must
+teach through those actions; an animated imitation of outcomes is not acceptance.
+Separate delegated work covers the complete text/interaction audit, isolated
+scenario construction and learning reliability. Hosted/provider acceptance is
+recorded after execution, separately from fixtures and local checks.
+
+The actual quiet-host Sonnet 5.5 runtime preflight completed both already-exposed
+development cases correctly, three provider calls each. Six calls were observed
+within a one-time 16-call reservation. No candidate, final-case exposure or
+promotion occurred. The private receipt freezes the model, output/token/time
+settings, runtime implementation and exact active procedure/context; subsequent
+normal queued learning must match it before diagnosis or evaluation begins.

@@ -10,6 +10,11 @@ import {
   textValue,
   type FinanceSnapshot,
 } from "@/lib/contracts";
+import {
+  ReadableText,
+  friendlyTitle,
+  sourceDocumentText,
+} from "@/components/readable-text";
 import { DirectorResponses } from "@/components/director-responses";
 
 type Row = Record<string, unknown>;
@@ -19,9 +24,14 @@ function record(value: unknown): Row {
     : {};
 }
 export function caseSourceIds(data: Row): string[] {
-  const values =
+  const current =
     data.source_ids ?? data.source_refs ?? data.sources ?? data.evidence;
-  if (!Array.isArray(values)) return [];
+  const values = [
+    ...(Array.isArray(current) ? current : []),
+    ...(Array.isArray(data.superseded_source_ids)
+      ? data.superseded_source_ids
+      : []),
+  ];
   return [
     ...new Set(
       values.flatMap((value) => {
@@ -94,13 +104,7 @@ function SourcePaper({
         let visible = content;
         try {
           const value: unknown = JSON.parse(content);
-          const row = record(value);
-          const candidate =
-            row.text ?? row.body ?? row.content ?? row.description;
-          visible =
-            typeof candidate === "string"
-              ? candidate
-              : JSON.stringify(displayRecord(value), null, 2);
+          visible = sourceDocumentText(displayRecord(value));
         } catch {
           /* Plain-text sources render as text, never HTML. */
         }
@@ -141,14 +145,20 @@ function SourcePaper({
         <FileText size={20} />
         <div>
           <h2>
-            {textValue(
-              metadata.filename ?? source.external_id,
-              "Source document",
+            {friendlyTitle(
+              textValue(
+                metadata.filename ?? source.external_id,
+                "Source document",
+              ),
             )}
           </h2>
           <span>
-            {textValue(source.source_type)} · Version{" "}
-            {textValue(source.version)}
+            {source.source_type === "demo_bundle"
+              ? "Practice document"
+              : source.source_type === "gmail"
+                ? "Email"
+                : "Document"}{" "}
+            · Version {textValue(source.version)}
           </span>
         </div>
       </header>
@@ -159,13 +169,13 @@ function SourcePaper({
       )}
       {failure && <p role="alert">{failure}</p>}
       {text !== null && (
-        <pre
+        <div
           className="source-content"
           data-loaded-source-id={textValue(source.id)}
           data-loaded-source-version={textValue(source.version)}
         >
-          {text}
-        </pre>
+          <ReadableText text={text} />
+        </div>
       )}
       {!path && <p>No stored document preview is available.</p>}
       <details>
@@ -198,9 +208,12 @@ export function CaseWorkspace({
   conversationForm?: ReactNode;
 }) {
   const ids = caseSourceIds(item.data);
-  const sources = snapshot.source_items.filter((source) =>
-    ids.includes(textValue(source.id, "")),
+  const sources = ids.flatMap((id) =>
+    snapshot.source_items.filter((source) => source.id === id),
   );
+  const superseded = Array.isArray(item.data.superseded_source_ids)
+    ? item.data.superseded_source_ids
+    : [];
   const [selected, setSelected] = useState("");
   const source = sources.find((row) => row.id === selected) ?? sources[0];
   const finding = record(item.data.finding);
@@ -222,11 +235,13 @@ export function CaseWorkspace({
     latestResponse?.provenance,
   ).source_case_version;
   const newerResponse =
-    typeof reviewVersion === "number" &&
-    Number.isSafeInteger(reviewVersion) &&
-    typeof responseVersion === "number" &&
-    Number.isSafeInteger(responseVersion) &&
-    responseVersion > reviewVersion;
+    Boolean(latestResponse) &&
+    (!finding.explanation ||
+      (typeof reviewVersion === "number" &&
+        Number.isSafeInteger(reviewVersion) &&
+        typeof responseVersion === "number" &&
+        Number.isSafeInteger(responseVersion) &&
+        responseVersion > reviewVersion));
   const blockers = Array.isArray(finding.blocking_requirements)
     ? finding.blocking_requirements
     : [];
@@ -249,7 +264,7 @@ export function CaseWorkspace({
           <button className="text-button" onClick={onBack}>
             <ArrowLeft size={15} /> All work
           </button>
-          <h1>{item.title}</h1>
+          <h1>{friendlyTitle(item.title)}</h1>
           <p>
             Version {item.version} · Updated {dateTime(item.updated_at)}
           </p>
@@ -271,6 +286,7 @@ export function CaseWorkspace({
               >
                 {textValue(record(row.metadata).filename, "Source")} · v
                 {textValue(row.version)}
+                {superseded.includes(row.id) ? " · Earlier" : ""}
               </button>
             ))}
             <button
@@ -319,7 +335,7 @@ export function CaseWorkspace({
             </section>
           )}
           <details className="case-evidence-action">
-            <summary>Add evidence / revise document</summary>
+            <summary>Add a document</summary>
             {evidenceForm}
           </details>
         </div>
@@ -335,10 +351,9 @@ export function CaseWorkspace({
                 ? "Review queued."
                 : newerResponse
                   ? "Latest response"
-                  : textValue(finding.decision, "Ready for review").replaceAll(
-                      "_",
-                      " ",
-                    )}
+                  : finding.decision
+                    ? "Review ready"
+                    : "Ready for review"}
           </h2>
           {running && (
             <p className="case-progress" role="status">
@@ -349,7 +364,9 @@ export function CaseWorkspace({
           {newerResponse && latestResponse && (
             <section className="case-latest-response">
               <p className="case-chronology-label">
-                Based on case v{String(responseVersion)} · Stored agent response
+                {typeof responseVersion === "number"
+                  ? `Based on case v${responseVersion} · Stored agent response`
+                  : "Stored agent response"}
               </p>
               <DirectorResponses
                 responses={[latestResponse]}
@@ -365,13 +382,22 @@ export function CaseWorkspace({
                 : "prepared-case-review"
             }
           >
-            {newerResponse && (
+            {newerResponse && Boolean(finding.explanation) && (
               <h3 className="case-chronology-label">
                 Earlier prepared review · based on case v{String(reviewVersion)}
               </h3>
             )}
             {typeof finding.explanation === "string" && (
-              <p className="case-explanation">{finding.explanation}</p>
+              <details
+                className="case-review-reasoning"
+                open={finding.explanation.length < 600}
+              >
+                <summary>Read Finney’s review</summary>
+                <ReadableText
+                  className="case-explanation"
+                  text={finding.explanation}
+                />
+              </details>
             )}
             {amount !== null && (
               <dl className="case-amount">
@@ -403,7 +429,10 @@ export function CaseWorkspace({
               </dl>
             )}
             {typeof finding.clarification === "string" && (
-              <p className="case-clarification">{finding.clarification}</p>
+              <ReadableText
+                className="case-clarification"
+                text={finding.clarification}
+              />
             )}
             {blockers.length > 0 && (
               <section className="case-blockers">
@@ -433,19 +462,16 @@ export function CaseWorkspace({
               </section>
             )}
             {Boolean(finding.verification) && (
-              <p className="muted">
-                Agent recommendation ·{" "}
-                {textValue(finding.verification).replaceAll("_", " ")}
-              </p>
+              <p className="muted">Agent review · awaiting verification</p>
             )}
           </section>
           {!newerResponse && decisions}
           <button
             className="primary"
-            disabled={!canWork || busy}
+            disabled={!canWork || busy || running || queued}
             onClick={onReview}
           >
-            {running || queued ? "Queue another review" : "Request review"}
+            {running || queued ? "Review in progress" : "Request review"}
           </button>
           {!newerResponse ? (
             <DirectorResponses responses={item.data.director_responses} />

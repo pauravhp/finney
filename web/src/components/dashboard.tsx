@@ -27,6 +27,8 @@ import { browserSupabase } from "@/lib/supabase/browser";
 import { AuthPanel } from "@/components/auth-panel";
 import { Procedure } from "@/components/procedure";
 import { PaymentExecution } from "@/components/payment-execution";
+import { GuidedDemo } from "@/components/guided-demo";
+import { friendlyTitle } from "@/components/readable-text";
 import { CaseWorkspace } from "@/components/case-workspace";
 import { DirectorResponses } from "@/components/director-responses";
 import {
@@ -265,6 +267,20 @@ export function Dashboard({
     setLoading(true);
     setError(null);
     try {
+      const entry = new URL(window.location.href);
+      if (entry.searchParams.get("demo") === "guided") {
+        const next = await api<Scope>("/api/finance/demo", {
+          method: "POST",
+          body: JSON.stringify({
+            name: "Hack Harbor practice event",
+            previous_run_id: null,
+          }),
+        });
+        entry.searchParams.delete("demo");
+        entry.searchParams.set("organization_id", next.organization_id);
+        entry.searchParams.set("run_id", next.run_id);
+        window.history.replaceState(null, "", entry);
+      }
       const result = await api<{ scopes: ScopeChoice[] }>(
         "/api/finance/scopes",
       );
@@ -422,9 +438,7 @@ export function Dashboard({
         }),
       });
       commandKeys.current.delete(requestKey);
-      setNotice(
-        `Work queued. Job ${result.job_id}. Completion will appear in activity.`,
-      );
+      setNotice("Request queued. Finney will add the result here.");
       if (type === "intake") {
         setIntake("");
         setShowIntake(false);
@@ -507,7 +521,7 @@ export function Dashboard({
       setBusy(null);
     }
   }
-  async function createDemo(reset = false) {
+  async function createDemo() {
     setBusy("demo");
     setNotice(null);
     try {
@@ -517,7 +531,7 @@ export function Dashboard({
           method: "POST",
           body: JSON.stringify({
             name: "My finance demo",
-            previous_run_id: reset ? scope?.run_id : null,
+            previous_run_id: null,
           }),
         },
       );
@@ -527,9 +541,9 @@ export function Dashboard({
       window.history.replaceState(null, "", url);
       await loadScopes();
       setNotice(
-        next.seed_status === "queued"
-          ? "Your isolated demo is ready. Labeled synthetic documents are queued for real agent review; no payment or result is pre-recorded."
-          : "Your isolated demo was created, but its source documents could not be queued. Use Work with Finney to add evidence while the connection is checked.",
+        ["queued", "running", "ready"].includes(next.seed_status)
+          ? "Your practice event is being prepared. The walkthrough will appear when its records arrive."
+          : "Your practice event was created, but document review could not be queued. You can retry or add a document.",
       );
     } catch (cause) {
       setNotice(
@@ -611,7 +625,6 @@ export function Dashboard({
             "amount_minor",
             "amount_base_units",
             "currency",
-            "case_id",
           ]
             .filter((key) => proposal.action[key] !== undefined)
             .map((key) => (
@@ -631,9 +644,10 @@ export function Dashboard({
           </span>
           <span>Expires {dateTime(proposal.expires_at)}</span>
         </div>
-        <p className="hash">
-          Action hash <code>{proposal.action_hash}</code>
-        </p>
+        <details className="record-details">
+          <summary>Action fingerprint</summary>
+          <code>{proposal.action_hash}</code>
+        </details>
         {proposal.decisions.length > 0 && (
           <RecordDetails
             value={proposal.decisions}
@@ -724,7 +738,7 @@ export function Dashboard({
                 <FolderOpen size={18} />
               </span>
               <span className="case-title">
-                <strong>{row.title}</strong>
+                <strong>{friendlyTitle(row.title)}</strong>
                 <small>
                   Version {row.version} · Updated {dateTime(row.updated_at)}
                 </small>
@@ -816,13 +830,6 @@ export function Dashboard({
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="authority-note">
-            <ShieldCheck size={17} />
-            <p>
-              Your team holds authority.
-              <span>Agent work stays inspectable.</span>
-            </p>
-          </div>
           {user ? (
             <>
               <div className="member">
@@ -870,15 +877,18 @@ export function Dashboard({
                   setTab("cases");
                   setExpanded(null);
                   setMobileMenu(false);
-                  setTimeout(
-                    () =>
-                      document
-                        .querySelector<HTMLTextAreaElement>(
-                          'textarea[id$="-finney-message"]',
-                        )
-                        ?.focus(),
-                    0,
-                  );
+                  setTimeout(() => {
+                    const composer =
+                      document.querySelector<HTMLDetailsElement>(
+                        ".focused-composer",
+                      );
+                    if (composer) composer.open = true;
+                    document
+                      .querySelector<HTMLTextAreaElement>(
+                        'textarea[id$="-finney-message"]',
+                      )
+                      ?.focus();
+                  }, 0);
                 }}
               >
                 Ask Finney <ArrowRight size={14} />
@@ -904,7 +914,7 @@ export function Dashboard({
         </header>
         <main id="main">
           <div
-            className={`page-heading ${tab === "cases" && selectedCase ? "case-parent-heading" : ""}`}
+            className={`page-heading ${tab === "cases" && (selectedCase || snapshot?.run.scenario) ? "case-parent-heading" : ""}`}
           >
             <div>
               <h1>
@@ -912,19 +922,6 @@ export function Dashboard({
                   ? "Overview"
                   : tabs.find((row) => row.id === tab)?.title}
               </h1>
-              <p>
-                {tab === "overview"
-                  ? "Know what is confirmed, what is committed, and what needs your decision."
-                  : tab === "cases"
-                    ? "Give Finney a document or a task. Follow the work here."
-                    : tab === "learning"
-                      ? "From observed behavior to evaluated procedure changes. Every result stays inspectable."
-                      : tab === "approvals"
-                        ? "Review the exact action. Decisions are bound to its current version."
-                        : tab === "connections"
-                          ? "Real provider access and worker health, with clear ownership."
-                          : "Source-linked records for your event and selected run."}
-              </p>
             </div>
             {user && (
               <button
@@ -970,57 +967,61 @@ export function Dashboard({
             />
           )}
           {user && scopes.length > 0 && (
-            <div className="scope-bar">
-              <label>
-                Event
-                <select
-                  value={scope?.organization_id ?? ""}
-                  onChange={(event) => {
-                    const org = scopes.find(
-                      (row) => row.organization_id === event.target.value,
-                    );
-                    setScope(
-                      org?.runs[0]
-                        ? {
-                            organization_id: org.organization_id,
-                            run_id: org.runs[0].id,
-                          }
-                        : null,
-                    );
-                  }}
-                >
-                  {scopes.map((row) => (
-                    <option
-                      key={row.organization_id}
-                      value={row.organization_id}
-                    >
-                      {row.organization_name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Run
-                <select
-                  value={scope?.run_id ?? ""}
-                  onChange={(event) =>
-                    scope && setScope({ ...scope, run_id: event.target.value })
-                  }
-                >
-                  {organization?.runs.map((row) => (
-                    <option key={row.id} value={row.id}>
-                      {row.name}
-                      {row.is_demo ? " · Demo" : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <span>
-                {selectedRun?.is_demo
-                  ? "Private to your demo session"
-                  : "Shared with authorized event members"}
-              </span>
-            </div>
+            <details className="scope-switcher">
+              <summary>Switch event</summary>
+              <div className="scope-bar">
+                <label>
+                  Event
+                  <select
+                    value={scope?.organization_id ?? ""}
+                    onChange={(event) => {
+                      const org = scopes.find(
+                        (row) => row.organization_id === event.target.value,
+                      );
+                      setScope(
+                        org?.runs[0]
+                          ? {
+                              organization_id: org.organization_id,
+                              run_id: org.runs[0].id,
+                            }
+                          : null,
+                      );
+                    }}
+                  >
+                    {scopes.map((row) => (
+                      <option
+                        key={row.organization_id}
+                        value={row.organization_id}
+                      >
+                        {row.organization_name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Run
+                  <select
+                    value={scope?.run_id ?? ""}
+                    onChange={(event) =>
+                      scope &&
+                      setScope({ ...scope, run_id: event.target.value })
+                    }
+                  >
+                    {organization?.runs.map((row) => (
+                      <option key={row.id} value={row.id}>
+                        {row.name}
+                        {row.is_demo ? " · Demo" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <span>
+                  {selectedRun?.is_demo
+                    ? "Private to your demo session"
+                    : "Shared with authorized event members"}
+                </span>
+              </div>
+            </details>
           )}
           {error && (
             <div className="message error-message" role="alert">
@@ -1058,60 +1059,53 @@ export function Dashboard({
           {user && !loading && !scopes.length && !error && (
             <Empty title="No event access yet" icon={ShieldCheck}>
               You are signed in. An event director can add your membership. You
-              can also create a private, empty demo run to explore the workflow.
+              can open a private practice event with a budget and documents.
               <button
                 className="primary"
                 disabled={Boolean(busy)}
                 onClick={() => createDemo()}
               >
-                Create my demo run
+                Open practice event
               </button>
             </Empty>
           )}
           {user && !loading && scopes.length > 0 && !scope && !error && (
             <Empty title="No finance run exists yet" icon={FolderOpen}>
               Initialize a shared event run through onboarding, or create your
-              own empty demo.
+              own practice event.
               <button
                 className="primary"
                 disabled={Boolean(busy)}
                 onClick={() => createDemo()}
               >
-                Create my demo run
+                Open practice event
               </button>
             </Empty>
           )}
-          {user && scope && selectedRun?.is_demo && (
+          {user && scope && selectedRun?.is_demo && !snapshot?.run.scenario && (
             <div className="demo-tools">
-              <span>
-                This demo is private to your account. Resetting cancels only
-                this run's queued work. Two-person payments require a shared
-                event run.
-              </span>
-              {resetConfirm ? (
-                <>
-                  <button
-                    disabled={Boolean(busy)}
-                    onClick={() => setResetConfirm(false)}
-                  >
-                    Keep current run
-                  </button>
-                  <button
-                    disabled={Boolean(busy)}
-                    onClick={() => createDemo(true)}
-                  >
-                    Confirm new empty run
-                  </button>
-                </>
-              ) : (
-                <button
-                  disabled={Boolean(busy)}
-                  onClick={() => setResetConfirm(true)}
-                >
-                  Start fresh demo
-                </button>
-              )}
+              <span>Your private practice event</span>
+              <button disabled={Boolean(busy)} onClick={() => createDemo()}>
+                Open guided practice event
+              </button>
             </div>
+          )}
+          {snapshot?.run.scenario && (
+            <GuidedDemo
+              key={scopeKey}
+              snapshot={snapshot}
+              busy={Boolean(busy) || !canWork}
+              onRetry={() => void createDemo()}
+              onPrompt={(caseId, message) =>
+                command("director_message", { case_id: caseId, message })
+              }
+              compact={tab !== "cases" || Boolean(selectedCase)}
+              onNavigate={(destination, caseId, prompt) => {
+                setTab(destination);
+                setExpanded(caseId ?? null);
+                if (prompt) setMessageDraft(prompt);
+              }}
+            />
           )}
           {showIntake && (
             <form
@@ -1392,8 +1386,11 @@ export function Dashboard({
                       currency={snapshot.run.currency}
                       cases={[selectedCase]}
                       sources={snapshot.source_items}
+                      contextual
                       initialCaseId={selectedCase.id}
                       initialMode="message"
+                      messageDraft={messageDraft}
+                      onMessageDraftChange={setMessageDraft}
                       canEdit={
                         canWork &&
                         ["director", "finance"].includes(
@@ -1412,6 +1409,7 @@ export function Dashboard({
                       currency={snapshot.run.currency}
                       cases={snapshot.cases}
                       sources={snapshot.source_items}
+                      contextual
                       initialCaseId={selectedCase.id}
                       initialMode="upload"
                       canEdit={
@@ -1428,7 +1426,11 @@ export function Dashboard({
                 />
               ) : (
                 <div className="work-intake-layout">
-                  <div className="work-intake-main">
+                  <details
+                    className="work-intake-main focused-composer"
+                    open={!snapshot?.run.scenario}
+                  >
+                    <summary>Ask Finney or add a document</summary>
                     {scope && snapshot ? (
                       <Workbench
                         key={`cases-workbench:${scopeKey}`}
@@ -1454,9 +1456,9 @@ export function Dashboard({
                         source document.
                       </Empty>
                     ) : null}
-                  </div>
+                  </details>
                   <aside className="work-on-file">
-                    <h2>On file</h2>
+                    <h2>Open cases</h2>
                     {caseList()}
                   </aside>
                 </div>
@@ -1594,10 +1596,14 @@ function Learning({
       <section className="learning-intro">
         <BookOpen size={23} />
         <div>
-          <h2>Improvement needs evidence</h2>
+          <h2>
+            {improvement?.promotions.some((row) => row.state === "promoted")
+              ? "Recorded learning history"
+              : "No learned change is active yet"}
+          </h2>
           <p>
-            Diagnosis, procedure changes, paired evaluation, and promotion are
-            recorded separately. Evaluation runs disable financial side effects.
+            Candidates must pass evaluation before activation. Explore the
+            actual attempts and their evidence below.
           </p>
         </div>
         <Badge status="unknown">Controls stay fixed</Badge>
@@ -1606,10 +1612,7 @@ function Learning({
         <div className="section-heading">
           <h2>Review jobs</h2>
         </div>
-        <p className="muted">
-          A completed review can reject a change. Only the measured evaluations
-          and promotion records below establish improvement.
-        </p>
+        <p className="muted">Job completion is separate from promotion.</p>
         {snapshot?.jobs
           .filter((job) => job.command_type === "evaluate_improvement")
           .map((job) => (
@@ -1640,7 +1643,11 @@ function Learning({
                 className="learning-record"
                 key={textValue(row.id, String(index))}
               >
-                <h3>{textValue(output.issue_type, "Observed behavior")}</h3>
+                <h3>
+                  {friendlyTitle(
+                    textValue(output.issue_type, "Observed behavior"),
+                  )}
+                </h3>
                 <p>{textValue(output.diagnosis)}</p>
                 <p>Desired behavior: {textValue(output.desired_behavior)}</p>
                 <RecordDetails
@@ -1701,47 +1708,50 @@ function Learning({
           <h2>Paired evaluation</h2>
         </div>
         {canWork && (
-          <form
-            className="evaluation-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              onEvaluate({ trace_id: traceId, suite_id: suiteId.trim() });
-            }}
-          >
-            <label>
-              Observed trace
-              <select
-                required
-                value={traceId}
-                onChange={(event) => setTraceId(event.target.value)}
-              >
-                <option value="">Select a completed actor trace</option>
-                {actorTraces.map((row) => (
-                  <option key={textValue(row.id)} value={textValue(row.id)}>
-                    {dateTime(row.created_at)} · {textValue(row.id)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Trusted evaluation suite
-              <input
-                required
-                maxLength={200}
-                value={suiteId}
-                onChange={(event) => setSuiteId(event.target.value)}
-                placeholder="Independently reviewed suite ID"
-              />
-            </label>
-            <button disabled={!traceId || !suiteId.trim()}>
-              Queue evaluation <ArrowRight size={14} />
-            </button>
-            <p>
-              The default suite uses labeled synthetic test-organization inputs
-              with real model replay. The worker validates independently
-              reviewed expectations; missing suites are blocked.
-            </p>
-          </form>
+          <details className="evaluation-setup">
+            <summary>Run an evaluation</summary>
+            <form
+              className="evaluation-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                onEvaluate({ trace_id: traceId, suite_id: suiteId.trim() });
+              }}
+            >
+              <label>
+                Observed trace
+                <select
+                  required
+                  value={traceId}
+                  onChange={(event) => setTraceId(event.target.value)}
+                >
+                  <option value="">Select a completed actor trace</option>
+                  {actorTraces.map((row) => (
+                    <option key={textValue(row.id)} value={textValue(row.id)}>
+                      {dateTime(row.created_at)} · {textValue(row.id)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Trusted evaluation suite
+                <input
+                  required
+                  maxLength={200}
+                  value={suiteId}
+                  onChange={(event) => setSuiteId(event.target.value)}
+                  placeholder="Independently reviewed suite ID"
+                />
+              </label>
+              <button disabled={!traceId || !suiteId.trim()}>
+                Queue evaluation <ArrowRight size={14} />
+              </button>
+              <p>
+                The default suite uses labeled synthetic test-organization
+                inputs with real model replay. The worker validates
+                independently reviewed expectations; missing suites are blocked.
+              </p>
+            </form>
+          </details>
         )}
         {improvement?.eval_runs.length ? (
           improvement.eval_runs.map((row, index) => (
@@ -1750,10 +1760,7 @@ function Learning({
               key={textValue(row.id, String(index))}
             >
               <div className="section-heading">
-                <h3>
-                  {textValue(row.skill_name, "Finance")} evaluation ·{" "}
-                  {textValue(row.id)}
-                </h3>
+                <h3>{textValue(row.skill_name, "Finance")} evaluation</h3>
                 <Badge status={textValue(row.status, "unknown")} />
               </div>
               <RecordDetails
@@ -1818,8 +1825,8 @@ function Learning({
           ))
         ) : (
           <p className="muted">
-            No candidate has a recorded promotion. Financial policy and approval
-            rules remain outside the improver's authority.
+            No candidate has been promoted. Approval policy stays outside the
+            learning loop.
           </p>
         )}
       </section>

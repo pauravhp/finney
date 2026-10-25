@@ -224,7 +224,7 @@ test("stored-document recovery retries the exact queued command without uploadin
   await page
     .getByRole("button", { name: "Upload a document", exact: true })
     .click();
-  await page.getByLabel("Invoice, agreement or receipt").setInputFiles({
+  await page.getByLabel(/Choose a document/).setInputFiles({
     name: "test-only.txt",
     mimeType: "text/plain",
     buffer: Buffer.from("TEST ONLY receipt"),
@@ -239,7 +239,7 @@ test("stored-document recovery retries the exact queued command without uploadin
   await expect(
     page
       .getByRole("status")
-      .filter({ hasText: "Stored document review queued" }),
+      .filter({ hasText: "Document review queued" }),
   ).toBeVisible();
 });
 
@@ -312,9 +312,9 @@ test("a changed document keeps its case and predecessor in the queued upload", a
     .getByRole("button", { name: "Upload a document", exact: true })
     .click();
   await page.getByLabel("Related case").selectOption(caseId);
-  await page.getByLabel("Document relationship").selectOption(sourceId);
+  await page.getByLabel("This document is").selectOption(sourceId);
   await page
-    .getByLabel("Invoice, agreement or receipt")
+    .getByLabel(/Choose a document/)
     .setInputFiles({
       name: "revised.txt",
       mimeType: "text/plain",
@@ -322,7 +322,7 @@ test("a changed document keeps its case and predecessor in the queued upload", a
     });
   await page.getByRole("button", { name: "Upload & queue review" }).click();
   await expect(
-    page.getByText("Document review queued.", { exact: false }),
+    page.getByText("Document received.", { exact: false }),
   ).toBeVisible();
   expect(submitted).toContain('name="case_id"');
   expect(submitted).toContain(caseId);

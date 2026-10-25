@@ -44,7 +44,7 @@ test("unconfigured workspace stays honest and usable at every viewport", async (
     await page.getByRole("button", { name: "Open navigation" }).click();
   await page.getByRole("button", { name: "Agent", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Improvement needs evidence" }),
+    page.getByRole("heading", { name: "No learned change is active yet" }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "No learned procedure yet" }),
