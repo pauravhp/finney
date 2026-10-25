@@ -218,3 +218,24 @@ within a one-time 16-call reservation. No candidate, final-case exposure or
 promotion occurred. The private receipt freezes the model, output/token/time
 settings, runtime implementation and exact active procedure/context; subsequent
 normal queued learning must match it before diagnosis or evaluation begins.
+
+The next normal queued 5.5 phase explicitly reused a historical 4.6 source-version
+failure as training evidence; it did not resume the closed attempt. Triage and
+reasoning consumed two calls. The new reviewer returned `no_defect`, judging the
+captured rejection insufficient to establish a procedure-caused error. The normal
+engine rejected the attempt before search with
+`no_source_supported_procedure_defect`. No candidate or final case was evaluated,
+and no skill was activated. This newer judgment does not rewrite the earlier 4.6
+diagnosis or establish whether its candidate would have performed well. The new
+final partition remains unopened. Additional budget is not a reason to repeatedly
+ask for a more favorable diagnosis on unchanged evidence.
+
+The actual guided invoice review corrected the same liability to USD 420 but
+misreported a hypothetical additional-spend simulation as current availability.
+Database readback showed the correct USD 4,180, not the reply's USD 3,700. The tool
+now labels its unchanged additive arithmetic explicitly, and protected guides
+require a fresh financial-position read after mutation. The old reply is retained.
+This is an engineering correction. Because the protected context changed, the
+earlier preflight receipt was not reused: a separately reserved quiet-host
+preflight completed both exposed development cases correctly in five actual calls.
+No new candidate or final evaluation occurred after that correction.

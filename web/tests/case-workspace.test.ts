@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import test from "node:test";
-import { CaseWorkspace, caseSourceIds } from "../src/components/case-workspace";
+import {
+  CaseWorkspace,
+  caseSourceIds,
+  sourceDisplayTitle,
+} from "../src/components/case-workspace";
 import { snapshotSchema } from "../src/lib/contracts";
 
 const org = "11111111-1111-4111-8111-111111111111";
@@ -209,4 +213,58 @@ test("a response from an older case version does not demote a newer prepared rev
       html.indexOf("TEST ONLY old reply"),
   );
   assert.doesNotMatch(html, /Earlier prepared review|Finney’s latest reply/);
+});
+
+test("privacy-projected source metadata uses the linked case name, not an internal external ID", () => {
+  const state = snapshot();
+  state.source_items[0] = {
+    ...state.source_items[0],
+    metadata: {},
+    external_id: "guided_demo:finney-mid-event-v1:av",
+    source_type: "guided_demo",
+  };
+  const html = renderToStaticMarkup(
+    createElement(CaseWorkspace, {
+      item: state.cases[0],
+      snapshot: state,
+      onBack: () => {},
+      onReview: () => {},
+      busy: false,
+      canWork: true,
+      decisions: null,
+      evidenceForm: null,
+    }),
+  );
+  assert.match(html, /<h2>TEST ONLY revised invoice<\/h2>/);
+  assert.match(html, /Practice document/);
+  const primary = html.split("Source provenance")[0];
+  assert.doesNotMatch(primary, /guided_demo:finney-mid-event-v1:av/);
+});
+
+test("director requests and email sources never masquerade as the linked invoice", () => {
+  assert.equal(
+    sourceDisplayTitle(
+      {
+        source_type: "director_message",
+        external_id: "director-message:fictional-job",
+        metadata: {},
+      },
+      "Harbor AV · revised invoice",
+    ),
+    "Director request",
+  );
+  assert.equal(
+    sourceDisplayTitle(
+      { source_type: "gmail", metadata: {} },
+      "Harbor AV · revised invoice",
+    ),
+    "Email · Harbor AV · revised invoice",
+  );
+  assert.equal(
+    sourceDisplayTitle(
+      { source_type: "guided_demo", metadata: {} },
+      "Harbor AV · revised invoice",
+    ),
+    "Harbor AV · revised invoice",
+  );
 });

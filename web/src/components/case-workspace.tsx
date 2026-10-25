@@ -46,12 +46,24 @@ export function caseSourceIds(data: Row): string[] {
   ];
 }
 
+export function sourceDisplayTitle(source: Row, caseTitle: string): string {
+  if (source.source_type === "director_message") return "Director request";
+  const filename = record(source.metadata).filename;
+  if (typeof filename === "string" && filename.trim())
+    return friendlyTitle(filename);
+  return source.source_type === "gmail"
+    ? `Email · ${friendlyTitle(caseTitle)}`
+    : friendlyTitle(caseTitle);
+}
+
 function SourcePaper({
   source,
   snapshot,
+  caseTitle,
 }: {
   source: Row;
   snapshot: FinanceSnapshot;
+  caseTitle: string;
 }) {
   const path = textValue(source.artifact_path, "");
   const identity = JSON.stringify([
@@ -75,7 +87,6 @@ function SourcePaper({
   const failure =
     matching && receipt.status === "error" ? receipt.failure : null;
   const loading = Boolean(path) && (!matching || receipt.status === "loading");
-  const metadata = record(source.metadata);
   useEffect(() => {
     let current = true;
     if (!path) return;
@@ -144,20 +155,17 @@ function SourcePaper({
       <header>
         <FileText size={20} />
         <div>
-          <h2>
-            {friendlyTitle(
-              textValue(
-                metadata.filename ?? source.external_id,
-                "Source document",
-              ),
-            )}
-          </h2>
+          <h2>{sourceDisplayTitle(source, caseTitle)}</h2>
           <span>
-            {source.source_type === "demo_bundle"
+            {["demo_bundle", "guided_demo"].includes(
+              textValue(source.source_type),
+            )
               ? "Practice document"
               : source.source_type === "gmail"
                 ? "Email"
-                : "Document"}{" "}
+                : source.source_type === "director_message"
+                  ? "Message"
+                  : "Document"}{" "}
             · Version {textValue(source.version)}
           </span>
         </div>
@@ -284,7 +292,7 @@ export function CaseWorkspace({
                 aria-pressed={selected !== "activity" && source?.id === row.id}
                 onClick={() => setSelected(textValue(row.id))}
               >
-                {textValue(record(row.metadata).filename, "Source")} · v
+                {sourceDisplayTitle(row, item.title)} · v
                 {textValue(row.version)}
                 {superseded.includes(row.id) ? " · Earlier" : ""}
               </button>
@@ -327,6 +335,7 @@ export function CaseWorkspace({
               key={`${textValue(source.id)}:${textValue(source.version)}`}
               source={source}
               snapshot={snapshot}
+              caseTitle={item.title}
             />
           ) : (
             <section className="source-paper-live">
@@ -371,6 +380,7 @@ export function CaseWorkspace({
               <DirectorResponses
                 responses={[latestResponse]}
                 heading="Finney’s latest reply"
+                collapseLong
               />
             </section>
           )}

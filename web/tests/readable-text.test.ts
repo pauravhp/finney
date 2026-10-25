@@ -129,3 +129,68 @@ test("guided budget decisions ignore unrelated categories and amounts", async ()
   });
   assert.equal(guidedAVDecision(state)?.status, "approved");
 });
+
+test("actual guided packets retain every evidence body without internal scaffold labels", async () => {
+  const { guidedSources } = await import("./fixtures/guided-source");
+  for (const packet of [...guidedSources._INITIAL, guidedSources._REVISED]) {
+    const output = sourceDocumentText(packet);
+    for (const document of packet.documents as { text: string }[])
+      assert.ok(output.includes(document.text));
+    assert.ok(output.includes(String(packet.description)));
+    assert.doesNotMatch(output, /External id:|Kind:|Headers:|Provider:|###/);
+    assert.equal(output.split(String(packet.description)).length - 1, 1);
+  }
+  const mail = sourceDocumentText({
+    description: "Invoice",
+    headers: {
+      from: "billing@example.invalid",
+      to: "director@example.invalid",
+      subject: "Corrected total",
+      date: "2026-10-25",
+    },
+    documents: [{ kind: "invoice", text: "USD 420.00 remains unpaid." }],
+  });
+  assert.match(mail, /From: billing@example.invalid/);
+  assert.match(mail, /To: director@example.invalid/);
+  assert.match(mail, /Subject: Corrected total/);
+  assert.match(mail, /Date: 2026-10-25/);
+  assert.match(mail, /USD 420\.00 remains unpaid/);
+});
+
+test("actual reply shape formats adjacent headings, tables, lists and italic without HTML injection", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { message } = JSON.parse(
+    readFileSync("tests/fixtures/catch-response.json", "utf8"),
+  );
+  const html = renderToStaticMarkup(
+    createElement(ReadableText, { text: message }),
+  );
+  assert.match(html, /<h3>What changed<\/h3><div class="table-scroll"><table>/);
+  assert.match(html, /<h3>Duplicate check<\/h3><ul>/);
+  assert.match(html, /<h3>Record updated<\/h3><ul>/);
+  assert.match(html, /<h3>Next decision<\/h3><p>/);
+  assert.match(html, /<em>reported<\/em>/);
+  assert.equal((html.match(/<tbody>/g) ?? []).length, 1);
+  assert.equal((html.match(/<li>/g) ?? []).length, 9);
+  for (const amount of [
+    "420.00",
+    "480.00",
+    "60.00",
+    "800.00",
+    "380.00",
+    "3,700.00",
+    "7,800.00",
+  ])
+    assert.ok(html.includes(amount));
+  assert.match(html, /not the whole mailbox/);
+  assert.match(html, /rather than a tool result/);
+  assert.doesNotMatch(html, /##|\|---/);
+  const malicious = renderToStaticMarkup(
+    createElement(ReadableText, {
+      text: "## Review\n- *Unpaid* <script>alert(1)</script>\n| Amount | State |\n|---|---|\n| USD 420.00 | **Not paid** |",
+    }),
+  );
+  assert.match(malicious, /&lt;script&gt;/);
+  assert.doesNotMatch(malicious, /<script>/);
+  assert.match(malicious, /<table>/);
+});

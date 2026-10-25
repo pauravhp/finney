@@ -13,9 +13,15 @@ scope: cash forecasts, commitments and director-reviewed allocation proposals
    Separate confirmed cash from sponsor money expected later. Do not describe a
    receivable as spendable settled cash. Read relevant source documents if timing
    or commitment status is disputed.
-3. For a proposed spend use `simulate_commitment` with exact minor units/currency.
-   Explain the resulting availability and any unknown opening snapshot or
-   incomplete account coverage. A simulation changes no allocation or payable.
+3. Use `simulate_commitment` only for NEW ADDITIONAL spending beyond recorded
+   obligations, with exact minor units/currency. Recorded commitments already
+   reduce current availability. The simulation does not replace an existing
+   obligation: never pass an amended invoice's full amount as additional spend.
+   Label the result hypothetical; it is not current cash or current availability.
+   After updating an obligation or other financial record, reread
+   `get_financial_position` before stating the current figures. Explain any
+   unknown opening snapshot or incomplete account coverage. A simulation changes
+   no allocation or payable.
 4. If the director requests an allocation change, use `propose_budget_change`
    with the current line ID/version, allocated amount and source-grounded
    rationale. New lines use a clear `new_name`. This creates a pending proposal;

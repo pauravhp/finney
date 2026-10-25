@@ -59,7 +59,12 @@ class FinanceToolClient:
             amount = minor_units(args.get("amount_minor"), nonnegative=True)
             available = position["available_minor"]
             return {"currency": position["currency"], "available_after_minor": None if available is None else str(minor_units(available)-amount),
-                    "status": "unknown_cash" if available is None else "simulation"}
+                    "status": "unknown_cash" if available is None else "simulation",
+                    "current_available_minor": None if available is None else str(minor_units(available)),
+                    "additional_commitment_minor": str(amount),
+                    "calculation": "current_available_minus_additional_commitment",
+                    "is_projection": True, "effects_enabled": False,
+                    "position_basis": "captured_snapshot" if self._snapshot is not None else "recorded_position_at_read"}
         if name in {"put_artifact", "read_artifact"}:
             if self._snapshot is not None and name == "read_artifact":
                 artifacts = self._snapshot.get("artifacts", {})

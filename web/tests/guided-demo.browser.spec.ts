@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { build } from "esbuild";
 import { mkdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { guidedSources } from "./fixtures/guided-source";
 
 // Explicit isolated UI/HTTP fixtures; no live account, provider or paid model calls.
 const org = "11111111-1111-4111-8111-111111111111",
@@ -86,9 +87,10 @@ const fixture = {
   source_items: [
     {
       id: source,
-      source_type: "demo_bundle",
+      source_type: "guided_demo",
+      external_id: "guided_demo:finney-mid-event-v1:av",
       version: 2,
-      metadata: { filename: "Harbor AV — revised invoice" },
+      metadata: {},
       artifact_path: `${org}/${run}/av-v2`,
     },
   ],
@@ -122,7 +124,7 @@ test.beforeAll(async () => {
             }));
             build.onLoad({ filter: /.*/, namespace: "test-only" }, () => ({
               loader: "js",
-              contents: String.raw`export function browserSupabase(){const channel={on(){return channel},subscribe(fn){fn('SUBSCRIBED');return channel}};return{channel:()=>channel,removeChannel:()=>{},realtime:{setAuth:async()=>{}},auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},storage:{from:()=>({download:async()=>({data:new Blob([JSON.stringify({description:'Revised invoice',documents:[{title:'Harbor AV — amended invoice',text:'Invoice HHA-104 · 25 October 2026\nOriginal charge: USD 480.00\nEquipment credit: USD 60.00\nAmount due: USD 420.00\nPayment has not been received.'},{title:'Vendor note',text:'This replaces the earlier invoice. Please do not pay both versions.'}]})]),error:null})})}}}`,
+              contents: String.raw`export function browserSupabase(){const channel={on(){return channel},subscribe(fn){fn('SUBSCRIBED');return channel}};return{channel:()=>channel,removeChannel:()=>{},realtime:{setAuth:async()=>{}},auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},storage:{from:()=>({download:async()=>({data:new Blob([JSON.stringify(${JSON.stringify(guidedSources._REVISED)})]),error:null})})}}}`,
             }));
           },
         },
@@ -130,9 +132,19 @@ test.beforeAll(async () => {
     })
   ).outputFiles[0].text;
 });
-async function mount(page: Page, status = "ready") {
+async function mount(page: Page, status = "ready", response?: string) {
   const state = structuredClone(fixture);
   state.run.scenario.status = status;
+  if (response)
+    Object.assign(state.cases[0].data, {
+      director_responses: [
+        {
+          message: response,
+          provenance: { source_case_version: 2 },
+          consulted_source_ids: [source],
+        },
+      ],
+    });
   const calls: Record<string, any>[] = [];
   await page.route("**/api/finance/scopes", (route) =>
     route.fulfill({
@@ -206,8 +218,16 @@ test("the walkthrough operates real scoped actions, remains optional and never m
   });
   await expect(page.locator(".source-content")).toContainText("USD 420.00");
   await expect(page.locator(".source-content")).toContainText(
-    "Please do not pay both versions",
+    "No payment has been sent.",
   );
+  await expect(page.locator(".source-paper-live > header h2")).toHaveText(
+    "Harbor AV · revised invoice",
+  );
+  await expect(page.locator(".source-content")).not.toContainText("Kind:");
+  await expect(page.locator(".source-content")).not.toContainText(
+    "External id:",
+  );
+  await expect(page.locator(".source-content")).not.toContainText("###");
   await page.getByText("Add a document", { exact: true }).click();
   await expect(
     page
@@ -227,9 +247,13 @@ test("the walkthrough operates real scoped actions, remains optional and never m
   await page.getByRole("button", { name: /Step 3:/ }).click();
   await page.getByRole("button", { name: "Review Mira’s purchase" }).click();
   expect(calls[2].payload.case_id).toBe(mira);
-  await expect(page.getByRole("button", {name:"Generate an event report"})).toBeVisible();
-  await page.getByRole("button", {name:"Generate an event report"}).click();
-  await expect(page.getByRole("button", {name:"Generate report",exact:true})).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Generate an event report" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Generate an event report" }).click();
+  await expect(
+    page.getByRole("button", { name: "Generate report", exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Skip walkthrough" }).click();
   await expect(
     page.getByRole("button", { name: "Resume walkthrough" }),
@@ -251,4 +275,60 @@ test("partially seeded scenarios cannot begin agent work", async ({ page }) => {
     page.getByRole("button", { name: "Preparing documents…" }),
   ).toBeDisabled();
   expect(calls).toHaveLength(0);
+});
+
+test("actual captured response formats adjacent Markdown blocks inside the case", async ({
+  page,
+}, info) => {
+  const { message } = JSON.parse(
+    readFileSync(resolve("tests/fixtures/catch-response.json"), "utf8"),
+  );
+  await mount(page, "ready", message);
+  await page
+    .getByRole("button", { name: "Open the case", exact: true })
+    .click();
+  const reply = page.locator(".case-latest-response .director-response-text");
+  await expect(reply.locator(".reply-full-response")).not.toHaveAttribute(
+    "open",
+    "",
+  );
+  await expect(
+    reply.getByText("Read full response", { exact: true }),
+  ).toBeVisible();
+  await expect(reply.locator("table")).not.toBeVisible();
+  await expect(reply.locator(":scope > .readable-text")).toHaveText(
+    "We should owe Harbor AV USD 420.00, not USD 480.00, and I've revised the existing payable to that amount.",
+  );
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.screenshot({
+    path: resolve(
+      `../.impeccable/review/${info.project.name}-actual-response-closed.png`,
+    ),
+    fullPage: true,
+  });
+  await reply.getByText("Read full response", { exact: true }).click();
+
+  await expect(
+    reply.getByRole("heading", { name: "What changed", exact: true }),
+  ).toBeVisible();
+  await expect(reply.locator("table")).toBeVisible();
+  await expect(reply.locator("tbody tr")).toHaveCount(4);
+  await expect(reply.locator("ul")).toHaveCount(3);
+  await expect(reply.locator("em")).toHaveText("reported");
+  await expect(reply).toContainText("USD 420.00");
+  await expect(reply).toContainText("rather than a tool result");
+  await expect(reply).not.toContainText("##");
+  await expect(reply).not.toContainText("|---|");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.screenshot({
+    path: resolve(
+      `../.impeccable/review/${info.project.name}-actual-response.png`,
+    ),
+    fullPage: true,
+  });
 });
