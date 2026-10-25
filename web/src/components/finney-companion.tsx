@@ -4,6 +4,10 @@ import { useEffect, useId, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight } from "lucide-react";
 import { formatMoney, textValue, type FinanceSnapshot } from "@/lib/contracts";
 import { friendlyTitle } from "@/components/readable-text";
+import {
+  photoBoothContext,
+  shouldSubmitScenarioPrompt,
+} from "@/lib/photo-booth-scenario";
 import { DirectorResponses } from "@/components/director-responses";
 
 type Row = Record<string, unknown>;
@@ -142,9 +146,9 @@ export function companionState(
   const orderedCases = [...snapshot.cases].sort(
     (a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at),
   );
-  const guidedCase = snapshot.run.scenario?.steps?.find(
-    (step) => step.id === "catch",
-  )?.case_id;
+  const guidedCase =
+    photoBoothContext(snapshot)?.caseId ??
+    snapshot.run.scenario?.steps?.find((step) => step.id === "catch")?.case_id;
   const item =
     orderedCases.find((item) => item.id === caseId) ??
     orderedCases.find((item) => item.id === active?.case_id) ??
@@ -172,7 +176,10 @@ export function companionState(
   return {
     kind,
     title: titles[kind],
-    detail: friendlyTitle(item.title),
+    detail:
+      photoBoothContext(snapshot)?.caseId === item.id
+        ? "Can we afford the photo booth?"
+        : friendlyTitle(item.title),
     caseId: item.id,
     action: "case",
     actionLabel:
@@ -180,7 +187,9 @@ export function companionState(
         ? "Open the update"
         : kind === "failed"
           ? "Open the request"
-          : "Take a look",
+          : photoBoothContext(snapshot)?.caseId === item.id
+            ? "Open the documents"
+            : "Take a look",
   };
 }
 export function FinneyCharacter({
@@ -343,6 +352,19 @@ export function FinneyCompanion({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [question, setQuestion] = useState<Question | null>(null);
+  const photo = photoBoothContext(snapshot);
+  const [introSeen, setIntroSeen] = useState(false);
+  useEffect(() => {
+    if (!photo) {
+      setIntroSeen(true);
+      return;
+    }
+    try {
+      setIntroSeen(localStorage.getItem(photo.storageKey) === "seen");
+    } catch {
+      setIntroSeen(false);
+    }
+  }, [photo?.storageKey]);
   const scopeKey = snapshot
     ? `${snapshot.organization.id}:${snapshot.run.id}`
     : "";
@@ -416,9 +438,56 @@ export function FinneyCompanion({
     else if (state.caseId) onOpenCase(state.caseId);
     else document.getElementById(inputId)?.focus();
   };
+  const leaveIntro = (prefill: boolean) => {
+    setIntroSeen(true);
+    if (photo)
+      try {
+        localStorage.setItem(photo.storageKey, "seen");
+      } catch {
+        /* Optional preference only. */
+      }
+    if (prefill && photo) setMessage(photo.prompt);
+    requestAnimationFrame(() => document.getElementById(inputId)?.focus());
+  };
+  if (photo && !introSeen)
+    return (
+      <section
+        className="finney-companion photo-scenario-intro"
+        aria-label="Practice event introduction"
+      >
+        <header className="companion-header">
+          <span>
+            Finney <small>/ {photo.title}</small>
+          </span>
+        </header>
+        <div className="companion-character">
+          <FinneyCharacter state="ready" />
+        </div>
+        <h2 className="companion-title">Can we afford the photo booth?</h2>
+        <p>{photo.brief}</p>
+        <p>
+          The team thinks sponsorship will cover it. The latest invoices,
+          receipts and sponsor terms need a closer look.
+        </p>
+        <button
+          className="companion-primary"
+          disabled={!photo.ready}
+          onClick={() => leaveIntro(true)}
+        >
+          {photo.ready ? "Start with a question" : "Preparing documents…"}
+          <ArrowRight size={17} />
+        </button>
+        <button className="companion-back" onClick={() => leaveIntro(false)}>
+          Skip introduction
+        </button>
+        <p className="photo-scenario-label">
+          Private practice event · fictional documents
+        </p>
+      </section>
+    );
   return (
     <section
-      className={`finney-companion ${answer ? "has-answer" : ""}`}
+      className={`finney-companion ${answer ? "has-answer" : ""} ${photo ? "photo-scenario" : ""}`}
       aria-label="Finney companion"
       data-state={shownKind}
     >
@@ -505,7 +574,7 @@ export function FinneyCompanion({
         onSubmit={async (event) => {
           event.preventDefault();
           if (!message.trim() || sending || !canWork) return;
-          const askedCase = caseId ?? state.caseId ?? null;
+          const askedCase = caseId ?? photo?.caseId ?? state.caseId ?? null;
           const replies = snapshot?.cases.find((item) => item.id === askedCase)
             ?.data.director_responses;
           const prior = Array.isArray(replies) ? replies.map(row) : [];
@@ -542,17 +611,45 @@ export function FinneyCompanion({
         <label className="sr-only" htmlFor={inputId}>
           Ask Finney
         </label>
-        <input
-          id={inputId}
-          value={message}
-          maxLength={4000}
-          placeholder="Ask Finney…"
-          autoComplete="off"
-          onFocus={() => setListening(true)}
-          onBlur={() => setListening(false)}
-          onChange={(event) => setMessage(event.target.value)}
-          disabled={!canWork || sending}
-        />
+        {photo ? (
+          <textarea
+            id={inputId}
+            value={message}
+            rows={6}
+            maxLength={4000}
+            placeholder="Ask Finney…"
+            onFocus={() => setListening(true)}
+            onBlur={() => setListening(false)}
+            onChange={(event) => setMessage(event.target.value)}
+            onKeyDown={(event) => {
+              if (
+                shouldSubmitScenarioPrompt(
+                  event.key,
+                  event.shiftKey,
+                  event.nativeEvent.isComposing,
+                  event.nativeEvent.keyCode,
+                )
+              ) {
+                event.preventDefault();
+                event.currentTarget.form?.requestSubmit();
+              }
+            }}
+            disabled={!canWork || sending}
+          />
+        ) : (
+          <input
+            id={inputId}
+            value={message}
+            maxLength={4000}
+            placeholder="Ask Finney…"
+            autoComplete="off"
+            onFocus={() => setListening(true)}
+            onBlur={() => setListening(false)}
+            onChange={(event) => setMessage(event.target.value)}
+            disabled={!canWork || sending}
+          />
+        )}
+
         <button
           type="submit"
           aria-label="Send to Finney"
@@ -565,6 +662,17 @@ export function FinneyCompanion({
         <p className="companion-error" role="alert">
           {error}
         </p>
+      )}
+      {photo && !question && !message && (
+        <button
+          className="companion-back"
+          onClick={() => {
+            setMessage(photo.prompt);
+            document.getElementById(inputId)?.focus();
+          }}
+        >
+          Use the opening question
+        </button>
       )}
       <footer className="companion-shortcuts">
         {onViewBudget && <button onClick={onViewBudget}>Budget</button>}

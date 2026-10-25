@@ -28,6 +28,7 @@ import { AuthPanel } from "@/components/auth-panel";
 import { Procedure } from "@/components/procedure";
 import { PaymentExecution } from "@/components/payment-execution";
 import { LockedTutorial, type TutorialCommand } from "@/components/locked-tutorial";
+import { PHOTO_BOOTH_SCENARIO_ID, caseReviewPayload } from "@/lib/photo-booth-scenario";
 import { FinneyCompanion } from "@/components/finney-companion";
 
 import { friendlyTitle } from "@/components/readable-text";
@@ -821,7 +822,7 @@ export function Dashboard({
           <X size={20} />
         </button>
         <div className="workspace-label">
-          {snapshot?.organization.name ?? "Your event"}
+          {snapshot?.run.scenario?.title ?? snapshot?.organization.name ?? "Your event"}
           <span>
             {selectedRun?.is_demo ? "Isolated demo run" : "Finance operations"}
           </span>
@@ -1135,7 +1136,7 @@ export function Dashboard({
               </button>
             </div>
           )}
-          {snapshot?.run.scenario && (
+          {snapshot?.run.scenario && snapshot.run.scenario.id !== PHOTO_BOOTH_SCENARIO_ID && (
             <LockedTutorial key={scopeKey} snapshot={snapshot}
               selectedCaseId={selectedCase?.id ?? null} tab={tab} lastCommand={lastCommand}
               onNavigate={(destination, caseId) => { if (tabs.some(t => t.id === destination)) setTab(destination as Tab); if (caseId) setExpanded(caseId); }} />
@@ -1411,10 +1412,7 @@ export function Dashboard({
                   busy={Boolean(busy)}
                   canWork={canWork}
                   onReview={() =>
-                    void command("review_case", {
-                      case_id: selectedCase.id,
-                      expected_version: selectedCase.version,
-                    })
+                    void command("review_case", caseReviewPayload(snapshot, selectedCase))
                   }
                   decisions={snapshot.approvals
                     .filter(
