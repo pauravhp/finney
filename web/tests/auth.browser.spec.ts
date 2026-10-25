@@ -119,7 +119,7 @@ test("email sign-in uses the SDK password grant and contains credential errors",
   });
   await page.goto("/desk");
   await expect(
-    page.getByRole("heading", { name: "Your event. Your team's decisions." }),
+    page.getByRole("heading", { name: "Sign in to Finney" }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Continue with Google" }),
@@ -210,7 +210,7 @@ test("signup with no session stays pending confirmation and cannot open finance 
     "Open it in this browser",
   );
   await expect(
-    page.getByRole("button", { name: "Create my demo run" }),
+    page.getByRole("button", { name: "Open practice event" }),
   ).toHaveCount(0);
   await expect(page.getByLabel("Password", { exact: true })).toHaveCount(0);
   expect(signupRequest).toBe(true);
@@ -251,7 +251,7 @@ test("unconfirmed account and failed callback give an actionable next step", asy
     "Confirm your email before signing in",
   );
   await expect(
-    page.getByRole("button", { name: "Create my demo run" }),
+    page.getByRole("button", { name: "Open practice event" }),
   ).toHaveCount(0);
 });
 

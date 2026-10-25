@@ -271,6 +271,8 @@ def evaluation_manifest(actor, suite: ProtectedSuite, *, fixed_context: dict | N
                 "api_mode": actor.config.api_mode,
                 "max_tokens": actor.config.max_tokens,
                 "max_iterations": actor.max_iterations,
+                "provider_timeout_seconds": actor.config.timeout_seconds,
+                "actor_timeout_seconds": getattr(actor, "timeout_seconds", None),
             },
             "cases": [
                 {

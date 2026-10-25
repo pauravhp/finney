@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     organization_id: UUID | None = Field(None, validation_alias="FINANCE_ORGANIZATION_ID")
     run_id: UUID | None = Field(None, validation_alias="FINANCE_RUN_ID")
     finance_model: str = "claude-sonnet-4-6"
+    # Trusted private receipt for a model-matched learning runtime preflight.
+    # Never accepted from a queued command or a browser request.
+    finance_learning_preflight_artifact: str = ""
+    finance_learning_preflight_sha256: str = ""
     finance_model_base_url: str = "https://api.anthropic.com/v1"
     finance_model_api_mode: str = "anthropic_messages"
     finance_model_api_key: SecretStr = SecretStr("")

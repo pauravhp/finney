@@ -129,11 +129,11 @@ function queueScroll(){if(!engineeringFrame)engineeringFrame=requestAnimationFra
 function openDetail(content){const d=$('#detail');$('#detail-content').innerHTML=content;d.showModal();}
 document.addEventListener('click',e=>{const b=e.target.closest('button,a');if(!b)return;
  if(b.dataset.view==='landing'){e.preventDefault();window.scrollTo({top:0,behavior:paused?'instant':'smooth'});return;}
- if(b.dataset.view||b.dataset.desk||b.dataset.caseAction){e.preventDefault();location.assign('/desk');return;}
+ if(b.dataset.view||b.dataset.desk||b.dataset.caseAction){e.preventDefault();location.assign('/desk?demo=guided');return;}
  if(b.dataset.scroll){document.getElementById(b.dataset.scroll)?.scrollIntoView({behavior:paused?'instant':'smooth'});return;}
  if(b.dataset.folderSelect){folder=b.dataset.folderSelect;let back=0;$$('.folder').forEach(f=>{const on=f.dataset.folder===folder;f.style.setProperty('--level',on?4:back++);f.classList.toggle('front',on);f.querySelector('.folder-tab').setAttribute('aria-pressed',String(on));f.querySelector('.folder-inside').innerHTML=on?folderInner(folder):'';});$('.landing').style.setProperty('--active-folder',FOLDER_COLORS[folder]);return;}
  if(b.dataset.action==='evaluation'){openDetail(evaluationStory());return;}
- if(b.dataset.action==='sponsors'){openDetail('<h2>Illustrative sponsorship</h2><p>Expected sponsorship is excluded from cash until received. Open your desk to inspect actual event records.</p><a class="button black" href="/desk">Open the desk</a>');return;}
+ if(b.dataset.action==='sponsors'){openDetail('<h2>Illustrative sponsorship</h2><p>Expected sponsorship is excluded from cash until received. Open your desk to inspect actual event records.</p><a class="button black" href="/desk?demo=guided">Open the desk</a>');return;}
  if(b.classList.contains('dialog-close'))$('#detail').close();
 });
 $('#detail').addEventListener('click',e=>{if(e.target===e.currentTarget)e.target.close();});

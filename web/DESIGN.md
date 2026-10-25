@@ -69,3 +69,11 @@ activity pane beside Finney’s recorded finding, stage blockers, exact-action
 approval/payment controls and director conversation. The decision moves above
 evidence on phones. The initial palette-only overview arrangement was superseded
 before release. General prompt drafts survive tab changes within the event scope.
+
+## October 25: director scenario redesign
+
+The owner superseded the blank workbench-first v7 composition after reviewing live screenshots. The receipt mark, Albert Sans and mint/ink identity stay; the first screen is now a concrete mid-event situation with one action. A resumable, optional walkthrough invokes actual scoped work and opens actual decisions. It never marks model work complete from tutorial progress.
+
+Case evidence renders the complete nested source body. Case-specific upload and conversation are bound to that case; their generic task tabs/case selector are removed. Long reasoning, raw identifiers and system provenance move into disclosures. Current amounts, stage requirements, refusals and unknowns stay explicit. Sources retain exact org/run/version/path binding and predecessor history. Body copy is 16px with a 14px support-text floor. Motion is limited to a short step transition and disabled under reduced-motion.
+
+The page’s first question is “What needs my decision at this event?” Its signature interaction is the changed invoice alongside the stored review, followed by a real director decision and recovery. See `../docs/build/UI_TEXT_AUDIT.md` for the complete surface audit and verification limits.

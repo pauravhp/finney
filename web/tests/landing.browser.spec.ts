@@ -34,7 +34,7 @@ test("approved landing opens the live desk and labels the illustrated learning e
     .getByRole("link", { name: "Try Finney", exact: false })
     .first()
     .click();
-  await expect(page).toHaveURL(/\/desk$/);
+  await expect(page).toHaveURL(/\/desk\?demo=guided$/);
   await expect(
     page.getByRole("heading", { name: "Work", exact: true }),
   ).toBeVisible();

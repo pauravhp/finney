@@ -106,7 +106,9 @@ export function Workbench({
   sources = [],
   messageDraft,
   onMessageDraftChange,
+  contextual = false,
 }: {
+  contextual?: boolean;
   sources?: FinanceSnapshot["source_items"];
   messageDraft?: string;
   onMessageDraftChange?: (message: string) => void;
@@ -207,9 +209,7 @@ export function Workbench({
       setRetry(null);
       setFile(null);
       if (fileInput.current) fileInput.current.value = "";
-      setNotice(
-        `Document review queued. Job ${textValue(result.job_id)}. Extraction and review will appear in activity.`,
-      );
+      setNotice("Document received. Finney’s review is queued.");
       await onRefresh();
     } catch (error) {
       setFailure(
@@ -231,9 +231,7 @@ export function Workbench({
       setRetry(null);
       setFile(null);
       if (fileInput.current) fileInput.current.value = "";
-      setNotice(
-        `Stored document review queued. Job ${textValue(result.job_id)}.`,
-      );
+      setNotice("Document review queued.");
       await onRefresh();
     } catch (error) {
       setFailure(
@@ -248,42 +246,46 @@ export function Workbench({
 
   return (
     <section
-      className="finance-workbench"
+      className={`finance-workbench ${contextual ? "contextual-workbench" : ""}`}
       aria-labelledby={`${fieldId}-workbench-title`}
     >
-      <div className="section-heading">
-        <img
-          className="workbench-mascot"
-          src="/brand/finney.svg"
-          alt=""
-          aria-hidden="true"
-        />
-        <h2 id={`${fieldId}-workbench-title`}>Work with Finney</h2>
-      </div>
-      <div className="workbench-modes" aria-label="Choose a finance task">
-        {(
-          [
-            ["message", "Ask Finney", MessageSquare],
-            ["manual", "Add a record", Plus],
-            ["upload", "Upload a document", FileUp],
-          ] as const
-        ).map(([id, label, Icon]) => (
-          <button
-            key={id}
-            type="button"
-            aria-pressed={mode === id}
-            disabled={uploading}
-            onClick={() => {
-              setMode(id);
-              setFailure(null);
-              setNotice(null);
-            }}
-          >
-            <Icon size={15} aria-hidden="true" />
-            {label}
-          </button>
-        ))}
-      </div>
+      {!contextual && (
+        <div className="section-heading">
+          <img
+            className="workbench-mascot"
+            src="/brand/finney.svg"
+            alt=""
+            aria-hidden="true"
+          />
+          <h2 id={`${fieldId}-workbench-title`}>Work with Finney</h2>
+        </div>
+      )}
+      {!contextual && (
+        <div className="workbench-modes" aria-label="Choose a finance task">
+          {(
+            [
+              ["message", "Ask Finney", MessageSquare],
+              ["manual", "Add a record", Plus],
+              ["upload", "Upload a document", FileUp],
+            ] as const
+          ).map(([id, label, Icon]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={mode === id}
+              disabled={uploading}
+              onClick={() => {
+                setMode(id);
+                setFailure(null);
+                setNotice(null);
+              }}
+            >
+              <Icon size={15} aria-hidden="true" />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       {!canEdit && (
         <p className="section-description">
           An active director or finance team member can add evidence and request
@@ -325,22 +327,24 @@ export function Workbench({
             placeholder="Review the catering quote against our food budget and show the missing evidence."
           />
           <div className="workbench-fields">
-            <label htmlFor={`${fieldId}-finney-case`}>
-              Related case
-              <select
-                id={`${fieldId}-finney-case`}
-                value={caseId}
-                disabled={locked}
-                onChange={(event) => setCaseId(event.target.value)}
-              >
-                <option value="">General event request</option>
-                {cases.map((row) => (
-                  <option key={row.id} value={row.id}>
-                    {row.title}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {!contextual && (
+              <label htmlFor={`${fieldId}-finney-case`}>
+                Related case
+                <select
+                  id={`${fieldId}-finney-case`}
+                  value={caseId}
+                  disabled={locked}
+                  onChange={(event) => setCaseId(event.target.value)}
+                >
+                  <option value="">General event request</option>
+                  {cases.map((row) => (
+                    <option key={row.id} value={row.id}>
+                      {row.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <button
               className="primary"
               type="submit"
@@ -349,10 +353,6 @@ export function Workbench({
               Queue request <ArrowRight size={15} />
             </button>
           </div>
-          <p>
-            Finney reviews your event’s records. Payment proposals still follow
-            the event’s human approval policy.
-          </p>
         </form>
       )}
       {mode === "manual" && (
@@ -443,38 +443,40 @@ export function Workbench({
             void upload();
           }}
         >
-          <label htmlFor={`${fieldId}-upload-case`}>
-            Related case
-            <select
-              id={`${fieldId}-upload-case`}
-              value={uploadCaseId}
-              disabled={locked || Boolean(retry)}
-              onChange={(event) => {
-                setUploadCaseId(event.target.value);
-                setReplacesSourceId("");
-              }}
-            >
-              <option value="">Start a new case</option>
-              {cases.map((row) => (
-                <option key={row.id} value={row.id}>
-                  {row.title}
-                </option>
-              ))}
-            </select>
-          </label>
+          {!contextual && (
+            <label htmlFor={`${fieldId}-upload-case`}>
+              Related case
+              <select
+                id={`${fieldId}-upload-case`}
+                value={uploadCaseId}
+                disabled={locked || Boolean(retry)}
+                onChange={(event) => {
+                  setUploadCaseId(event.target.value);
+                  setReplacesSourceId("");
+                }}
+              >
+                <option value="">Start a new case</option>
+                {cases.map((row) => (
+                  <option key={row.id} value={row.id}>
+                    {row.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           {uploadCaseId && (
             <label htmlFor={`${fieldId}-upload-replaces`}>
-              Document relationship
+              This document is
               <select
                 id={`${fieldId}-upload-replaces`}
                 value={replacesSourceId}
                 disabled={locked || Boolean(retry)}
                 onChange={(event) => setReplacesSourceId(event.target.value)}
               >
-                <option value="">Additional evidence</option>
+                <option value="">New evidence</option>
                 {sourceChoices.map((row) => (
                   <option key={row.id} value={row.id}>
-                    Revises: {row.title}
+                    A revision of {row.title}
                   </option>
                 ))}
               </select>
@@ -486,26 +488,33 @@ export function Workbench({
               will trigger a new review.
             </p>
           )}
-          <label htmlFor={`${fieldId}-finance-document`}>
-            Invoice, agreement or receipt
+          <label
+            className="document-dropzone"
+            htmlFor={`${fieldId}-finance-document`}
+          >
+            <FileUp size={24} aria-hidden="true" />
+            <strong>{file ? file.name : "Choose a document"}</strong>
+            <span>PDF, text, CSV or image · up to 3 MiB</span>
+            <input
+              id={`${fieldId}-finance-document`}
+              ref={fileInput}
+              type="file"
+              disabled={locked || Boolean(retry)}
+              accept=".pdf,.txt,.md,.csv,.png,.jpg,.jpeg,.webp,.gif"
+              onChange={(event) => {
+                setFile(event.target.files?.[0] ?? null);
+                setFailure(null);
+                setNotice(null);
+              }}
+            />
           </label>
-          <input
-            id={`${fieldId}-finance-document`}
-            ref={fileInput}
-            type="file"
-            disabled={locked || Boolean(retry)}
-            accept=".pdf,.txt,.md,.csv,.png,.jpg,.jpeg,.webp,.gif"
-            onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null);
-              setFailure(null);
-              setNotice(null);
-            }}
-          />
-          <p>
-            PDF, text, CSV or receipt image, up to 3 MiB. Scanned PDFs support
-            up to four pages per review. Model-extracted text needs
-            verification.
-          </p>
+          <details className="upload-limits">
+            <summary>Scans and supported files</summary>
+            <p>
+              Scanned PDFs: up to four pages per review. Extracted text is
+              reviewed before it is treated as evidence.
+            </p>
+          </details>
           {retry && (
             <p>
               The original document is stored. Retry review without uploading

@@ -55,12 +55,13 @@ and a current report is saved. Start with that case's two source tabs and latest
 stored reply. The new 5.5 reply explicitly identifies the older finding as stale;
 the UI preserves that earlier review as history rather than erasing it.
 
-The private test-run cap is 1,100 reserved calls with 1,040 consumed at final
-readback. An ordinary agent request reserves up to nine calls, so roughly six
-more requests fit before additional automatic work/OCR. Reading records, showing
-the saved experiment, rejecting a proposal and generating the deterministic report
-do not themselves request model inference. All four learning attempts are consumed;
-no further learning phase is authorized by the remaining ordinary-call allowance.
+The owner subsequently authorized further learning work without the earlier
+one-phase budget restriction. The private test run now has an operational
+allocation of 10,000 reserved calls and 100 attempts; its previous 1,040 calls and
+four attempts remain recorded. This does not change public demo quotas,
+per-attempt call guards, holdout isolation or promotion requirements. Reading
+records, showing saved experiments, rejecting a proposal and generating the
+deterministic report do not themselves request model inference.
 
 Sign in at `/desk` using the existing owner account; credentials remain in the
 owner's password manager. Anonymous guest access is not enabled. Do not present the old learning

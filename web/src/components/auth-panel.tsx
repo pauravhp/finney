@@ -110,7 +110,7 @@ export function AuthPanel({ callbackError }: { callbackError: boolean }) {
             ? "Check your email to continue"
             : mode === "signup"
               ? "Create your finance account"
-              : "Your event. Your team's decisions."}
+              : "Sign in to Finney"}
         </h2>
         {pending ? (
           <>
@@ -135,7 +135,7 @@ export function AuthPanel({ callbackError }: { callbackError: boolean }) {
             <p>
               {mode === "signup"
                 ? "Use your email and a password. Confirm your email before opening your workspace."
-                : "Sign in with your email and password to open your team's finance runs."}
+                : "Your event’s finance workspace."}
             </p>
             <form
               className="auth-form"
@@ -215,9 +215,8 @@ export function AuthPanel({ callbackError }: { callbackError: boolean }) {
               <div>
                 <h3>Explore as a guest</h3>
                 <p>
-                  Open a private director demo with labeled synthetic documents.
-                  A temporary guest identity has no shared event, Gmail, or
-                  payment access.
+                  Try a private practice event with synthetic documents. No
+                  mailbox or payment access.
                 </p>
                 {guestError && (
                   <div className="auth-error" role="alert">

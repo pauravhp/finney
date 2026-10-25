@@ -192,7 +192,13 @@ async def run_job(
         stage = "actor_setup"
         if settings.finance_actor_runtime == "opencode":
             from app.runtime.opencode import OpenCodeActor
-            actor = OpenCodeActor(config, binary=settings.finance_opencode_binary or None)
+            if command == "evaluate_improvement" and config.model == "claude-sonnet-5-5":
+                from app.improvement.runtime_preflight import learning_actor
+
+                actor = learning_actor(config, binary=settings.finance_opencode_binary or None)
+                config = actor.config
+            else:
+                actor = OpenCodeActor(config, binary=settings.finance_opencode_binary or None)
         else:
             actor = HermesActor(
                 config,
@@ -252,6 +258,29 @@ async def run_job(
                         raise ModelError("runtime_context_artifact_hash_mismatch")
                 except (KeyError, TypeError, ValueError):
                     raise ModelError("runtime_context_artifact_invalid") from None
+            if config.model == "claude-sonnet-5-5":
+                from app.improvement.runtime_preflight import require_runtime_preflight
+
+                stage = "improvement_runtime_preflight"
+                receipt = {
+                    "artifact_path": getattr(settings, "finance_learning_preflight_artifact", ""),
+                    "content_sha256": getattr(settings, "finance_learning_preflight_sha256", ""),
+                }
+                if not all(receipt.values()):
+                    raise ModelError("learning_runtime_preflight_missing")
+                checked = await require_runtime_preflight(
+                    tools=tools, receipt=receipt, actor=actor,
+                    baseline_content=skill, fixed_context=fixed_context,
+                )
+                await tools.call("record_trace", {
+                    "event_type": "learning_runtime_preflight_checked",
+                    "payload": {"job_id": job_id, "study_id": checked["study_id"],
+                                "preflight_artifact": receipt, "model": config.model,
+                                "operating_trace_model": trace.get("evidence", {}).get("model")
+                                or trace.get("model_identity", "not_recorded"),
+                                "historical_results_regraded": False},
+                    "idempotency_key": f"job:{job_id}:runtime-preflight",
+                })
             from app.improvement.corpus_online import CORPUS_ONLINE_SUITE_ID, CorpusEvaluationTools
             from app.improvement.promotion_suite import PROMOTION_SUITE_ID, PromotionEvaluationTools
             from app.models import GenerativeModel
@@ -293,7 +322,8 @@ async def run_job(
                 from app.runtime.opencode_editor import OpenCodeEditor
                 if settings.finance_actor_runtime != "opencode":
                     raise ModelError("harness2_requires_opencode_actor")
-                editor = OpenCodeEditor(replace(config, max_tokens=3500),
+                editor_config = config if config.model == "claude-sonnet-5-5" else replace(config, max_tokens=3500)
+                editor = OpenCodeEditor(editor_config,
                                         binary=settings.finance_opencode_binary or None)
                 candidate_search = make_harness2_candidate_search(actor, editor)
             engine = ImprovementEngine(
@@ -357,6 +387,7 @@ async def run_job(
             raise ModelError(reservation.get("reason", "run_inference_budget_not_reserved"))
         failure_context = {
             "job_id": job_id, "command_type": command,
+            "model_identity": config.model,
             "initiated_by_user_id": job.get("requested_by"),
             "skill_version": skill_version if routing["improvement_eligible"]
             else "bundle:" + routing["context_sha256"],
@@ -376,6 +407,7 @@ async def run_job(
             })
         trace = {
             "job_id": job_id,
+            "model_identity": config.model,
             "initiated_by_user_id": job.get("requested_by"),
             "skill_version": skill_version
             if routing["improvement_eligible"]

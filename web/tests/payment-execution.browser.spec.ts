@@ -68,6 +68,7 @@ test("pending Wallet approval exposes a safe link and queues reconciliation of e
     "href",
     "https://wallet.example.invalid/approve/TEST-ONLY-request",
   );
+  await page.getByText("Payment references", {exact:true}).click();
   await expect(page.getByText(paymentId)).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Finney’s replies" }),
@@ -77,9 +78,9 @@ test("pending Wallet approval exposes a safe link and queues reconciliation of e
   );
   expect(
     await page
-      .locator(".director-response-text")
+      .locator(".director-response-text p")
       .evaluate((element) => getComputedStyle(element).whiteSpace),
-  ).toBe("pre-wrap");
+  ).toBe("pre-line");
   await expect(page.locator(".director-response-text script")).toHaveCount(0);
   await page.getByRole("button", { name: "Check existing payment" }).click();
   await expect(page.locator("#queue-status")).toHaveText(

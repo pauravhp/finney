@@ -119,6 +119,31 @@ export const snapshotSchema = z.object({
     status: z.string(),
     currency: z.string(),
     revision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+    scenario: z
+      .object({
+        id: z.string(),
+        title: z.string(),
+        brief: z.string(),
+        status: z.string().optional(),
+        seed_status: z.string().optional(),
+        seed_retry_available: z.boolean().optional(),
+        seed_attempts: z.number().optional(),
+        seed_attempt_limit: z.number().optional(),
+        seed_error_code: z.string().nullable().optional(),
+        synthetic: z.literal(true),
+        steps: z
+          .array(
+            z.object({
+              id: z.string(),
+              title: z.string(),
+              case_id: uuid.nullable().optional(),
+              prompt: z.string().optional(),
+            }),
+          )
+          .optional(),
+      })
+      .nullable()
+      .optional(),
     required_payment_approvals: z
       .union([z.literal(1), z.literal(2)])
       .default(2),

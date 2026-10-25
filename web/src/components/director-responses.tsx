@@ -1,3 +1,4 @@
+import { ReadableText } from "@/components/readable-text";
 import { displayRecord } from "@/lib/contracts";
 
 type Reply = Record<string, unknown> & { message: string };
@@ -32,13 +33,18 @@ export function DirectorResponses({
               : `${String(reply.actor_trace_id ?? reply.job_id ?? "reply")}:${index}`
           }
         >
-          <p className="director-response-text">{reply.message}</p>
+          <ReadableText
+            className="director-response-text"
+            text={reply.message}
+          />
           {Array.isArray(reply.consulted_source_ids) ? (
             reply.consulted_source_ids.filter(
               (id): id is string => typeof id === "string",
             ).length ? (
-              <div className="director-response-sources">
-                <h4>Sources consulted</h4>
+              <details className="director-response-sources">
+                <summary>
+                  Sources consulted ({reply.consulted_source_ids.length})
+                </summary>
                 <ul>
                   {reply.consulted_source_ids
                     .filter((id): id is string => typeof id === "string")
@@ -46,7 +52,7 @@ export function DirectorResponses({
                       <li key={`${id}:${sourceIndex}`}>{id}</li>
                     ))}
                 </ul>
-              </div>
+              </details>
             ) : (
               <p className="muted">
                 No source documents were opened for this reply.
