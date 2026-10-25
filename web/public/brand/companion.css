@@ -50,7 +50,7 @@
 .companion-case-panel .case-check-again { display:flex; margin:10px auto 0; }
 .finney-companion .companion-conversation { margin-bottom:16px; }
 .finney-companion .companion-back { border:0; background:none; min-height:32px; padding:4px 0; color:#58654f; font-size:13px; margin-bottom:10px; }
-.finney-companion .companion-answer { max-height:280px; overflow:auto; scrollbar-gutter:stable; }
+.finney-companion .companion-answer { max-height:min(50dvh, 520px); overflow:auto; scrollbar-gutter:stable; }
 .finney-companion .companion-answer .director-responses,.finney-companion .companion-answer .director-response,.finney-companion .companion-answer .director-response-text { margin:0; padding:0; border:0; }
 .finney-companion .companion-question { font-size:15px; line-height:1.5; margin:0; overflow-wrap:anywhere; }
 /* Keep the accessible name without duplicating the visible placeholder. */

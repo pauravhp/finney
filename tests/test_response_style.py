@@ -24,4 +24,6 @@ def test_editor_and_machine_evidence_schema_are_not_shortened():
     schema = output_schema("finance")
     assert set(schema["required"]) == {"decision", "explanation", "evidence_source_ids", "clarification",
                                        "proposed_action", "blocking_requirements"}
+    # Concision remains prompt guidance, not a hard output-length gate.
+    assert "maxLength" not in schema["properties"]["explanation"]
     assert schema["properties"]["blocking_requirements"]["items"]["properties"]["supporting_refs"]["minItems"] == 1

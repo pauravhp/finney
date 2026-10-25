@@ -208,3 +208,20 @@ context and schema. Both exposed development cases completed correctly (two and
 three provider calls); the current trusted receipt binds this new configuration.
 The previous preflight remains a historical receipt, not a reusable authorization
 for the changed runtime. No candidate or final evaluation followed this repair.
+
+### Narrower answers after hosted response review
+
+Hosted checks still produced a 96-word case review with unrelated event totals
+and testnet setup, and a 90-word payment-status reply with an unsolicited setup
+question. The reported liability/payment facts were correct, but the replies
+went beyond the request. These original responses remain preserved.
+
+The shared style and duplicated guide/tool-description wording now ask for the
+exact task first, typically one to three short sentences, and explicitly exclude
+unrelated budget recaps, future payment checklists and unsolicited setup questions.
+A follow-up belongs only when needed to resolve the current request. Material
+uncertainty, financial authority and all structured blockers/evidence remain
+required; no result is clipped and no hard sentence/length gate is added. This is
+an engineering prompt revision, not a measured learned gain. It again invalidates
+the preceding preflight's protected-runtime binding. No new inference, restart or
+learning attempt was performed to implement it; live verification is separate.
