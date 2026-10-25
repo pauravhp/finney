@@ -8,6 +8,13 @@ from typing import TYPE_CHECKING, Any
 from app.models import JevClient, ModelConfig, ModelError
 from app.resources import resource_path
 
+from .failure_intake import (
+    ELIGIBLE_FAILURES,
+    eligible_failed_trace,
+    failed_improvement_request,
+    failure_observations,
+    private_failure_artifact,
+)
 from .hermes import FinanceTools, HermesActor
 from .skills import runtime_skill_context
 
@@ -24,6 +31,9 @@ def automatic_improvement_request(job: dict, outcome: dict, *, suite_id: str) ->
     trace-specific key. Atomic attempt/run-budget guards still execute before
     inference. A reviewer must establish a supported defect to generate a skill.
     """
+    failed_request = failed_improvement_request(job, outcome, suite_id=suite_id)
+    if failed_request is not None:
+        return failed_request
     if (
         job.get("command_type") not in {"review_case", "director_message"}
         or outcome.get("status") != "completed"
@@ -55,7 +65,7 @@ def improvement_review_request(job: dict) -> dict:
         raise ModelError("protected_evaluation_suite_required")
     trigger = payload.get("trigger", "manual_review")
     feedback = payload.get("feedback")
-    if trigger not in {"manual_review", "completed_case_review"} or (
+    if trigger not in {"manual_review", "completed_case_review", "failed_case_review"} or (
         feedback is not None and (not isinstance(feedback, str) or not 1 <= len(feedback) <= 2000)
     ):
         raise ModelError("improvement_feedback_invalid")
@@ -120,6 +130,7 @@ async def run_job(
     job_id = str(job.get("id", ""))
     if not job_id or not job.get("organization_id") or not job.get("run_id"):
         return {"status": "blocked", "reason": "job_scope_required"}
+    failure_context = None
     try:
         from app.config import Settings
 
@@ -130,11 +141,15 @@ async def run_job(
         skill, skill_version = artifact["content"], current["id"]
         if current.get("content_sha256") != hashlib.sha256(skill.encode()).hexdigest():
             raise ModelError("active_skill_artifact_hash_mismatch")
-        actor = HermesActor(
-            config,
-            source=Path(settings.finance_hermes_source) if settings.finance_hermes_source else None,
-            python=settings.finance_hermes_python or None,
-        )
+        if settings.finance_actor_runtime == "opencode":
+            from app.runtime.opencode import OpenCodeActor
+            actor = OpenCodeActor(config, binary=settings.finance_opencode_binary or None)
+        else:
+            actor = HermesActor(
+                config,
+                source=Path(settings.finance_hermes_source) if settings.finance_hermes_source else None,
+                python=settings.finance_hermes_python or None,
+            )
         gateway_key = settings.ai_gateway_api_key.get_secret_value()
         if command == "evaluate_improvement":
             from app.improvement.engine import ImprovementEngine
@@ -145,8 +160,12 @@ async def run_job(
             if not gateway_key:
                 raise ModelError("jev_unconfigured")
             captured = await tools.call("get_trace", {"trace_id": payload["trace_id"]})
-            if not captured or captured.get("event_type") != "actor_completed":
-                raise ModelError("completed_actor_trace_required")
+            if not captured or (
+                captured.get("event_type") != "actor_completed"
+                and not (captured.get("event_type") == "actor_failed"
+                         and eligible_failed_trace(captured.get("payload", {})))
+            ):
+                raise ModelError("eligible_actor_trace_required")
             trace = {**captured["payload"], "id": captured["id"], "review_request": request}
             if trace.get("improvement_eligible") is False:
                 raise ModelError("trace_outside_mutable_skill_family")
@@ -241,6 +260,16 @@ async def run_job(
         )
         if reservation.get("claimed") is not True:
             raise ModelError(reservation.get("reason", "run_inference_budget_not_reserved"))
+        failure_context = {
+            "job_id": job_id, "command_type": command,
+            "initiated_by_user_id": job.get("requested_by"),
+            "skill_version": skill_version if routing["improvement_eligible"]
+            else "bundle:" + routing["context_sha256"],
+            **routing, "runtime_context_artifact": context_artifact,
+            "inference_reservation": reservation,
+            "case_provenance": {"id": case.get("id"), "version": case.get("version")}
+            if isinstance(case, dict) else None,
+        }
         result = await actor.run({"command_type": command, "payload": payload}, context, tools)
         diagnostic = result.pop("private_diagnostic", None)
         if diagnostic is not None:
@@ -287,20 +316,33 @@ async def run_job(
         return {"status": "completed", **result, **routing, "trace": recorded, "triage": triage}
     except ModelError as error:
         diagnostic_receipt = None
+        observations = None
+        eligible = False
         diagnostic = getattr(error, "private_diagnostic", None)
-        if diagnostic is not None:
+        if isinstance(diagnostic, dict) and failure_context is not None:
             try:
                 artifact = await tools.call("put_artifact", {
                     "name": "actor-failed-diagnostic.json", "content_type": "application/json",
-                    "content": json.dumps(diagnostic, sort_keys=True),
+                    "content": private_failure_artifact(diagnostic),
+                    "idempotency_key": f"job:{job_id}:failure-diagnostic",
                 })
+                observations = failure_observations(error.code, diagnostic)
+                failed_payload = {
+                    **failure_context, "reason": observations["reason"], "actor_status": "failed",
+                    "diagnostic_artifact": artifact, "failure_observations": observations,
+                }
+                eligible = error.code in ELIGIBLE_FAILURES and eligible_failed_trace(failed_payload)
+                failed_payload["improvement_eligible"] = eligible
                 diagnostic_receipt = await tools.call("record_trace", {
-                    "event_type": "actor_failed", "payload": {"job_id": job_id, "reason": error.code, "diagnostic_artifact": artifact},
-                    "idempotency_key": f"job:{job_id}:failure:{error.code}",
+                    "event_type": "actor_failed", "payload": failed_payload,
+                    "idempotency_key": f"job:{job_id}:failure:{observations['reason']}",
                 })
-            except Exception as persistence_error:  # noqa: BLE001 -- preserve primary safe failure; no provider bodies.
+            except Exception as persistence_error:  # noqa: BLE001 -- retain primary safe failure.
+                eligible = False
                 diagnostic_receipt = {"status": "unavailable", "error_type": type(persistence_error).__name__}
         return {"status": "blocked", "reason": error.code, "provider_status": error.status,
+                "improvement_eligible": eligible,
+                **({"failure_observations": observations} if observations is not None else {}),
                 **({"failure_trace": diagnostic_receipt} if diagnostic_receipt is not None else {})}
     except Exception as error:  # noqa: BLE001 -- job boundary reports a safe failure without provider bodies.
         return {

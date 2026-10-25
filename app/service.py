@@ -364,6 +364,10 @@ async def dispatch_job(
                 from app.finance.workflows import queue_automatic_improvement
 
                 outcome["automatic_improvement"] = await queue_automatic_improvement(db, job, outcome)
+        elif command == "review_case" and outcome.get("improvement_eligible") is True:
+            from app.finance.workflows import queue_automatic_improvement
+
+            outcome["automatic_improvement"] = await queue_automatic_improvement(db, job, outcome)
         return outcome
     except ConnectionRequired:
         return {"status": "blocked", "reason": "connector_authorization_required"}

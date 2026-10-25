@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     ai_gateway_api_key: SecretStr = SecretStr("")
     finance_hermes_source: str = ""
     finance_hermes_python: str = ""
+    finance_actor_runtime: Literal["hermes", "opencode"] = "hermes"
+    finance_opencode_binary: str = ""
     google_client_id: str = ""
     google_client_secret: SecretStr = SecretStr("")
     google_redirect_uri: str = "http://127.0.0.1:8767/oauth/gmail/callback"

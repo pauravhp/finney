@@ -134,6 +134,14 @@ def diagnosis_has_trace_support(diagnosis: dict, context: dict) -> bool:
             and value != {}
         ):
             has_observed_behavior = True
+        if (
+            len(components) == 3
+            and components[:2] == ["trace", "failure_observations"]
+            and context.get("trace", {}).get("actor_status") == "failed"
+            and components[2] in {"reason", "schema_error", "output_format", "tool_calls_observed"}
+            and value is not None and value != ""
+        ):
+            has_observed_behavior = True
     return has_observed_behavior
 
 
