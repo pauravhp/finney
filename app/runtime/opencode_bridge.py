@@ -222,6 +222,13 @@ class FinanceBridge:
             payload.pop("thinking", None)
             payload.pop("reasoning_effort", None)
             payload["temperature"] = 0
+            if self.config.api_mode == "anthropic_messages" and self.config.model == "claude-sonnet-5-5":
+                for field in ("temperature", "top_p", "top_k"):
+                    payload.pop(field, None)
+                payload["thinking"] = {"type": "between_tools"}
+                payload["output_config"] = {**payload.get("output_config", {}), "effort": "high"}
+                if payload.get("tool_choice", {}).get("type") in {"tool", "any"}:
+                    payload["tool_choice"] = {"type": "auto"}
             path = "/messages" if self.config.api_mode == "anthropic_messages" else "/chat/completions"
             headers = ({"x-api-key": self.config.api_key, "anthropic-version": "2023-06-01"}
                        if self.config.api_mode == "anthropic_messages"

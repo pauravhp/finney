@@ -127,3 +127,61 @@ budget update retained all 904 consumed call reservations and all three attempts
 No old attempt was reset, no dataset was relabeled, and no promotion gate changed.
 The next operating review recovers the still-unresolved amendment and creates its
 own new trace. Fresh transfer cases remain unopened at this checkpoint.
+
+## 8. A real candidate, interrupted persistence and bounded continuation
+
+The recovery review again submitted a superseded reference. This time the specific
+domain rejection and deterministic lineage signal let the reasoning reviewer
+identify a supported `procedure_defect`. Actual upstream Harness2 ran four probe
+and four editor stages and selected a changed permitted procedure. Three search
+probes failed when their structured responses reached the 1,600-token cap; those
+failures remain in the archive and were not retried or counted as successful.
+
+The complete search archive reached private Storage. The following search audit
+write omitted an idempotency key, which the real database correctly rejected.
+The job failed before any candidate or evaluation row was saved. An actual
+PostgreSQL regression test now exercises this previously fixture-only boundary.
+The key was fixed; the failed job remains failed.
+
+We added an independently reviewed continuation restricted to that exact boundary.
+It verifies the original claimed attempt, failed job, archived selected bytes,
+baseline, policy/context, model settings and full dataset manifest. A one-shot
+nonce/idempotency claim prevents concurrent or repeated evaluation. The original
+96-call reservation remains charged: 30 calls were conservatively accounted before
+continuation, leaving enough for at most 64 paired calls. It shares the normal
+evaluation and activation code and has no direct promotion shortcut. A separate
+PostgreSQL rejection test also caught and fixed a final audit/promotion idempotency
+key collision, allowing a real rejection to finish cleanly.
+
+The real 4.6 continuation completed only the first validation baseline, which was
+incorrect. The candidate invocation then raised `opencode_provider_or_runtime_failure`.
+The phase ended blocked at 43 accounted calls, with no regression/transfer execution
+and no promotion. Its exact candidate failure cause was not retained; earlier
+search truncations do not prove the cause of this later failure. A future-only
+repair now persists bounded private paired-failure diagnostics and safe case/variant
+references. Neither the historical result nor the gates were rewritten.
+
+## 9. Completed operating exception and the 5.5 boundary
+
+The ordinary director request corrected the same obligation to USD 420.00 using
+only the current source and prepared a pending allocation. A real authenticated
+browser rejected the USD 420.00 allocation. The follow-up agent kept the liability
+open, retained unknown cash, created no duplicate proposal and made no payment.
+The current report includes the corrected liability and rejected decision. This
+is actual application/model execution on labeled synthetic inputs; it is not a
+claim that a real vendor was paid or that the skill was promoted.
+
+The owner then authorized Sonnet 5.5. Its conditional compatibility patch covers
+the direct reviewer, native provider bridge and OCR; legacy 4.6 behavior and all
+output/call guards remain. Seventeen protocol fixtures plus broader targeted checks
+passed. After 4.6 finished, real checks passed for a two-call read-only actor,
+one-call structured editor and one-call image OCR. A local smoke-helper process
+guard was corrected and image extraction rechecked offline; no duplicate provider
+call was made. Finney's dedicated worker switched once, after draining.
+
+A normal director request submitted through the live UI completed on 5.5 in three
+calls. It identified the obsolete USD 480.00 finding and explicitly distinguished
+an unsupported allocation prerequisite from the actual approval-request contract.
+That is a useful operating baseline on an already exposed case. It does not turn
+the 4.6 experiments into 5.5 evidence or count as learned improvement. No further
+learning attempt or budget extension has been taken.

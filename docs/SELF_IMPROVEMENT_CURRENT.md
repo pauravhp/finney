@@ -1,9 +1,11 @@
 # Finney's current self-improvement loop
 
-Current deployed acceptance: OpenCode + Harness2, active `baseline-v1`, no measured
-promotion yet. Stage/policy provenance repairs and fresh evaluation are currently
-being prepared; this document will record their acceptance before claiming them
-deployed. The complete history is [documented separately](SELF_IMPROVEMENT_JOURNEY.md).
+Current deployed runtime: OpenCode + Harness2, with **Claude Sonnet 5.5** for the
+finance actor, reasoning reviewer, editor and OCR. Jev remains a separate judge.
+The active skill remains `baseline-v1`; **no learned promotion has occurred**.
+Captured decision-time policy, shared stage vocabulary and safe domain-error
+feedback are deployed. The complete history is
+[documented separately](SELF_IMPROVEMENT_JOURNEY.md).
 
 ## Operating work
 
@@ -25,6 +27,14 @@ A reasoning reviewer must identify a source-supported defect in the mutable
 investigation procedure. A policy question, missing evidence, unsupported diagnosis
 or protected-authority issue does not become a patch. The recorded example ending
 in `policy_question` demonstrates this refusal, not successful self-improvement.
+
+Known source-reference rejections now carry fixed machine-readable reasons and
+recovery guidance. Raw provider messages remain private. Diagnosis also receives
+deterministic observations when a captured mutation uses a source already known
+to be replaced. These observations cite actual earlier reads and arguments; they
+do not infer a generic error's cause or force the reviewer to propose a patch.
+Operating policy comes from the captured context; evaluation policy belongs to
+the frozen synthetic suite and is never substituted into the historical trace.
 
 ## Candidate generation
 
@@ -67,3 +77,28 @@ It cannot yet claim a deployed learned improvement, customer-level accuracy,
 measured time savings or verified settlement from the learning experiment. The
 current corpus is synthetic with independent AI review. New unseen transfer evidence
 must use genuinely fresh cases after policy/evaluator semantics are frozen.
+
+## Latest bounded phase and model boundary
+
+The new four-case suite contains one validation, one regression and two final
+transfer cases. A 4.6 operating failure produced a supported diagnosis and a real
+Harness2 candidate. An omitted audit idempotency key interrupted the job after
+the complete search archive was saved. A separately audited, one-shot continuation
+used those exact candidate bytes, the original model/context and the same reserved
+96-call allowance. It did not regenerate a candidate or retry a scored case.
+
+The first validation baseline was incorrect; the candidate invocation then failed
+at the runtime/output boundary. The phase ended blocked with 43 conservatively
+accounted calls. Regression and final transfer were not reached. The two new final
+cases remain untouched; the older corpus's final partition remains consumed.
+Future paired failures now preserve bounded private diagnostics so a generic
+runtime failure need not hide its cause. This does not recover missing historical
+diagnostics or alter the blocked result.
+
+Sonnet 5.5 was enabled only after that 4.6 phase and active jobs finished. Actual
+native actor, editor and OCR smokes passed. One ordinary case-scoped director
+request also completed on 5.5 through the hosted UI and real worker. These establish
+operating compatibility on an exposed case, not an accuracy benchmark or a learned
+gain. Keep all historical 4.6 results labeled 4.6. A future 5.5 learning phase needs
+its own model-matched baseline and explicitly allocated attempt budget; no 5.5
+learning attempt has run.

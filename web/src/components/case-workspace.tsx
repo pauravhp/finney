@@ -43,21 +43,41 @@ function SourcePaper({
   source: Row;
   snapshot: FinanceSnapshot;
 }) {
-  const [text, setText] = useState<string | null>(null);
-  const [failure, setFailure] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const path = textValue(source.artifact_path, "");
+  const identity = JSON.stringify([
+    snapshot.organization.id,
+    snapshot.run.id,
+    source.id,
+    source.version,
+    path,
+  ]);
+  const [receipt, setReceipt] = useState<{
+    identity: string;
+    status: "loading" | "ready" | "error";
+    text?: string;
+    failure?: string;
+  } | null>(null);
+  // Props may change before an effect runs. Never label the previous fetch's
+  // text/error as the newly requested document, even if a parent reuses its key.
+  const matching = receipt?.identity === identity;
+  const text =
+    matching && receipt.status === "ready" ? (receipt.text ?? null) : null;
+  const failure =
+    matching && receipt.status === "error" ? receipt.failure : null;
+  const loading = Boolean(path) && (!matching || receipt.status === "loading");
   const metadata = record(source.metadata);
   useEffect(() => {
     let current = true;
-    setText(null);
-    setFailure(null);
     if (!path) return;
+    setReceipt({ identity, status: "loading" });
     if (!path.startsWith(`${snapshot.organization.id}/${snapshot.run.id}/`)) {
-      setFailure("This document does not belong to the selected event run.");
+      setReceipt({
+        identity,
+        status: "error",
+        failure: "This document does not belong to the selected event run.",
+      });
       return;
     }
-    setLoading(true);
     void browserSupabase()
       .storage.from("finance-artifacts")
       .download(path)
@@ -85,31 +105,37 @@ function SourcePaper({
           /* Plain-text sources render as text, never HTML. */
         }
         if (current)
-          setText(
-            visible.slice(0, 100000) +
+          setReceipt({
+            identity,
+            status: "ready",
+            text:
+              visible.slice(0, 100000) +
               (visible.length > 100000
                 ? "\n[Preview truncated. Download the source for the full record.]"
                 : ""),
-          );
+          });
       })
       .catch((error) => {
         if (current)
-          setFailure(
-            error instanceof Error ? error.message : "Source unavailable.",
-          );
-      })
-      .finally(() => {
-        if (current) setLoading(false);
+          setReceipt({
+            identity,
+            status: "error",
+            failure:
+              error instanceof Error ? error.message : "Source unavailable.",
+          });
       });
     return () => {
       current = false;
     };
-  }, [path, source.version, snapshot.organization.id, snapshot.run.id]);
+  }, [identity, path, snapshot.organization.id, snapshot.run.id]);
   return (
     <article
       className="source-paper-live"
       data-source-id={textValue(source.id)}
       data-source-version={textValue(source.version)}
+      data-source-load-state={
+        !path ? "unavailable" : matching ? receipt.status : "loading"
+      }
     >
       <header>
         <FileText size={20} />
@@ -132,7 +158,15 @@ function SourcePaper({
         </p>
       )}
       {failure && <p role="alert">{failure}</p>}
-      {text !== null && <pre className="source-content">{text}</pre>}
+      {text !== null && (
+        <pre
+          className="source-content"
+          data-loaded-source-id={textValue(source.id)}
+          data-loaded-source-version={textValue(source.version)}
+        >
+          {text}
+        </pre>
+      )}
       {!path && <p>No stored document preview is available.</p>}
       <details>
         <summary>Source provenance</summary>
@@ -171,6 +205,28 @@ export function CaseWorkspace({
   const source = sources.find((row) => row.id === selected) ?? sources[0];
   const finding = record(item.data.finding);
   const action = record(finding.proposed_action);
+  const responses = Array.isArray(item.data.director_responses)
+    ? item.data.director_responses.filter(
+        (value) =>
+          typeof record(value).message === "string" &&
+          String(record(value).message).trim(),
+      )
+    : [];
+  // Stored conversation history is appended by the guarded persistence RPC.
+  // Compare recorded case versions; prose never changes financial state here.
+  const latestResponse = responses.length
+    ? record(responses[responses.length - 1])
+    : null;
+  const reviewVersion = record(finding.provenance).source_case_version;
+  const responseVersion = record(
+    latestResponse?.provenance,
+  ).source_case_version;
+  const newerResponse =
+    typeof reviewVersion === "number" &&
+    Number.isSafeInteger(reviewVersion) &&
+    typeof responseVersion === "number" &&
+    Number.isSafeInteger(responseVersion) &&
+    responseVersion > reviewVersion;
   const blockers = Array.isArray(finding.blocking_requirements)
     ? finding.blocking_requirements
     : [];
@@ -251,7 +307,11 @@ export function CaseWorkspace({
               )}
             </section>
           ) : source ? (
-            <SourcePaper key={`${textValue(source.id)}:${textValue(source.version)}`} source={source} snapshot={snapshot} />
+            <SourcePaper
+              key={`${textValue(source.id)}:${textValue(source.version)}`}
+              source={source}
+              snapshot={snapshot}
+            />
           ) : (
             <section className="source-paper-live">
               <h2>Source evidence</h2>
@@ -273,10 +333,12 @@ export function CaseWorkspace({
               ? "Working on this case."
               : queued
                 ? "Review queued."
-                : textValue(finding.decision, "Ready for review").replaceAll(
-                    "_",
-                    " ",
-                  )}
+                : newerResponse
+                  ? "Latest response"
+                  : textValue(finding.decision, "Ready for review").replaceAll(
+                      "_",
+                      " ",
+                    )}
           </h2>
           {running && (
             <p className="case-progress" role="status">
@@ -284,67 +346,100 @@ export function CaseWorkspace({
               You can keep using the desk.
             </p>
           )}
-          {typeof finding.explanation === "string" && (
-            <p className="case-explanation">{finding.explanation}</p>
+          {newerResponse && latestResponse && (
+            <section className="case-latest-response">
+              <p className="case-chronology-label">
+                Based on case v{String(responseVersion)} · Stored agent response
+              </p>
+              <DirectorResponses
+                responses={[latestResponse]}
+                heading="Finney’s latest reply"
+              />
+            </section>
           )}
-          {amount !== null && (
-            <dl className="case-amount">
-              <div>
-                <dt>Proposed amount</dt>
-                <dd>
-                  {formatMoney(
-                    amount,
-                    textValue(action.currency, snapshot.run.currency),
-                  )}
-                </dd>
-              </div>
-              {Boolean(
-                action.payee || action.recipient || action.destination,
-              ) && (
+          {newerResponse && decisions}
+          <section
+            className={
+              newerResponse
+                ? "prepared-case-review earlier-prepared-review"
+                : "prepared-case-review"
+            }
+          >
+            {newerResponse && (
+              <h3 className="case-chronology-label">
+                Earlier prepared review · based on case v{String(reviewVersion)}
+              </h3>
+            )}
+            {typeof finding.explanation === "string" && (
+              <p className="case-explanation">{finding.explanation}</p>
+            )}
+            {amount !== null && (
+              <dl className="case-amount">
                 <div>
-                  <dt>To</dt>
+                  <dt>
+                    {newerResponse
+                      ? "Earlier proposed amount"
+                      : "Proposed amount"}
+                  </dt>
                   <dd>
-                    {textValue(
-                      action.payee ?? action.recipient ?? action.destination,
+                    {formatMoney(
+                      amount,
+                      textValue(action.currency, snapshot.run.currency),
                     )}
                   </dd>
                 </div>
-              )}
-            </dl>
-          )}
-          {typeof finding.clarification === "string" && (
-            <p className="case-clarification">{finding.clarification}</p>
-          )}
-          {blockers.length > 0 && (
-            <section className="case-blockers">
-              <h3>What needs attention</h3>
-              <ul>
-                {blockers.map((value, index) => {
-                  const row = record(value);
-                  return (
-                    <li key={index}>
-                      <strong>
-                        {textValue(row.stage, "Review").replaceAll("_", " ")}
-                      </strong>
-                      <span>
-                        {textValue(
-                          row.requirement ?? row.reason ?? row.description,
-                          "Inspect the recorded requirement",
-                        ).replaceAll("_", " ")}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          )}
-          {Boolean(finding.verification) && (
-            <p className="muted">
-              Agent recommendation ·{" "}
-              {textValue(finding.verification).replaceAll("_", " ")}
-            </p>
-          )}
-          {decisions}
+                {Boolean(
+                  action.payee || action.recipient || action.destination,
+                ) && (
+                  <div>
+                    <dt>To</dt>
+                    <dd>
+                      {textValue(
+                        action.payee ?? action.recipient ?? action.destination,
+                      )}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            )}
+            {typeof finding.clarification === "string" && (
+              <p className="case-clarification">{finding.clarification}</p>
+            )}
+            {blockers.length > 0 && (
+              <section className="case-blockers">
+                <h3>
+                  {newerResponse
+                    ? "Requirements in that review"
+                    : "What needs attention"}
+                </h3>
+                <ul>
+                  {blockers.map((value, index) => {
+                    const row = record(value);
+                    return (
+                      <li key={index}>
+                        <strong>
+                          {textValue(row.stage, "Review").replaceAll("_", " ")}
+                        </strong>
+                        <span>
+                          {textValue(
+                            row.requirement ?? row.reason ?? row.description,
+                            "Inspect the recorded requirement",
+                          ).replaceAll("_", " ")}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+            {Boolean(finding.verification) && (
+              <p className="muted">
+                Agent recommendation ·{" "}
+                {textValue(finding.verification).replaceAll("_", " ")}
+              </p>
+            )}
+          </section>
+          {!newerResponse && decisions}
           <button
             className="primary"
             disabled={!canWork || busy}
@@ -352,7 +447,14 @@ export function CaseWorkspace({
           >
             {running || queued ? "Queue another review" : "Request review"}
           </button>
-          <DirectorResponses responses={item.data.director_responses} />
+          {!newerResponse ? (
+            <DirectorResponses responses={item.data.director_responses} />
+          ) : responses.length > 1 ? (
+            <details className="case-response-history">
+              <summary>Earlier replies ({responses.length - 1})</summary>
+              <DirectorResponses responses={responses.slice(0, -1)} />
+            </details>
+          ) : null}
           {conversationForm && (
             <details className="case-conversation">
               <summary>Ask about this case</summary>

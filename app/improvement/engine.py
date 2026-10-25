@@ -13,6 +13,7 @@ from uuid import uuid4
 from app.finance.types import FinanceError, minor_units
 from app.models import GenerativeModel, JevClient, ModelError
 from app.runtime.decision_contract import OUTPUT_CONTRACT
+from app.runtime.failure_intake import private_failure_artifact
 from app.runtime.hermes import FinanceTools, HermesActor
 
 from .decisions import EVALUATOR_VERSION
@@ -326,6 +327,35 @@ class _AttemptState:
             "cost_usd": observed.get("cost_usd"),
             "latency_seconds": observed.get("latency_seconds"), "model": observed.get("model"),
         })
+
+
+async def _paired_failure_receipt(tools, *, error: ModelError, attempt: str,
+                                  case: EvaluationCase, variant: str) -> dict:
+    """Retain bounded private runtime evidence without treating it as a decision."""
+    observation = {"phase": "paired_actor_execution", "case_key": case.case_key,
+                   "variant": variant, "group": case.group,
+                   "source_snapshot_hash": case.source_snapshot_hash,
+                   "reason": error.code, "provider_status": error.status,
+                   "diagnostic_status": "not_supplied"}
+    try:
+        diagnostic = getattr(error, "private_diagnostic", None)
+        if not isinstance(diagnostic, dict):
+            return observation
+        identity = hashlib.sha256(case.case_key.encode()).hexdigest()[:16]
+        receipt = await tools.call("put_artifact", {
+            "name": f"paired-failure-{attempt}-{identity}-{variant}.json",
+            "content_type": "application/json", "content": private_failure_artifact(diagnostic),
+            "idempotency_key": f"improvement:{attempt}:paired-failure:{identity}:{variant}",
+        })
+        # Only the trusted artifact locator/hash cross into ordinary metrics.
+        observation.update(diagnostic_status="persisted", diagnostic_artifact={
+            "artifact_path": receipt["artifact_path"], "content_sha256": receipt["content_sha256"]})
+    except Exception as persistence_error:  # noqa: BLE001 -- preserve the original actor failure.
+        name = type(persistence_error).__name__
+        observation.update(diagnostic_status="unavailable", diagnostic_error_type=name if name in {
+            "SupabaseError", "TimeoutError", "OSError", "ValueError", "TypeError", "KeyError"
+        } else "Exception")
+    return observation
 
 
 class ImprovementEngine:
@@ -664,16 +694,22 @@ class ImprovementEngine:
                         if limit < 1:
                             raise ModelError("evaluation_model_call_budget_exhausted")
                         reserve_calls(limit)
-                        result = await self.actor.run(
-                            {"case": copy.deepcopy(case.snapshot), "mode": "prepare_only"},
-                            (fixed_context["prefix"] + skill + fixed_context["suffix"])
-                            if fixed_context
-                            else skill,
-                            scoped,
-                            allowed_tools=READ_TOOLS,
-                            policy=copy.deepcopy(suite.policy),
-                            max_model_calls=limit,
-                        )
+                        try:
+                            result = await self.actor.run(
+                                {"case": copy.deepcopy(case.snapshot), "mode": "prepare_only"},
+                                (fixed_context["prefix"] + skill + fixed_context["suffix"])
+                                if fixed_context
+                                else skill,
+                                scoped,
+                                allowed_tools=READ_TOOLS,
+                                policy=copy.deepcopy(suite.policy),
+                                max_model_calls=limit,
+                            )
+                        except ModelError as error:
+                            evidence["paired_actor_failure"] = await _paired_failure_receipt(
+                                tools, error=error, attempt=attempt, case=case, variant=variant,
+                            )
+                            raise
                         usage(f"evaluation:{case.case_key}:{variant}", result)
                         actual_calls = result["evidence"].get("api_calls")
                         if type(actual_calls) is int and 0 <= actual_calls <= limit:
@@ -762,11 +798,15 @@ class ImprovementEngine:
                             "reason": error.code,
                             "model_call_budget": evidence["model_call_budget"],
                             "completed_rows": len(evidence["rows"]),
+                            **({"paired_actor_failure": evidence["paired_actor_failure"]}
+                               if "paired_actor_failure" in evidence else {}),
                         },
                         "idempotency_key": f"improvement:{attempt}:eval-incomplete",
                     },
                 )
-            await state(status, reason=error.code, provider_status=error.status)
+            await state(status, reason=error.code, provider_status=error.status,
+                        **({"paired_actor_failure": evidence["paired_actor_failure"]}
+                           if "paired_actor_failure" in evidence else {}))
             return {**evidence, "reason": error.code, "provider_status": error.status}
 
 

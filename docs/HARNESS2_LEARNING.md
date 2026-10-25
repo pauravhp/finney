@@ -51,6 +51,12 @@ failures even when they contain a plausible output object.
 
 ## Run one bounded comparison
 
+The command below operates on the original 24-case corpus. Its completed final
+partition has already been consumed in the demonstrated event; it cannot supply
+fresh transfer evidence by changing the experiment or run ID. The deployed online
+path and separate new suite are described in the
+[current loop](SELF_IMPROVEMENT_CURRENT.md).
+
 Use an existing authorized private synthetic test run with enough remaining
 inference allowance. Run the live experiment on a quiet host; perform builds and
 scripted browser/runtime checks afterward. Concurrent release checks caused

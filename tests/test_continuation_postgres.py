@@ -200,3 +200,32 @@ async def test_read_only_preflight_checks_every_proof_without_claim_or_inference
     assert result["continuation_claimed"] is False and actor.calls == []
     assert all(name in {"get_active_skill", "read_artifact"} for name, _ in tools.calls[before:])
     assert conn.execute("select count(*) from trace_events where idempotency_key=%s", (f"improvement:{attempt}:continue-post-search",)).fetchone()[0] == 0
+
+
+@pytest.mark.asyncio
+async def test_paired_runtime_failure_persists_private_receipt_and_finishes_original_attempt_blocked(state, tmp_path, monkeypatch):
+    from app.runtime.opencode import OpenCodeActorError
+    conn, tools, actor, attempt, archive, baseline = await prepared(state, tmp_path, monkeypatch)
+    original = actor.run
+    invocations = 0
+    async def failed_candidate(*args, **kwargs):
+        nonlocal invocations
+        invocations += 1
+        if invocations == 2:
+            raise OpenCodeActorError("opencode_provider_or_runtime_failure", private_diagnostic={
+                "original_final_response": "PRIVATE_PAIRED_POSTGRES_FIXTURE", "tool_events": [], "api_calls": 2})
+        return await original(*args, **kwargs)
+    actor.run = failed_candidate
+    result = await continue_archived_search(connection=conn, tools=tools, actor=actor, attempt_id=attempt, archive_receipt=archive)
+    assert result["status"] == "blocked" and len(result["rows"]) == 1 and invocations == 2
+    failure = result["paired_actor_failure"]
+    assert failure["variant"] == "candidate" and failure["group"] == "validation"
+    assert failure["diagnostic_status"] == "persisted"
+    private = await tools.call("read_artifact", {"artifact_path": failure["diagnostic_artifact"]["artifact_path"]})
+    assert "PRIVATE_PAIRED_POSTGRES_FIXTURE" in private["content"]
+    assert "PRIVATE_PAIRED_POSTGRES_FIXTURE" not in json.dumps(result)
+    metrics = conn.execute("select metrics from eval_runs where run_id=%s", (tools.scope.run_id,)).fetchone()[0]
+    assert metrics["paired_actor_failure"] == failure and metrics["gate_passed"] is False
+    assert conn.execute("select status from finance_improvement_attempts where id=%s", (attempt,)).fetchone()[0] == "blocked"
+    assert conn.execute("select count(*) from finance_improvement_holdouts where attempt_id=%s", (attempt,)).fetchone()[0] == 0
+    assert (await tools.call("get_active_skill", {"skill_name": "organizer-expenses"}))["id"] == baseline["id"]
