@@ -1,0 +1,49 @@
+# Validation and current limits
+
+The implementation uses isolated Hermes, real provider calls and hosted Supabase.
+The financial inputs used for acceptance are explicitly synthetic. Model answers,
+provider responses, payments and improvement scores are never seeded as successes.
+Raw live receipts, account identifiers, authorization callbacks and private runtime
+state are excluded from this repository.
+
+## Verified
+
+- 639 Python tests and 28 subtests passed, including isolated PostgreSQL integration
+  for authorization, finance invariants, version checks, migrations and concurrency.
+- 48 web unit tests, 15 desktop/mobile browser checks, production build and TypeScript
+  passed. Ten optional Auth SDK fixture checks and one desktop-only exclusion were
+  skipped in the normal browser run; fixture checks are not live provider proof.
+- Actual password sign-in, approved budget allocation, PDF upload/private Storage,
+  extraction, queued Hermes review, Jev triage, persisted finding and close report.
+- Actual private Realtime broadcast matched its audit event; native original-document
+  download matched the uploaded bytes.
+- Real Claude vision OCR with a durable call reservation and unverified-source status.
+- Actual authenticated guided-demo seeding and two real source reviews. Cash remained
+  unknown; no payment, approval or successful learning result was seeded.
+- Actual director conversation persisted and rendered the provider's answer and
+  consulted-source provenance without changing financial findings or financial records.
+
+## Learning evidence
+
+The control path includes trace diagnosis, bounded candidate generation, immutable
+paired validation/regression/transfer inputs, independent SQL promotion checks,
+active-version loading and rollback. Local lifecycle tests use explicit model fixtures.
+Live checks have produced rejected diagnoses/candidates and no measured promotion.
+One fresh frozen operating review failed validation because its blockers omitted
+supporting references; it never reached the reviewer or evaluation stages. A failure
+is not counted as an improvement. See the build summaries for these distinctions.
+
+## Still unverified or outside coverage
+
+- Live learned improvement, untouched-transfer success and promotion.
+- Coinbase wallet consent, funding and actual testnet payout/x402 settlement.
+- Public Vercel deployment and anonymous guest Auth. Guest entry is opt-in and needs
+  provider/anti-abuse configuration before public use.
+- Nonempty live Gmail intake. The isolated readonly profile/history/empty-label path
+  ran live; attachment processing also has local transport and SQL tests.
+- Bank/Plaid reconciliation, tax filing and outbound vendor/sponsor messaging.
+- Wallet links conservatively become unavailable when an event revision changes;
+  existing submitted/request-linked payments can still be reconciled without resending.
+
+Run the commands in the README against your own isolated test database. Never point
+the integration-test database variable at an operating financial database.

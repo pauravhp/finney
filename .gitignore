@@ -1,0 +1,25 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+.runtime/
+.state/
+.artifacts/
+node_modules/
+.next/
+.vercel/
+*.egg-info/
+*.log
+*.pem
+*.key
+coverage/
+finance-setup.sql
+event-setup.sql
+dist/
+!docs/build/
+!docs/build/**
+# Instance-specific live receipts and diagnostic/source payloads stay private.
+docs/build/evidence/

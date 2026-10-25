@@ -1,0 +1,18 @@
+{
+  "project": "hermes-agent",
+  "version": "0.20.0",
+  "revision": "08606fc2317f591f4e73292670be65a9bf35da72",
+  "source_kind": "public_git_commit",
+  "files": {
+    "run_agent.py": "f31e01cabdd0936f69e9538da0773f46b2e7760a5ae7711f8872a90a98ab6d81",
+    "agent/agent_init.py": "975a30719e406dbbd48efd12a91deb16d6d5993377b1c60411bc59c161708176",
+    "agent/conversation_loop.py": "efc383a848593ff5aca9be701d5702a4c5d4b9c32e0768ea5f8f57ebe92b2cb9",
+    "tools/registry.py": "64a1826a546a439b194c6512c500a725ac69c717d6fe462824f362fe9f5237f2",
+    "model_tools.py": "770e2bc1f7d4eda7e6a4f83b2079073a50b09a13c7166ce9ce9544e98a2cf8ed",
+    "toolsets.py": "7677d7a578545b34a8942a6a496c555b732108349c8ebcb6750eba55f2050995",
+    "hermes_cli/env_loader.py": "a9598030743443edf8b3342b5178f6415911b108acf483ab21c71b9424ffd6ec",
+    "agent/anthropic_adapter.py": "0a14b86f08665d064e08f0bdcf63f49d99da8fcce814a260a89b969f1b7c5894"
+  },
+  "tree_sha256": "b559f75798fcf17e0d97d331e86f053be940a8da23b8b6e7324fdb7439aa0bee",
+  "repository": "https://github.com/NousResearch/hermes-agent"
+}
