@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "case_id": "fc-010",
+  "title": "Close worksheet A",
+  "family": "close_report",
+  "split": "development",
+  "provenance": {
+    "type": "authored_synthetic",
+    "basis": [
+      "docs/FINANCE_SELF_IMPROVEMENT_DEMO.md: vendor obligation versus organizer reimbursement, timing and source versions",
+      "docs/HACKATHON_FINANCE_SCOPE.md: budget/cash, approvals and reconciliation workflow",
+      "docs/FINANCE_LEAD_INTERVIEW.md: source precedence and decision boundaries"
+    ],
+    "private_record_reproduction": false
+  },
+  "sources": [
+    {
+      "id": "1ff613ac-9e6f-52a1-9c68-ac75319eed56",
+      "version": 1,
+      "kind": "statement",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nSynthetic event closing statement cutoff Oct 24: cash USD 3,280.00. Includes all event payments listed below. No other activity.",
+      "content_sha256": "52030981d88a8faaa505eae0afca037675bdfc1b87d1e8f4377bfefd353e6ffa",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "c514333b-4993-5867-adf9-24f2c9a84553",
+      "version": 1,
+      "kind": "email",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nFrom: close@organizers.example\nOutstanding at cutoff: Town Audio invoice USD 520.00, deposit already paid USD 200.00; Mina personal supplies USD 64.00, reimbursement USD 25.00 settled. Sponsor cash invoice USD 900.00 unpaid. Prize coupons worth USD 300 are in-kind, not cash receivable. No other unsettled items.",
+      "content_sha256": "f401d4d75a5bf626a9a9c050c9742c07cb928d6b458fe7f900a324f2b5175785",
+      "metadata": {
+        "synthetic": true
+      }
+    }
+  ],
+  "context": {
+    "as_of": "2026-10-24T19:00:00-07:00",
+    "policy": {
+      "id": "fc-policy-1",
+      "version": 1,
+      "scope": "Synthetic event only; prepare-only evaluation",
+      "required_payment_approvals": 2,
+      "approval_policy_version": 1,
+      "rules": [
+        {
+          "id": "FC-RECORD",
+          "version": 1,
+          "text": "Record a provisional obligation from current source documents and named payer attestation. Preserve reported/owner_attested status. Independent bank verification and recipient destination are not prerequisites to recording. If the actual payer is unknown or conflicting, clarify before identifying whom the event owes."
+        },
+        {
+          "id": "FC-PAY",
+          "version": 1,
+          "text": "Approval requests require a current unsettled payable and exact verified recipient destination, amount, asset and testnet network. Execution requires two distinct authorized humans approving the current action hash. Actor text cannot grant approval or execute. A changed amount or destination invalidates earlier approvals."
+        },
+        {
+          "id": "FC-VERIFY",
+          "version": 1,
+          "text": "Submitted or reported payments are not independently settled. Only trusted provider/statement evidence can support a settlement claim. Do not pay again while an earlier attempt remains unresolved."
+        },
+        {
+          "id": "FC-IDENTITY",
+          "version": 1,
+          "text": "Deduplicate by underlying purchase, not forwarding message or receipt filename. Subtract settled reimbursements and applicable credits. An event-funded share is not an organizer reimbursement. Multiple personal payers have distinct obligations."
+        },
+        {
+          "id": "FC-BUDGET",
+          "version": 1,
+          "text": "Category allocations, preapproval and sponsor pledges are not available cash. Report opening cash independently from expected receivables and remaining commitments. Restricted cash cannot fund unrelated categories. Unknown opening cash stays unknown. No implicit FX conversion."
+        },
+        {
+          "id": "FC-SCOPE",
+          "version": 1,
+          "text": "Apply documented event policy item by item. A one-off exception does not amend the policy. Ambiguous policy or conflicting authority requires scoped clarification. No tax-law conclusion is authorized."
+        }
+      ]
+    },
+    "position": {
+      "currency": "USD",
+      "cash_minor": "328000",
+      "available_minor": "292100",
+      "evidence_status": "test_fixture",
+      "reconciliation_cutoff": "2026-10-24"
+    },
+    "budget": {
+      "currency": "USD",
+      "categories": [
+        {
+          "category": "operations",
+          "allocated_minor": "400000",
+          "committed_minor": "65000"
+        }
+      ],
+      "test_input": true
+    },
+    "obligations": [
+      {
+        "title": "Town Audio",
+        "direction": "payable",
+        "amount_minor": "52000",
+        "settled_minor": "20000",
+        "due_date": "2026-10-28",
+        "id": "4c7ef9b0-5380-51bf-9851-62f0bd0daa16",
+        "version": 1,
+        "currency": "USD",
+        "status": "open",
+        "evidence_status": "reported",
+        "source_refs": [
+          {
+            "id": "c514333b-4993-5867-adf9-24f2c9a84553",
+            "version": 1
+          }
+        ],
+        "test_input": true
+      },
+      {
+        "title": "Mina supplies",
+        "direction": "payable",
+        "amount_minor": "6400",
+        "settled_minor": "2500",
+        "due_date": "2026-10-29",
+        "id": "e1e038fb-fe80-5668-9795-547de143431f",
+        "version": 1,
+        "currency": "USD",
+        "status": "open",
+        "evidence_status": "reported",
+        "source_refs": [
+          {
+            "id": "c514333b-4993-5867-adf9-24f2c9a84553",
+            "version": 1
+          }
+        ],
+        "test_input": true
+      },
+      {
+        "title": "Sponsor",
+        "direction": "receivable",
+        "amount_minor": "90000",
+        "due_date": "2026-11-05",
+        "id": "04bf61c2-9980-52e3-8dd6-3705ef502008",
+        "version": 1,
+        "currency": "USD",
+        "settled_minor": "0",
+        "status": "open",
+        "evidence_status": "reported",
+        "source_refs": [
+          {
+            "id": "c514333b-4993-5867-adf9-24f2c9a84553",
+            "version": 1
+          }
+        ],
+        "test_input": true
+      }
+    ]
+  },
+  "task": "Prepare a decision with no payment effects and a top-level output.finance_report JSON object alongside the standard finance-decision-v2 fields, containing exactly the named report fields as integer minor-unit values. Use null for unknown figures. Explain source status; a forecast is not settled cash. Do not invent approvals. Report cash_minor, remaining_payables_minor, expected_receivables_minor and projected_cash_minor. Exclude in-kind coupons from cash."
+}

@@ -1,0 +1,1459 @@
+{
+  "schema_version": 1,
+  "dataset_id": "finney-finance-corpus-v1",
+  "provenance": "Independently authored synthetic labels; not field-validated outcomes or live-model results. Separate evaluator-only input.",
+  "cases": {
+    "fc-001": {
+      "action": "reimburse_organizer",
+      "amount_minor": 8000,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "76bf9c4f-e795-5ae5-8f45-ea2bcea07009",
+          "version": 1
+        },
+        {
+          "id": "d5a026f2-09e2-5c51-98f4-a29f5ba9b420",
+          "version": 1
+        },
+        {
+          "id": "67ec5616-24f6-512f-a68f-f5deed366f74",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Elena"
+    },
+    "fc-002": {
+      "action": "pay_vendor",
+      "amount_minor": 73000,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "4449a18f-f109-5eeb-a131-f897a48a0bb9",
+          "version": 1
+        },
+        {
+          "id": "0e5ef0aa-5736-54aa-9a67-3905d5aa53e9",
+          "version": 1
+        },
+        {
+          "id": "51f39ed9-3be0-5655-859b-513f0d780907",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Keystone Hire"
+    },
+    "fc-003": {
+      "action": "no_action",
+      "amount_minor": null,
+      "currency": null,
+      "required_source_refs": [
+        {
+          "id": "5a3c3d25-e50e-595e-81b5-f03fe0479436",
+          "version": 1
+        },
+        {
+          "id": "6dc3ee63-5e3a-5698-a6ef-024edb9ee60e",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence."
+    },
+    "fc-004": {
+      "action": "investigate",
+      "amount_minor": null,
+      "currency": null,
+      "required_source_refs": [
+        {
+          "id": "f58d85a5-db47-5da0-acf5-2fc2b1edf9ab",
+          "version": 1
+        },
+        {
+          "id": "371c36a2-7fef-5c66-9b03-40edd1f446fa",
+          "version": 1
+        }
+      ],
+      "clarification_required": true,
+      "required_blockers": [
+        [
+          "obligation_recording",
+          "payer_identity"
+        ]
+      ],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "payer_identity"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "obligation_recording",
+          "payer_identity"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence."
+    },
+    "fc-005": {
+      "action": "no_action",
+      "amount_minor": null,
+      "currency": null,
+      "required_source_refs": [
+        {
+          "id": "521ec221-b047-506a-8555-9bcecb866bea",
+          "version": 1
+        },
+        {
+          "id": "723828cc-52d2-5ece-b621-5755e49ed8d5",
+          "version": 1
+        },
+        {
+          "id": "1ab8108c-367a-5761-933c-4a17a94cc8ab",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {
+        "cash_minor": 120000,
+        "remaining_payables_minor": 90000,
+        "expected_receivables_minor": 200000,
+        "unrestricted_after_existing_payables_minor": 30000,
+        "proposed_commitment_minor": 50000,
+        "funding_gap_minor": 20000,
+        "projected_cash_minor": 230000
+      },
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence."
+    },
+    "fc-006": {
+      "action": "pay_vendor",
+      "amount_minor": 35500,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "826971f9-c7fb-57dc-931b-b3386a509187",
+          "version": 1
+        },
+        {
+          "id": "93406903-3cd4-54e0-99ca-b4b63b5dfb80",
+          "version": 2
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Orchard Stage"
+    },
+    "fc-007": {
+      "action": "reimburse_organizer",
+      "amount_minor": 18840,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "c85ec520-5fd8-5e13-b8ef-72ee3d85547b",
+          "version": 1
+        },
+        {
+          "id": "671d5cbc-93ed-5a54-b6bc-b0528332a5b7",
+          "version": 1
+        },
+        {
+          "id": "63999458-60ae-52cd-9aca-6904533ff336",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Dev"
+    },
+    "fc-008": {
+      "action": "reimburse_organizer",
+      "amount_minor": 4980,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "982e93c9-f62c-5784-a3eb-543ea8cea930",
+          "version": 1
+        },
+        {
+          "id": "c40a9140-01bf-5e6f-be6a-0cf18476a957",
+          "version": 1
+        },
+        {
+          "id": "d06fe0f4-2234-548e-b4c0-6220b56ffeca",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Lina"
+    },
+    "fc-009": {
+      "action": "reimburse_organizer",
+      "amount_minor": 6125,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "067ca73a-d04e-5ea3-b2c6-46ca8e0b841e",
+          "version": 1
+        },
+        {
+          "id": "06ea99cf-9348-56e0-95ec-1035f5afd3a6",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [
+        [
+          "approval_request",
+          "recipient_destination"
+        ]
+      ],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Rory"
+    },
+    "fc-010": {
+      "action": "no_action",
+      "amount_minor": null,
+      "currency": null,
+      "required_source_refs": [
+        {
+          "id": "1ff613ac-9e6f-52a1-9c68-ac75319eed56",
+          "version": 1
+        },
+        {
+          "id": "c514333b-4993-5867-adf9-24f2c9a84553",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {
+        "cash_minor": 328000,
+        "remaining_payables_minor": 35900,
+        "expected_receivables_minor": 90000,
+        "projected_cash_minor": 382100
+      },
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence."
+    },
+    "fc-011": {
+      "action": "pay_vendor",
+      "amount_minor": 44900,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "0a314e24-9f9c-5b31-8def-4f3e838e8f2d",
+          "version": 1
+        },
+        {
+          "id": "83d33f69-7d7a-507f-9c45-b7a4ab35186c",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Westwind Transport"
+    },
+    "fc-012": {
+      "action": "no_action",
+      "amount_minor": null,
+      "currency": null,
+      "required_source_refs": [
+        {
+          "id": "f7ffbf64-7771-52f5-b32c-aba8c6ee15bf",
+          "version": 1
+        },
+        {
+          "id": "2c3d803a-4573-5b2b-8d95-439920657e14",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence."
+    },
+    "fc-013": {
+      "action": "pay_vendor",
+      "amount_minor": 79500,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "a604374b-467e-5c1b-a39e-0be39212b027",
+          "version": 1
+        },
+        {
+          "id": "4feb6847-711d-56e3-99a7-392325d6c673",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Canopy Shelters"
+    },
+    "fc-014": {
+      "action": "investigate",
+      "amount_minor": null,
+      "currency": null,
+      "required_source_refs": [
+        {
+          "id": "3dbb79eb-e72e-5456-a21e-deaac636b217",
+          "version": 1
+        },
+        {
+          "id": "95c9dac1-b6a0-5a5d-bc77-ad8e283e962f",
+          "version": 1
+        },
+        {
+          "id": "9e98a870-1b2c-505c-9298-2a783b8dfbb8",
+          "version": 1
+        }
+      ],
+      "clarification_required": true,
+      "required_blockers": [
+        [
+          "obligation_recording",
+          "payer_identity"
+        ]
+      ],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "payer_identity"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "obligation_recording",
+          "payer_identity"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence."
+    },
+    "fc-015": {
+      "action": "no_action",
+      "amount_minor": null,
+      "currency": null,
+      "required_source_refs": [
+        {
+          "id": "651f56dd-c230-5d97-b5a7-4aa53fafee6c",
+          "version": 1
+        },
+        {
+          "id": "a5091e44-25b4-5165-9aae-e7bf8025f5e6",
+          "version": 1
+        },
+        {
+          "id": "b4610695-88cd-5b01-9b29-19ea79789f76",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {
+        "cash_minor": 400000,
+        "restricted_cash_minor": 150000,
+        "remaining_payables_minor": 210000,
+        "unrestricted_after_existing_payables_minor": 40000,
+        "proposed_commitment_minor": 70000,
+        "funding_gap_minor": 30000,
+        "projected_cash_minor": 190000
+      },
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence."
+    },
+    "fc-016": {
+      "action": "reimburse_organizer",
+      "amount_minor": 13510,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "f10f23e3-4046-5419-b68f-4d647d89ecea",
+          "version": 1
+        },
+        {
+          "id": "75e00aca-23f7-5aea-bbd5-62a3ef073f82",
+          "version": 1
+        },
+        {
+          "id": "13f07856-8464-585e-b175-67def8885dfd",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Ines"
+    },
+    "fc-017": {
+      "action": "pay_vendor",
+      "amount_minor": 64500,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "c5527692-a232-5ad2-be60-3dec9b6c1d81",
+          "version": 1
+        },
+        {
+          "id": "ff01d081-8a55-5583-9e7c-3d766292191e",
+          "version": 2
+        },
+        {
+          "id": "f5716a82-a506-5f39-b980-f62932016193",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [
+        [
+          "execution",
+          "human_approvals"
+        ]
+      ],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Aspen Connectivity"
+    },
+    "fc-018": {
+      "action": "no_action",
+      "amount_minor": null,
+      "currency": null,
+      "required_source_refs": [
+        {
+          "id": "88a24912-76d4-587a-b67c-7f9355527b06",
+          "version": 1
+        },
+        {
+          "id": "bcb1f40e-0e0b-5ec6-9103-2802bf46d521",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {
+        "cash_minor": null,
+        "remaining_payables_minor": 46000,
+        "expected_receivables_minor": 120000,
+        "projected_cash_minor": null
+      },
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence."
+    },
+    "fc-019": {
+      "action": "reimburse_organizer",
+      "amount_minor": 18000,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "47721a01-a96f-563c-99cd-9b515be65a37",
+          "version": 1
+        },
+        {
+          "id": "9288f3e5-de43-52b9-81d4-00faeec11869",
+          "version": 1
+        },
+        {
+          "id": "6fd89c73-c602-55c3-a2ab-bfdb2a3d26d9",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Mei"
+    },
+    "fc-020": {
+      "action": "reimburse_organizer",
+      "amount_minor": 18500,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "487ca3ca-10de-5ba2-8638-c6600946c79d",
+          "version": 1
+        },
+        {
+          "id": "254515d2-da6e-5415-8692-9717801af534",
+          "version": 1
+        },
+        {
+          "id": "f2ee70d4-b3af-5e5f-aef9-4de291b52aa5",
+          "version": 1
+        },
+        {
+          "id": "9c1cca28-c289-5a14-b254-c12e3b2463bc",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Amir"
+    },
+    "fc-021": {
+      "action": "investigate",
+      "amount_minor": null,
+      "currency": null,
+      "required_source_refs": [
+        {
+          "id": "2f6a93c8-76d7-58c6-82d8-65cfdfc62366",
+          "version": 1
+        },
+        {
+          "id": "42980333-0a60-545d-9396-df1d604a9896",
+          "version": 1
+        },
+        {
+          "id": "ccf900e0-20b5-5a75-8dc6-049f31cc79c9",
+          "version": 1
+        }
+      ],
+      "clarification_required": true,
+      "required_blockers": [
+        [
+          "approval_request",
+          "duplicate_resolution"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "duplicate_resolution"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "duplicate_resolution"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence."
+    },
+    "fc-022": {
+      "action": "no_action",
+      "amount_minor": null,
+      "currency": null,
+      "required_source_refs": [
+        {
+          "id": "ba428725-695f-5cf3-b1a6-b4e7471b8eb6",
+          "version": 1
+        },
+        {
+          "id": "7c85fb6e-127e-530e-bb57-ad38a62a6f9d",
+          "version": 1
+        },
+        {
+          "id": "e0f80cfa-1660-5924-b174-27e24ff44a5d",
+          "version": 1
+        },
+        {
+          "id": "a7fe1b46-7b42-5497-87ca-f2b2a5c806e7",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {
+        "cash_minor": 185000,
+        "remaining_payables_minor": 205000,
+        "expected_receivables_minor": 160000,
+        "minimum_projected_cash_minor": -20000,
+        "projected_cash_minor": 140000,
+        "funding_gap_minor": 20000
+      },
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence."
+    },
+    "fc-023": {
+      "action": "investigate",
+      "amount_minor": null,
+      "currency": null,
+      "required_source_refs": [
+        {
+          "id": "052e9a24-a57d-5d1b-bee1-caa72959d95d",
+          "version": 1
+        },
+        {
+          "id": "3c11c587-c6c5-5fe1-b5d1-40e1d6fe9902",
+          "version": 1
+        },
+        {
+          "id": "83cc25c3-7ae1-5e07-81a1-6d57a03ccfd7",
+          "version": 1
+        }
+      ],
+      "clarification_required": true,
+      "required_blockers": [
+        [
+          "obligation_recording",
+          "policy_clarification"
+        ]
+      ],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "policy_clarification"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "obligation_recording",
+          "policy_clarification"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence."
+    },
+    "fc-024": {
+      "action": "reimburse_organizer",
+      "amount_minor": 5400,
+      "currency": "USD",
+      "required_source_refs": [
+        {
+          "id": "26df254a-ef35-5810-bd2e-f5d525ef2980",
+          "version": 1
+        },
+        {
+          "id": "020018be-4da7-540e-a50b-b1aa5fd70775",
+          "version": 1
+        },
+        {
+          "id": "18507320-9ef1-5e77-b80f-f91450c1c5a6",
+          "version": 1
+        }
+      ],
+      "clarification_required": false,
+      "required_blockers": [],
+      "allowed_blockers": [
+        [
+          "approval_request",
+          "current_obligation"
+        ],
+        [
+          "approval_request",
+          "exact_payment_terms"
+        ],
+        [
+          "approval_request",
+          "recipient_destination"
+        ],
+        [
+          "execution",
+          "current_obligation"
+        ],
+        [
+          "execution",
+          "exact_payment_terms"
+        ],
+        [
+          "execution",
+          "human_approvals"
+        ],
+        [
+          "execution",
+          "recipient_destination"
+        ],
+        [
+          "settlement_claim",
+          "independent_payment_verification"
+        ]
+      ],
+      "report_checks": {},
+      "rationale": "Author-derived from the supplied synthetic records. Independent reviewer must verify arithmetic, payer and source precedence before use as evaluation evidence.",
+      "recipient_name": "Tess"
+    }
+  }
+}

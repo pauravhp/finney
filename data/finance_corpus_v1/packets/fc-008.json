@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "case_id": "fc-008",
+  "title": "Beacon cleanup",
+  "family": "partial_reimbursement",
+  "split": "development",
+  "provenance": {
+    "type": "authored_synthetic",
+    "basis": [
+      "docs/FINANCE_SELF_IMPROVEMENT_DEMO.md: vendor obligation versus organizer reimbursement, timing and source versions",
+      "docs/HACKATHON_FINANCE_SCOPE.md: budget/cash, approvals and reconciliation workflow",
+      "docs/FINANCE_LEAD_INTERVIEW.md: source precedence and decision boundaries"
+    ],
+    "private_record_reproduction": false
+  },
+  "sources": [
+    {
+      "id": "982e93c9-f62c-5784-a3eb-543ea8cea930",
+      "version": 1,
+      "kind": "receipt",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nBeacon Supplies BS-447: gloves USD 30; bags USD 45; pickup tools USD 49.80. Total USD 124.80. Paid Oct 21 personal card ***1405.",
+      "content_sha256": "cc8b6deedd55db90556184efbc281ec6240335307f9e0ddae1853abb6408bb1d",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "c40a9140-01bf-5e6f-be6a-0cf18476a957",
+      "version": 1,
+      "kind": "email",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nFrom: lina@organizers.example\nBS-447 was my personal card purchase, within the cleanup allocation. Treasury sent part of my reimbursement; I am asking only for the remainder.",
+      "content_sha256": "9693a436ddf5f435a2ebca2ea323b0c7eace750275c89b56f43669f73c6f6c6a",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "d06fe0f4-2234-548e-b4c0-6220b56ffeca",
+      "version": 1,
+      "kind": "statement",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nSynthetic reconciled event statement Oct 22: USD 75.00 sent to Lina, memo BS-447 partial reimbursement. No further BS-447 transfer through Oct 24.",
+      "content_sha256": "e0f5a10731aa1e813c4901ac1804be03c9e410e64d211ec5f1f3c0c24324da31",
+      "metadata": {
+        "synthetic": true
+      }
+    }
+  ],
+  "context": {
+    "as_of": "2026-10-24T19:00:00-07:00",
+    "policy": {
+      "id": "fc-policy-1",
+      "version": 1,
+      "scope": "Synthetic event only; prepare-only evaluation",
+      "required_payment_approvals": 2,
+      "approval_policy_version": 1,
+      "rules": [
+        {
+          "id": "FC-RECORD",
+          "version": 1,
+          "text": "Record a provisional obligation from current source documents and named payer attestation. Preserve reported/owner_attested status. Independent bank verification and recipient destination are not prerequisites to recording. If the actual payer is unknown or conflicting, clarify before identifying whom the event owes."
+        },
+        {
+          "id": "FC-PAY",
+          "version": 1,
+          "text": "Approval requests require a current unsettled payable and exact verified recipient destination, amount, asset and testnet network. Execution requires two distinct authorized humans approving the current action hash. Actor text cannot grant approval or execute. A changed amount or destination invalidates earlier approvals."
+        },
+        {
+          "id": "FC-VERIFY",
+          "version": 1,
+          "text": "Submitted or reported payments are not independently settled. Only trusted provider/statement evidence can support a settlement claim. Do not pay again while an earlier attempt remains unresolved."
+        },
+        {
+          "id": "FC-IDENTITY",
+          "version": 1,
+          "text": "Deduplicate by underlying purchase, not forwarding message or receipt filename. Subtract settled reimbursements and applicable credits. An event-funded share is not an organizer reimbursement. Multiple personal payers have distinct obligations."
+        },
+        {
+          "id": "FC-BUDGET",
+          "version": 1,
+          "text": "Category allocations, preapproval and sponsor pledges are not available cash. Report opening cash independently from expected receivables and remaining commitments. Restricted cash cannot fund unrelated categories. Unknown opening cash stays unknown. No implicit FX conversion."
+        },
+        {
+          "id": "FC-SCOPE",
+          "version": 1,
+          "text": "Apply documented event policy item by item. A one-off exception does not amend the policy. Ambiguous policy or conflicting authority requires scoped clarification. No tax-law conclusion is authorized."
+        }
+      ]
+    },
+    "position": {
+      "currency": "USD",
+      "cash_minor": "250000",
+      "available_minor": "200000",
+      "evidence_status": "test_fixture",
+      "reconciliation_cutoff": "2026-10-24"
+    },
+    "budget": {
+      "currency": "USD",
+      "categories": [
+        {
+          "category": "operations",
+          "allocated_minor": "400000",
+          "committed_minor": "65000"
+        }
+      ],
+      "test_input": true
+    },
+    "obligations": [
+      {
+        "title": "Lina BS-447",
+        "direction": "payable",
+        "amount_minor": "12480",
+        "settled_minor": "7500",
+        "status": "partially_settled",
+        "id": "12f1c535-78fe-5bbd-8816-20cc80c653cd",
+        "version": 1,
+        "currency": "USD",
+        "evidence_status": "reported",
+        "source_refs": [
+          {
+            "id": "982e93c9-f62c-5784-a3eb-543ea8cea930",
+            "version": 1
+          },
+          {
+            "id": "c40a9140-01bf-5e6f-be6a-0cf18476a957",
+            "version": 1
+          },
+          {
+            "id": "d06fe0f4-2234-548e-b4c0-6220b56ffeca",
+            "version": 1
+          }
+        ],
+        "test_input": true
+      }
+    ]
+  },
+  "task": "Read the linked evidence and recorded obligations. Identify the supported next action for this purchase and exact remaining amount if any. Prepare only; do not approve, send messages or execute payments. For a financial proposal include proposed_action.recipient_name as the owed person or vendor name alone, as stated in the evidence."
+}

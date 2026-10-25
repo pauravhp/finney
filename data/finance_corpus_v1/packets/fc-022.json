@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "case_id": "fc-022",
+  "title": "November cash calendar",
+  "family": "budget_cash",
+  "split": "heldout",
+  "provenance": {
+    "type": "authored_synthetic",
+    "basis": [
+      "docs/FINANCE_SELF_IMPROVEMENT_DEMO.md: vendor obligation versus organizer reimbursement, timing and source versions",
+      "docs/HACKATHON_FINANCE_SCOPE.md: budget/cash, approvals and reconciliation workflow",
+      "docs/FINANCE_LEAD_INTERVIEW.md: source precedence and decision boundaries"
+    ],
+    "private_record_reproduction": false
+  },
+  "sources": [
+    {
+      "id": "ba428725-695f-5cf3-b1a6-b4e7471b8eb6",
+      "version": 1,
+      "kind": "statement",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nSynthetic bank balance cutoff Oct 24 USD 1,850.00. No restricted cash. All settled items included.",
+      "content_sha256": "59296bc56a1edd950c3c738f021938e07c1ed12711a0034f2839215cd35c3381",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "7c85fb6e-127e-530e-bb57-ad38a62a6f9d",
+      "version": 1,
+      "kind": "agreement",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nSigned sponsor contract AM-23 cash USD 1,600.00 originally due Oct 27.",
+      "content_sha256": "4b9ee900b2a7c9f6cb803e42d910f4b2f931851228e2aaf6efd0a246a81e3726",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "e0f80cfa-1660-5924-b174-27e24ff44a5d",
+      "version": 1,
+      "kind": "email",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nFrom: sponsor-finance@amber.example\nSigned amendment Oct 24, authorized by both parties: AM-23 USD 1,600.00 now due Nov 12. Amount unchanged; no cash sent yet. Old due date superseded.",
+      "content_sha256": "46b79920faaae79e04aa5e3f4b1c5f047923552b1805a42682ffc82f66694e41",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "a7fe1b46-7b42-5497-87ca-f2b2a5c806e7",
+      "version": 1,
+      "kind": "email",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nFrom: operations@organizers.example\nVenue outstanding USD 1,100.00 due Oct 26; catering outstanding USD 950.00 due Oct 29. Both accepted commitments. No other obligations.",
+      "content_sha256": "e1dadee31450c6ea29d526e860e57bdc7a06d839cad191f104086204ea4d8813",
+      "metadata": {
+        "synthetic": true
+      }
+    }
+  ],
+  "context": {
+    "as_of": "2026-10-24T19:00:00-07:00",
+    "policy": {
+      "id": "fc-policy-1",
+      "version": 1,
+      "scope": "Synthetic event only; prepare-only evaluation",
+      "required_payment_approvals": 2,
+      "approval_policy_version": 1,
+      "rules": [
+        {
+          "id": "FC-RECORD",
+          "version": 1,
+          "text": "Record a provisional obligation from current source documents and named payer attestation. Preserve reported/owner_attested status. Independent bank verification and recipient destination are not prerequisites to recording. If the actual payer is unknown or conflicting, clarify before identifying whom the event owes."
+        },
+        {
+          "id": "FC-PAY",
+          "version": 1,
+          "text": "Approval requests require a current unsettled payable and exact verified recipient destination, amount, asset and testnet network. Execution requires two distinct authorized humans approving the current action hash. Actor text cannot grant approval or execute. A changed amount or destination invalidates earlier approvals."
+        },
+        {
+          "id": "FC-VERIFY",
+          "version": 1,
+          "text": "Submitted or reported payments are not independently settled. Only trusted provider/statement evidence can support a settlement claim. Do not pay again while an earlier attempt remains unresolved."
+        },
+        {
+          "id": "FC-IDENTITY",
+          "version": 1,
+          "text": "Deduplicate by underlying purchase, not forwarding message or receipt filename. Subtract settled reimbursements and applicable credits. An event-funded share is not an organizer reimbursement. Multiple personal payers have distinct obligations."
+        },
+        {
+          "id": "FC-BUDGET",
+          "version": 1,
+          "text": "Category allocations, preapproval and sponsor pledges are not available cash. Report opening cash independently from expected receivables and remaining commitments. Restricted cash cannot fund unrelated categories. Unknown opening cash stays unknown. No implicit FX conversion."
+        },
+        {
+          "id": "FC-SCOPE",
+          "version": 1,
+          "text": "Apply documented event policy item by item. A one-off exception does not amend the policy. Ambiguous policy or conflicting authority requires scoped clarification. No tax-law conclusion is authorized."
+        }
+      ]
+    },
+    "position": {
+      "currency": "USD",
+      "cash_minor": "185000",
+      "available_minor": "-20000",
+      "evidence_status": "test_fixture",
+      "reconciliation_cutoff": "2026-10-24"
+    },
+    "budget": {
+      "currency": "USD",
+      "categories": [
+        {
+          "category": "operations",
+          "allocated_minor": "400000",
+          "committed_minor": "65000"
+        }
+      ],
+      "test_input": true
+    },
+    "obligations": [
+      {
+        "title": "Venue",
+        "direction": "payable",
+        "amount_minor": "110000",
+        "due_date": "2026-10-26",
+        "id": "c8c234e9-8b24-513f-bff5-d3898fe27669",
+        "version": 1,
+        "currency": "USD",
+        "settled_minor": "0",
+        "status": "open",
+        "evidence_status": "reported",
+        "source_refs": [
+          {
+            "id": "a7fe1b46-7b42-5497-87ca-f2b2a5c806e7",
+            "version": 1
+          }
+        ],
+        "test_input": true
+      },
+      {
+        "title": "Catering",
+        "direction": "payable",
+        "amount_minor": "95000",
+        "due_date": "2026-10-29",
+        "id": "3759f283-5642-575f-8b09-43131c3dcff1",
+        "version": 1,
+        "currency": "USD",
+        "settled_minor": "0",
+        "status": "open",
+        "evidence_status": "reported",
+        "source_refs": [
+          {
+            "id": "a7fe1b46-7b42-5497-87ca-f2b2a5c806e7",
+            "version": 1
+          }
+        ],
+        "test_input": true
+      },
+      {
+        "title": "AM-23",
+        "direction": "receivable",
+        "amount_minor": "160000",
+        "due_date": "2026-11-12",
+        "id": "fdf6bfc0-fd7a-520a-a2b9-eed6557176f4",
+        "version": 1,
+        "currency": "USD",
+        "settled_minor": "0",
+        "status": "open",
+        "evidence_status": "reported",
+        "source_refs": [
+          {
+            "id": "7c85fb6e-127e-530e-bb57-ad38a62a6f9d",
+            "version": 1
+          },
+          {
+            "id": "e0f80cfa-1660-5924-b174-27e24ff44a5d",
+            "version": 1
+          }
+        ],
+        "test_input": true
+      }
+    ]
+  },
+  "task": "Prepare a decision with no payment effects and a top-level output.finance_report JSON object alongside the standard finance-decision-v2 fields, containing exactly the named report fields as integer minor-unit values. Use null for unknown figures. Explain source status; a forecast is not settled cash. Do not invent approvals. Report cash_minor, remaining_payables_minor, expected_receivables_minor, minimum_projected_cash_minor, projected_cash_minor, funding_gap_minor using the amended due date. Gap is the largest shortfall over the dated existing obligations."
+}

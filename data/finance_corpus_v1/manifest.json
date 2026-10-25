@@ -1,0 +1,140 @@
+{
+  "dataset_id": "finney-finance-corpus-v1",
+  "schema_version": 1,
+  "authored_at": "2026-10-25",
+  "case_count": 24,
+  "split_counts": {
+    "development": 10,
+    "validation": 8,
+    "heldout": 6
+  },
+  "hash_algorithm": "sha256",
+  "entries": [
+    {
+      "path": "packets/fc-001.json",
+      "sha256": "535b8f20d6fd76afc2d4e9b0289eb36657f87df0c9af18046188f4474ddc1cb1",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-002.json",
+      "sha256": "4900113cf39fd27c1d959a9ef3846507250d8b4bad4279c17791655cb0703710",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-003.json",
+      "sha256": "b67bb78f6540612b032bae04649b8a3e80e43bb56ef4cd6ed91ffde229a8ef0a",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-004.json",
+      "sha256": "27c8de2665f99033998ceda7bed446ead92dfa52cc5e743553675ad6e8fba5d7",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-005.json",
+      "sha256": "96b30be975bec5379e0c15b39bef022dab7932dd1e8e92f3d86416f445312acd",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-006.json",
+      "sha256": "f712c2a166df6feeb6b337bf24fe3dca1f7e2a3bfce11fdf01cf30b2fad29694",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-007.json",
+      "sha256": "3ac52a325e75931ee554e2c8376f323587ad01e825f464fce1add84d7a0657f5",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-008.json",
+      "sha256": "87b8757f6fa3943814ecd7ada8c8327e71c30a7742e3af704b0ea2c757547629",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-009.json",
+      "sha256": "dfc8cd296613e6d0aa5cd6bede985e8d4baa18c7b21aa786e7c21bbb99dfa998",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-010.json",
+      "sha256": "8b7fcf7fb8ec4156eeceef96f3ec12d4f4d0f1e5c908f1e451d34fba5379e45e",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-011.json",
+      "sha256": "5b6442d8b5ed922637d8203848e2b1811e19fce48811c92e5c686e9cdc617cb4",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-012.json",
+      "sha256": "8b8df063a130962d38781e2367b4eec5ee5d96cec3a7693a8874d7a32b8afbf0",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-013.json",
+      "sha256": "de0403b1453ad56109288540a91ca54e86a457c4675074a00e80df308e3903bb",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-014.json",
+      "sha256": "4a2de0d5f55624001183270c891aa7f18dae5b237959feabc2a77d8d0baa6c02",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-015.json",
+      "sha256": "0e2bb6f82a5e26b575f976e095a940b4e98f4f382e4fafa6aca0b842065da631",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-016.json",
+      "sha256": "c1f368e616d1040320690a3cd7faf746c6a971720333cec493254b55d41ed7c4",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-017.json",
+      "sha256": "c5e476f0c12158a18db1b016cce13b1f4a0c4022616d5c95a81848b79f09902f",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-018.json",
+      "sha256": "3de898bb7e6c1e1d58bd96ec00279fa620c20f3319a10eba4b89f907a5335b46",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-019.json",
+      "sha256": "919731da945e20109fcd42b527110300230cc1b26be963d78e5b62c918673720",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-020.json",
+      "sha256": "584f1cf63f7f46cb0d2d615ea6abc4cc7a2a9d3eb99eed74ceb1abafdb7d8d86",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-021.json",
+      "sha256": "f6d4a3b2e39497e5e900325dabe3aae51d7d813a6ecf626ec359b872ca4502a1",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-022.json",
+      "sha256": "678fa3435cd8f997d573ba7e543d36cea8701df0a3272adcddd0e993901604bc",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-023.json",
+      "sha256": "3a1e6e4ed96f5801c344c0d583299d45fb982c7c4794eeebe6f731e18550b411",
+      "audience": "source_packet"
+    },
+    {
+      "path": "packets/fc-024.json",
+      "sha256": "ac4a1f5ca9d43d789924278b70e9cdb805d7e1be8bb9375ca5ad16654658b146",
+      "audience": "source_packet"
+    },
+    {
+      "path": "protected/ground_truth.json",
+      "sha256": "f7a1f07a672c649006dc1d3f2f423b4a21db5b03366dd1b7e0209f809cf77ad1",
+      "audience": "evaluator_only"
+    }
+  ],
+  "manifest_content_sha256": "8c01c438aa95cb12e5c53da562114f4c8ebd45bc83eae03d29ccf3cc13075e64"
+}

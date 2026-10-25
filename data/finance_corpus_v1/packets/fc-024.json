@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "fc-024",
+  "title": "Willow volunteer shopping",
+  "family": "organizer_expense",
+  "split": "heldout",
+  "provenance": {
+    "type": "authored_synthetic",
+    "basis": [
+      "docs/FINANCE_SELF_IMPROVEMENT_DEMO.md: vendor obligation versus organizer reimbursement, timing and source versions",
+      "docs/HACKATHON_FINANCE_SCOPE.md: budget/cash, approvals and reconciliation workflow",
+      "docs/FINANCE_LEAD_INTERVIEW.md: source precedence and decision boundaries"
+    ],
+    "private_record_reproduction": false
+  },
+  "sources": [
+    {
+      "id": "26df254a-ef35-5810-bd2e-f5d525ef2980",
+      "version": 1,
+      "kind": "receipt",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nWillow Market WM-933 | Oct 22 | volunteer fruit 26.40; water 19.60; packing tape 8.00; personal groceries 14.20. Total USD 68.20 paid card ***6613.",
+      "content_sha256": "e8c4a32e459ca3e0e41833353f0afa3d22bad5548f266d65e01d5d8971fdf58b",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "020018be-4da7-540e-a50b-b1aa5fd70775",
+      "version": 1,
+      "kind": "email",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nFrom: tess@organizers.example\n6613 is my personal card. Fruit, water and tape were for event setup. Personal groceries are mine; please exclude them. No reimbursement yet.",
+      "content_sha256": "85eff4482ef96b6e928197290cbae6a763797fe288952efda43335b1b9598de3",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "18507320-9ef1-5e77-b80f-f91450c1c5a6",
+      "version": 1,
+      "kind": "policy_note",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nSynthetic director allocation note: up to USD 75 of event volunteer refreshments and setup consumables are preapproved for Tess. Personal items are excluded. No separate reimbursement has been made.",
+      "content_sha256": "1c40fd3cd166e0a39883c5a6f0074e3c482058be1526a4bae28291a471f94671",
+      "metadata": {
+        "synthetic": true
+      }
+    }
+  ],
+  "context": {
+    "as_of": "2026-10-24T19:00:00-07:00",
+    "policy": {
+      "id": "fc-policy-1",
+      "version": 1,
+      "scope": "Synthetic event only; prepare-only evaluation",
+      "required_payment_approvals": 2,
+      "approval_policy_version": 1,
+      "rules": [
+        {
+          "id": "FC-RECORD",
+          "version": 1,
+          "text": "Record a provisional obligation from current source documents and named payer attestation. Preserve reported/owner_attested status. Independent bank verification and recipient destination are not prerequisites to recording. If the actual payer is unknown or conflicting, clarify before identifying whom the event owes."
+        },
+        {
+          "id": "FC-PAY",
+          "version": 1,
+          "text": "Approval requests require a current unsettled payable and exact verified recipient destination, amount, asset and testnet network. Execution requires two distinct authorized humans approving the current action hash. Actor text cannot grant approval or execute. A changed amount or destination invalidates earlier approvals."
+        },
+        {
+          "id": "FC-VERIFY",
+          "version": 1,
+          "text": "Submitted or reported payments are not independently settled. Only trusted provider/statement evidence can support a settlement claim. Do not pay again while an earlier attempt remains unresolved."
+        },
+        {
+          "id": "FC-IDENTITY",
+          "version": 1,
+          "text": "Deduplicate by underlying purchase, not forwarding message or receipt filename. Subtract settled reimbursements and applicable credits. An event-funded share is not an organizer reimbursement. Multiple personal payers have distinct obligations."
+        },
+        {
+          "id": "FC-BUDGET",
+          "version": 1,
+          "text": "Category allocations, preapproval and sponsor pledges are not available cash. Report opening cash independently from expected receivables and remaining commitments. Restricted cash cannot fund unrelated categories. Unknown opening cash stays unknown. No implicit FX conversion."
+        },
+        {
+          "id": "FC-SCOPE",
+          "version": 1,
+          "text": "Apply documented event policy item by item. A one-off exception does not amend the policy. Ambiguous policy or conflicting authority requires scoped clarification. No tax-law conclusion is authorized."
+        }
+      ]
+    },
+    "position": {
+      "currency": "USD",
+      "cash_minor": "250000",
+      "available_minor": "200000",
+      "evidence_status": "test_fixture",
+      "reconciliation_cutoff": "2026-10-24"
+    },
+    "budget": {
+      "currency": "USD",
+      "categories": [
+        {
+          "category": "operations",
+          "allocated_minor": "400000",
+          "committed_minor": "65000"
+        }
+      ],
+      "test_input": true
+    },
+    "obligations": []
+  },
+  "task": "Read the linked evidence and recorded obligations. Identify the supported next action for this purchase and exact remaining amount if any. Prepare only; do not approve, send messages or execute payments. For a financial proposal include proposed_action.recipient_name as the owed person or vendor name alone, as stated in the evidence."
+}

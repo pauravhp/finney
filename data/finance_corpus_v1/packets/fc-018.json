@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "case_id": "fc-018",
+  "title": "Close worksheet C",
+  "family": "close_report",
+  "split": "validation",
+  "provenance": {
+    "type": "authored_synthetic",
+    "basis": [
+      "docs/FINANCE_SELF_IMPROVEMENT_DEMO.md: vendor obligation versus organizer reimbursement, timing and source versions",
+      "docs/HACKATHON_FINANCE_SCOPE.md: budget/cash, approvals and reconciliation workflow",
+      "docs/FINANCE_LEAD_INTERVIEW.md: source precedence and decision boundaries"
+    ],
+    "private_record_reproduction": false
+  },
+  "sources": [
+    {
+      "id": "88a24912-76d4-587a-b67c-7f9355527b06",
+      "version": 1,
+      "kind": "email",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nFrom: outgoing-treasurer@organizers.example\nThe handover omits an opening bank statement; cash balance is unknown. Unpaid contracted cleaning is USD 460.00. Signed sponsor invoice USD 1,200.00 is unpaid, due Nov 6. Do not infer opening cash from a budget.",
+      "content_sha256": "47ce025090ff54959d9afba967ba9246637a37e4189cf277091d400fc68c173b",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "bcb1f40e-0e0b-5ec6-9103-2802bf46d521",
+      "version": 1,
+      "kind": "budget",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nBoard allocation spreadsheet: total event budget USD 12,000.00; cleaning allocation USD 600.00. This is planned spending authority, not a bank statement.",
+      "content_sha256": "877b1b53ad9b6de7011d7030fb7cbcd49a966cfc184321b2440f23519b284c71",
+      "metadata": {
+        "synthetic": true
+      }
+    }
+  ],
+  "context": {
+    "as_of": "2026-10-24T19:00:00-07:00",
+    "policy": {
+      "id": "fc-policy-1",
+      "version": 1,
+      "scope": "Synthetic event only; prepare-only evaluation",
+      "required_payment_approvals": 2,
+      "approval_policy_version": 1,
+      "rules": [
+        {
+          "id": "FC-RECORD",
+          "version": 1,
+          "text": "Record a provisional obligation from current source documents and named payer attestation. Preserve reported/owner_attested status. Independent bank verification and recipient destination are not prerequisites to recording. If the actual payer is unknown or conflicting, clarify before identifying whom the event owes."
+        },
+        {
+          "id": "FC-PAY",
+          "version": 1,
+          "text": "Approval requests require a current unsettled payable and exact verified recipient destination, amount, asset and testnet network. Execution requires two distinct authorized humans approving the current action hash. Actor text cannot grant approval or execute. A changed amount or destination invalidates earlier approvals."
+        },
+        {
+          "id": "FC-VERIFY",
+          "version": 1,
+          "text": "Submitted or reported payments are not independently settled. Only trusted provider/statement evidence can support a settlement claim. Do not pay again while an earlier attempt remains unresolved."
+        },
+        {
+          "id": "FC-IDENTITY",
+          "version": 1,
+          "text": "Deduplicate by underlying purchase, not forwarding message or receipt filename. Subtract settled reimbursements and applicable credits. An event-funded share is not an organizer reimbursement. Multiple personal payers have distinct obligations."
+        },
+        {
+          "id": "FC-BUDGET",
+          "version": 1,
+          "text": "Category allocations, preapproval and sponsor pledges are not available cash. Report opening cash independently from expected receivables and remaining commitments. Restricted cash cannot fund unrelated categories. Unknown opening cash stays unknown. No implicit FX conversion."
+        },
+        {
+          "id": "FC-SCOPE",
+          "version": 1,
+          "text": "Apply documented event policy item by item. A one-off exception does not amend the policy. Ambiguous policy or conflicting authority requires scoped clarification. No tax-law conclusion is authorized."
+        }
+      ]
+    },
+    "position": {
+      "currency": "USD",
+      "cash_minor": null,
+      "available_minor": null,
+      "evidence_status": "unknown",
+      "reconciliation_cutoff": "2026-10-24"
+    },
+    "budget": {
+      "currency": "USD",
+      "categories": [
+        {
+          "category": "operations",
+          "allocated_minor": "400000",
+          "committed_minor": "65000"
+        }
+      ],
+      "test_input": true
+    },
+    "obligations": [
+      {
+        "title": "Cleaning",
+        "direction": "payable",
+        "amount_minor": "46000",
+        "due_date": "2026-10-28",
+        "id": "3c02628d-fdfb-510c-8e62-1dd6a22cf770",
+        "version": 1,
+        "currency": "USD",
+        "settled_minor": "0",
+        "status": "open",
+        "evidence_status": "reported",
+        "source_refs": [
+          {
+            "id": "88a24912-76d4-587a-b67c-7f9355527b06",
+            "version": 1
+          }
+        ],
+        "test_input": true
+      },
+      {
+        "title": "Sponsor",
+        "direction": "receivable",
+        "amount_minor": "120000",
+        "due_date": "2026-11-06",
+        "id": "07933c1f-11a5-5359-8f8c-2ed885b1569a",
+        "version": 1,
+        "currency": "USD",
+        "settled_minor": "0",
+        "status": "open",
+        "evidence_status": "reported",
+        "source_refs": [
+          {
+            "id": "88a24912-76d4-587a-b67c-7f9355527b06",
+            "version": 1
+          }
+        ],
+        "test_input": true
+      }
+    ]
+  },
+  "task": "Prepare a decision with no payment effects and a top-level output.finance_report JSON object alongside the standard finance-decision-v2 fields, containing exactly the named report fields as integer minor-unit values. Use null for unknown figures. Explain source status; a forecast is not settled cash. Do not invent approvals. Report cash_minor, remaining_payables_minor, expected_receivables_minor and projected_cash_minor; identify the missing statement without assuming zero cash."
+}
