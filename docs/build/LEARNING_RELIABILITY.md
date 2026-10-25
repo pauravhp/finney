@@ -157,3 +157,35 @@ These tests validate control flow; they are not real inference or a measured gai
 No live preflight, hosted migration, service restart or new learning phase was
 performed while implementing this runner. The coordinator records subsequent live
 receipts separately and updates the journey/current-loop documents.
+
+## Subsequent guided cash correction: engineering repair
+
+The coordinator subsequently completed the fresh 5.5 preflight and an online phase
+that stopped at `no_defect`; it did not promote a skill. A later ordinary director
+conversation correctly amended the guided Harbor AV obligation from $480 to $420,
+but described a $3,700 commitment simulation as current availability. The actual
+recorded position was correct: availability rose from $4,120 to $4,180 while cash
+remained $7,800. The simulation had subtracted another $420 from the earlier
+$4,120 availability; it did not model replacement of the existing $480 obligation.
+The original reply remains preserved as evidence of that reporting error.
+
+This is an **engineering clarification, not a learned gain**. The simulation's
+arithmetic is unchanged. Its tool description and returned fields now explicitly
+separate current availability, additional commitment and hypothetical availability
+afterward. Runtime and budget instructions require a fresh financial-position read
+after mutations before asserting current figures, and forbid counting a recorded
+obligation again as new spending. This instruction is not a claim that a model's
+future prose has already been verified. Tests exercise the actual PostgreSQL
+amendment and Python simulation kernels, including unknown cash and zero balances.
+
+These protected guide/schema changes invalidate the earlier preflight binding.
+Do not reuse that receipt for another learning phase: a new preflight is required
+under the new context before diagnosis/search. The old phase remains terminal
+`no_defect`; no holdout or gate changes, historical rescore, or director-message
+learning eligibility changes accompany this repair.
+
+The coordinator subsequently ran a separate preflight with the updated protected
+context and schema. Both exposed development cases completed correctly (two and
+three provider calls); the current trusted receipt binds this new configuration.
+The previous preflight remains a historical receipt, not a reusable authorization
+for the changed runtime. No candidate or final evaluation followed this repair.

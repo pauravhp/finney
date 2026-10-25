@@ -1,5 +1,14 @@
 # Finney UI text and interaction audit
 
+Final actual-response acceptance: long current case replies show their exact
+opening paragraph with an explicit **Read full response** disclosure for the
+unchanged remainder. Short answers and historical replies are unaffected;
+provenance and decision controls remain outside. Ten reply/source unit checks,
+twelve desktop/mobile browser checks and the production build passed for this
+last correction. Closed and expanded screenshots were inspected. Director
+messages use **Director request** in source tabs and headings, avoiding accidental
+invoice labels when private metadata is omitted from the public snapshot.
+
 Date: 25 October 2026. Scope: every operating screen and the landing/sign-in entry. The owner's two screenshots are the primary failure evidence. This is a redesign of the operating flow, preserving the receipt identity, mint palette, actual financial controls and source records.
 
 ## Finding
@@ -69,3 +78,15 @@ Initial implementation: typecheck, 62 unit checks, production build passed. Brow
 - Review ownership: parent coordinator independently reviewed screenshots/code and requested the lossless paragraph regression, AV-only budget state, and visible report continuation; all three were addressed. No additional child reviewer was spawned under the coordinator's explicit no-extra-agents boundary.
 
 Remaining hosted verification belongs to the coordinator: deployed sign-in/guided create/resume, actual worker outputs, actual director rejection/recovery, and reports. Local UI fixtures establish interaction correctness, not model competence or promotion. Case-specific queued/running labels additionally depend on the snapshot exposing a safe case/job association; the guided action itself observes scoped director-job state and avoids duplicate guided submissions while work is active.
+
+### Hosted-schema correction
+
+Actual hosted inspection exposed a fixture gap: source metadata is privacy-projected to `{}`, and the guided artifacts use `provider: guided_demo`, `external_id`, `headers.subject`, and `documents[].kind/text`. The original UI fixture supplied a filename and a different packet shape. Corrected the source header and document tabs to use the linked case title when a filename is absent, labeled guided sources Practice document, omitted technical `kind`/`external_id`, and rendered email headers without duplicate subject or Markdown scaffolding. From/To/Date and distinct Subject remain readable evidence.
+
+The tests now load canonical `_INITIAL` and `_REVISED` literals directly from `app/guided_demo.py` through Python AST parsing, without importing the app or contacting providers. Every actual document body is asserted intact. The full Dashboard browser fixture uses the canonical revised packet with empty source metadata. Targeted acceptance: **12 unit checks and 10 desktop/mobile browser checks passed; production build and TypeScript passed**. Opened both updated case screenshots; title, actual full source and contextual upload render correctly. No other operating behavior changed in this batch.
+
+### Actual model Markdown correction
+
+A real hosted catch response placed `##` headings immediately before its comparison table and bullet lists, without blank lines. Replaced blank-line-only rendering with escaped line-block parsing for headings, tables, lists, paragraphs, code fences and italic emphasis. The financial content is not rewritten. A captured response with fictionalized record references is stored as a formatting fixture; its separately diagnosed simulation explanation is explicitly not a financial test expectation.
+
+Verification: **15 targeted unit checks and 14 desktop/mobile browser checks passed**, plus production build/TypeScript. Tests assert the actual response structure, all monetary values and qualifiers, safe raw-HTML escaping, and no horizontal page overflow. Opened `.impeccable/review/desktop-actual-response.png` and `mobile-actual-response.png`: headings, comparison table, bullet lists and italic text render as intended. No style, authority or workflow change accompanied this correction.

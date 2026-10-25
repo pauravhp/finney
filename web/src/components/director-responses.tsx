@@ -3,12 +3,50 @@ import { displayRecord } from "@/lib/contracts";
 
 type Reply = Record<string, unknown> & { message: string };
 
+export function currentReplyParts(message: string, collapseLong: boolean) {
+  const boundary = message.match(/\r?\n[ \t]*\r?\n/);
+  if (
+    !collapseLong ||
+    message.length <= 900 ||
+    boundary?.index === undefined ||
+    !message.slice(0, boundary.index).trim()
+  )
+    return null;
+  return {
+    lead: message.slice(0, boundary.index),
+    rest: message.slice(boundary.index),
+  };
+}
+
+function ReplyText({
+  message,
+  collapseLong,
+}: {
+  message: string;
+  collapseLong: boolean;
+}) {
+  const parts = currentReplyParts(message, collapseLong);
+  if (!parts)
+    return <ReadableText className="director-response-text" text={message} />;
+  return (
+    <div className="director-response-text">
+      <ReadableText text={parts.lead} />
+      <details className="record-details reply-full-response">
+        <summary>Read full response</summary>
+        <ReadableText text={parts.rest} />
+      </details>
+    </div>
+  );
+}
+
 export function DirectorResponses({
   responses,
   heading = "Finney’s replies",
+  collapseLong = false,
 }: {
   responses: unknown;
   heading?: string;
+  collapseLong?: boolean;
 }) {
   const replies = Array.isArray(responses)
     ? responses.filter((value): value is Reply =>
@@ -33,10 +71,7 @@ export function DirectorResponses({
               : `${String(reply.actor_trace_id ?? reply.job_id ?? "reply")}:${index}`
           }
         >
-          <ReadableText
-            className="director-response-text"
-            text={reply.message}
-          />
+          <ReplyText message={reply.message} collapseLong={collapseLong} />
           {Array.isArray(reply.consulted_source_ids) ? (
             reply.consulted_source_ids.filter(
               (id): id is string => typeof id === "string",

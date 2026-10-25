@@ -23,6 +23,14 @@ zero balance, and do not add amounts in different currencies without an approved
 conversion source/tool. Cash forecasting and commitment simulation are kernel
 calculations, not estimates invented in prose.
 
+`simulate_commitment` subtracts NEW ADDITIONAL spending from availability that
+already includes recorded commitments. It does not replace an existing
+obligation's amount. Do not subtract an amended invoice's full amount again or
+present `available_after_minor` as the current financial position. After any
+successful obligation or other financial mutation, reread
+`get_financial_position` before stating current cash, commitments or availability.
+Keep hypothetical scenarios explicitly separate from that fresh recorded state.
+
 Record a case-linked answer with `record_finding` using the current case version.
 `propose_obligation_update` can create or revise a source-linked payable or
 receivable, with expected/reported evidence status. It cannot grant an owner

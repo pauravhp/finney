@@ -102,8 +102,7 @@ operating compatibility on an exposed case, not an accuracy benchmark or a learn
 gain. Keep all historical 4.6 results labeled 4.6. The owner has now authorized
 further learning work and expanded the private test allocation, preserving all
 earlier reservations and promotion gates. A future 5.5 learning phase still needs
-its own model-matched baseline and a verified runtime preflight; no 5.5 learning
-attempt has run.
+its own model-matched baseline and a verified runtime preflight.
 
 The new quiet-host 5.5 runtime preflight has now completed: both exposed
 development cases returned valid, financially correct answers, three provider
@@ -112,3 +111,21 @@ The new configuration uses 8,192 output tokens, a 90-second provider timeout and
 240-second actor timeout. That proves completion for these two cases, not general
 accuracy or a learned improvement. The normal learning path now verifies its
 private, scope/context/model-bound receipt before diagnosis or suite construction.
+
+A new normal queued 5.5 learning phase then used the retained 4.6 source-version
+failure as explicitly historical training evidence. It completed diagnosis in two
+calls and returned `no_defect` / `no_source_supported_procedure_defect`: the reviewer
+did not find enough causal evidence to justify changing the procedure. The engine
+therefore generated no patch and performed no candidate or final evaluation.
+Both fresh final cases remain untouched. This is an actual guarded stop, not a
+runtime failure, measured improvement or promotion. It does not change the prior
+4.6 diagnosis or its unscored candidate's undetermined efficacy.
+
+An ordinary guided-demo reply subsequently exposed an additional-spend simulation
+being misdescribed as current availability. The stored obligation and financial
+position were correct. Tool metadata and protected runtime/budget instructions
+were clarified; the original reply remains in history. This was an engineering
+repair, not a learned skill. A separate quiet-host preflight under the updated
+context completed both exposed development cases correctly in five actual calls.
+The trusted receipt now binds that current configuration. No further diagnosis,
+candidate evaluation or holdout use followed the repair.

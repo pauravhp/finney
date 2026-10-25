@@ -71,3 +71,6 @@ and their results are recorded separately below after execution.
 - Quiet-host Sonnet 5.5 runtime preflight completed two exposed development cases
   correctly, six actual calls within a 16-call reservation. This is runtime and
   baseline evidence, not a learned promotion.
+- The subsequent normal queued 5.5 learning phase stopped after two diagnosis
+  calls with no source-supported procedure defect. No patch or final evaluation
+  occurred. Fresh final cases remain untouched and baseline-v1 remains active.

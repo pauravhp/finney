@@ -1,19 +1,73 @@
 import { Fragment, type ReactNode } from "react";
 
-// Deliberately small Markdown renderer: text is always escaped by React. No HTML,
-// images, executable links, or model-authored attributes reach the DOM.
+// Text is always escaped by React. Model output cannot introduce HTML, images,
+// executable links or DOM attributes. Parse line boundaries, not blank lines:
+// actual model replies commonly put headings directly before tables and lists.
 function inline(text: string): ReactNode[] {
   return text
-    .split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
-    .map((part, index) =>
-      part.startsWith("**") && part.endsWith("**") ? (
-        <strong key={index}>{part.slice(2, -2)}</strong>
-      ) : part.startsWith("`") && part.endsWith("`") ? (
-        <code key={index}>{part.slice(1, -1)}</code>
-      ) : (
-        <Fragment key={index}>{part}</Fragment>
-      ),
-    );
+    .split(
+      /(\*\*[^*\n]+\*\*|`[^`\n]+`|(?<!\*)\*[^*\n]+\*(?!\*)|(?<!\w)_[^_\n]+_(?!\w))/g,
+    )
+    .map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**"))
+        return <strong key={index}>{inline(part.slice(2, -2))}</strong>;
+      if (part.startsWith("`") && part.endsWith("`"))
+        return <code key={index}>{part.slice(1, -1)}</code>;
+      if (
+        (part.startsWith("*") && part.endsWith("*")) ||
+        (part.startsWith("_") && part.endsWith("_"))
+      )
+        return <em key={index}>{part.slice(1, -1)}</em>;
+      return <Fragment key={index}>{part}</Fragment>;
+    });
+}
+const heading = /^\s{0,3}#{1,6}\s+(.+)$/;
+const bullet = /^\s*[-+*]\s+(.+)$/;
+const numbered = /^\s*\d+[.)]\s+(.+)$/;
+const fence = /^\s*```/;
+const rule = /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/;
+function cells(line: string) {
+  return line
+    .trim()
+    .replace(/^\||\|$/g, "")
+    .split("|");
+}
+function tableStarts(lines: string[], index: number) {
+  return (
+    index + 1 < lines.length &&
+    lines[index].includes("|") &&
+    lines[index + 1].includes("|") &&
+    cells(lines[index + 1]).every((cell) => /^:?-{3,}:?$/.test(cell.trim()))
+  );
+}
+function startsBlock(lines: string[], index: number) {
+  return (
+    heading.test(lines[index]) ||
+    bullet.test(lines[index]) ||
+    numbered.test(lines[index]) ||
+    fence.test(lines[index]) ||
+    rule.test(lines[index]) ||
+    tableStarts(lines, index)
+  );
+}
+function paragraph(text: string, key: number) {
+  // Lossless splitting: punctuation inside decimal amounts is never a boundary.
+  const parts =
+    text.length > 650 && !text.includes("\n")
+      ? text.split(/(?<=[.!?])(?=\s)/).reduce<string[]>((result, sentence) => {
+          const last = result.length - 1;
+          if (last >= 0 && result[last].length < 360) result[last] += sentence;
+          else result.push(sentence);
+          return result;
+        }, [])
+      : [text];
+  return (
+    <Fragment key={key}>
+      {parts.map((part, index) => (
+        <p key={index}>{inline(part)}</p>
+      ))}
+    </Fragment>
+  );
 }
 export function ReadableText({
   text,
@@ -22,84 +76,110 @@ export function ReadableText({
   text: string;
   className?: string;
 }) {
-  const blocks = text.trim().split(/\n\s*\n/);
-  return (
-    <div className={`readable-text ${className}`}>
-      {blocks.map((block, index) => {
-        const lines = block.split("\n");
-        if (lines.every((line) => /^\s*[-*]\s/.test(line)))
-          return (
-            <ul key={index}>
-              {lines.map((line, i) => (
-                <li key={i}>{inline(line.replace(/^\s*[-*]\s/, ""))}</li>
-              ))}
-            </ul>
-          );
-        if (lines.every((line) => /^\s*\d+[.)]\s/.test(line)))
-          return (
-            <ol key={index}>
-              {lines.map((line, i) => (
-                <li key={i}>{inline(line.replace(/^\s*\d+[.)]\s/, ""))}</li>
-              ))}
-            </ol>
-          );
-        if (
-          lines.length > 2 &&
-          /^\s*\|?\s*:?-{3}/.test(lines[1].replace(/\|/g, " ").trim())
-        ) {
-          const cells = (line: string) =>
-            line.replace(/^\s*\||\|\s*$/g, "").split("|");
-          return (
-            <div className="table-scroll" key={index}>
-              <table>
-                <thead>
-                  <tr>
-                    {cells(lines[0]).map((cell, i) => (
-                      <th key={i}>{inline(cell.trim())}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {lines.slice(2).map((line, i) => (
-                    <tr key={i}>
-                      {cells(line).map((cell, j) => (
-                        <td key={j}>{inline(cell.trim())}</td>
-                      ))}
-                    </tr>
+  const lines = text.trim().split(/\r?\n/);
+  const blocks: ReactNode[] = [];
+  let cursor = 0;
+  while (cursor < lines.length) {
+    if (!lines[cursor].trim()) {
+      cursor++;
+      continue;
+    }
+    const key = cursor;
+    const title = lines[cursor].match(heading);
+    if (title) {
+      blocks.push(<h3 key={key}>{inline(title[1])}</h3>);
+      cursor++;
+      continue;
+    }
+    if (fence.test(lines[cursor])) {
+      cursor++;
+      const code: string[] = [];
+      while (cursor < lines.length && !fence.test(lines[cursor]))
+        code.push(lines[cursor++]);
+      if (cursor < lines.length) cursor++;
+      blocks.push(
+        <pre key={key}>
+          <code>{code.join("\n")}</code>
+        </pre>,
+      );
+      continue;
+    }
+    if (tableStarts(lines, cursor)) {
+      const titles = cells(lines[cursor]);
+      cursor += 2;
+      const rows: string[][] = [];
+      while (
+        cursor < lines.length &&
+        lines[cursor].trim() &&
+        lines[cursor].includes("|") &&
+        !heading.test(lines[cursor])
+      )
+        rows.push(cells(lines[cursor++]));
+      blocks.push(
+        <div className="table-scroll" key={key}>
+          <table>
+            <thead>
+              <tr>
+                {titles.map((title, index) => (
+                  <th key={index}>{inline(title.trim())}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, index) => (
+                <tr key={index}>
+                  {row.map((cell, cellIndex) => (
+                    <td key={cellIndex}>{inline(cell.trim())}</td>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          );
-        }
-        if (/^#{1,4}\s/.test(block) && lines.length === 1)
-          return <h3 key={index}>{inline(block.replace(/^#{1,4}\s/, ""))}</h3>;
-        // Preserve every sentence; separate dense single-paragraph model output into
-        // readable paragraphs without generating a summary or removing qualifiers.
-        const paragraphs =
-          block.length > 650 && lines.length === 1
-            ? (block
-                .split(/(?<=[.!?])(?=\s)/)
-                ?.reduce<string[]>((parts, sentence) => {
-                  const last = parts.length - 1;
-                  if (last >= 0 && parts[last].length < 360)
-                    parts[last] += sentence;
-                  else parts.push(sentence);
-                  return parts;
-                }, []) ?? [block])
-            : [block];
-        return (
-          <Fragment key={index}>
-            {paragraphs.map((paragraph, i) => (
-              <p key={i}>{inline(paragraph)}</p>
-            ))}
-          </Fragment>
-        );
-      })}
-    </div>
-  );
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>,
+      );
+      continue;
+    }
+    const listPattern = bullet.test(lines[cursor])
+      ? bullet
+      : numbered.test(lines[cursor])
+        ? numbered
+        : null;
+    if (listPattern) {
+      const items: string[] = [];
+      while (cursor < lines.length) {
+        const item = lines[cursor].match(listPattern);
+        if (!item) break;
+        items.push(item[1]);
+        cursor++;
+      }
+      const content = items.map((item, index) => (
+        <li key={index}>{inline(item)}</li>
+      ));
+      blocks.push(
+        listPattern === bullet ? (
+          <ul key={key}>{content}</ul>
+        ) : (
+          <ol key={key}>{content}</ol>
+        ),
+      );
+      continue;
+    }
+    if (rule.test(lines[cursor])) {
+      blocks.push(<hr key={key} />);
+      cursor++;
+      continue;
+    }
+    const prose = [lines[cursor++]];
+    while (
+      cursor < lines.length &&
+      lines[cursor].trim() &&
+      !startsBlock(lines, cursor)
+    )
+      prose.push(lines[cursor++]);
+    blocks.push(paragraph(prose.join("\n"), key));
+  }
+  return <div className={`readable-text ${className}`}>{blocks}</div>;
 }
-
 export function friendlyTitle(value: string): string {
   return value
     .replace(/^SYNTHETIC demo:\s*/i, "")
@@ -127,12 +207,36 @@ export function sourceDocumentText(value: unknown): string {
     "synthetic",
     "content_sha256",
     "artifact_path",
+    "kind",
+    "external_id",
   ]);
   return Object.entries(row)
     .filter(([key]) => !technical.has(key))
     .map(([key, entry]) => {
       const content = sourceDocumentText(entry);
       if (!content) return "";
+      if (
+        key === "headers" &&
+        entry &&
+        typeof entry === "object" &&
+        !Array.isArray(entry)
+      ) {
+        return Object.entries(entry as Record<string, unknown>)
+          .filter(([header, value]) => {
+            // Synthetic packets repeat their description in Subject. Real email
+            // addressing and dates remain evidence and are never dropped.
+            return !(
+              header.toLowerCase() === "subject" &&
+              typeof value === "string" &&
+              [row.description, row.title].includes(value)
+            );
+          })
+          .map(
+            ([header, value]) =>
+              `${header.replaceAll("_", " ").replace(/^./, (char) => char.toUpperCase())}: ${sourceDocumentText(value)}`,
+          )
+          .join("\n");
+      }
       if (["documents", "attachments"].includes(key)) return content;
       if (["title", "subject"].includes(key) && typeof entry === "string")
         return `### ${entry}`;
