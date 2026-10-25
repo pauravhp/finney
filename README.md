@@ -360,19 +360,20 @@ Public Vercel deployment remains unverified.
 
 ```sh
 uv run --frozen pytest -m 'not live'
-uv run --frozen ruff check app/cli.py app/onboarding.py app/setup_checks.py app/event_setup.py app/setup_sql.py app/resources.py
+uv run --frozen ruff check app tests
 cd web
 npm test
-npm run typecheck
 npm run build
+npm run typecheck
 npm run test:browser
 ```
 
 The browser suite checks an **unconfigured** production build; run it before adding
 live web `.env.local` values, or use a clean separate checkout. Its local Chromium
 path can be changed with `PLAYWRIGHT_CHROMIUM_EXECUTABLE`. Unit HTTP fixtures and
-local PostgreSQL tests are not live provider proof. CI runs these checks against
-an ephemeral PostgreSQL 16 service with no provider credentials. For local SQL
+local PostgreSQL tests are not live provider proof. The prepared
+[CI workflow](docs/CI_SETUP.md) uses an ephemeral PostgreSQL 16 service and no
+provider credentials; hosted Actions still needs workflow-write authorization. For local SQL
 coverage, set `FINANCE_TEST_DB_URL` to an isolated loopback PostgreSQL admin URI;
 the fixtures create/drop random test databases. Never use an operating database.
 See [validation and current limits](docs/VALIDATION.md),

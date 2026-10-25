@@ -104,8 +104,8 @@ download, a report artifact, and Realtime/reconnect recovery. Confirm the event'
 approval policy: default two distinct humans, or explicitly selected one-director
 mode; an agent never supplies a human approval.
 
-Record deployment and live acceptance separately from [CI](../.github/workflows/ci.yml).
-CI uses PostgreSQL platform stubs and browser fixtures without provider secrets;
+Record deployment and live acceptance separately from [CI setup](CI_SETUP.md).
+The prepared CI uses PostgreSQL platform stubs and browser fixtures without provider secrets;
 it cannot establish hosted Auth delivery, live model accuracy, chain settlement
 or improved financial performance. Do not reset uncertain payments or claim a
 successful learning result to make a deployment check pass.

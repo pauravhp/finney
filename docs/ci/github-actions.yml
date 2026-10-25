@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: finance_ci_only
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Disposable CI service only; never a hosted or operating financial database.
+      FINANCE_TEST_DB_URL: postgresql://postgres:finance_ci_only@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+          enable-cache: true
+      - run: uv sync --frozen --extra dev --extra payments
+      - name: Lint application and tests
+        run: uv run --frozen ruff check app tests
+      - name: Unit and isolated PostgreSQL integration tests
+        run: uv run --frozen pytest -m 'not live'
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - name: Build without provider configuration
+        run: npm run build
+      - run: npm run typecheck
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Select installed Chromium
+        run: node -e 'console.log("PLAYWRIGHT_CHROMIUM_EXECUTABLE=" + require("@playwright/test").chromium.executablePath())' >> "$GITHUB_ENV"
+      - name: Unconfigured desktop and mobile browser checks
+        run: npm run test:browser
