@@ -336,6 +336,8 @@ export function Dashboard({
   }, []);
 
   useEffect(() => {
+    const section = new URLSearchParams(window.location.search).get("section");
+    if (section && tabs.some(item => item.id === section)) setTab(section as Tab);
     if (configured && user) void loadScopes();
     if (new URLSearchParams(window.location.search).has("auth_error"))
       setAuthCallbackError(true);

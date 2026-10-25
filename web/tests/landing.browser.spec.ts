@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("approved landing opens the live desk and labels the illustrated learning example", async ({
+test("standalone v7 landing keeps its original design and opens the real desk", async ({
   page,
 }, info) => {
   const errors: string[] = [];
@@ -11,9 +11,9 @@ test("approved landing opens the live desk and labels the illustrated learning e
       name: "The finance teammate for hackathon organizers.",
     }),
   ).toBeVisible();
-  await expect(
-    page.getByText("Illustrative financial examples below.", { exact: false }),
-  ).toBeVisible();
+  await expect(page.locator(".marketing-root")).toHaveCount(0);
+  expect(await page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain("Albert Sans");
+  expect(await page.locator('link[href*="/_next/"]').count()).toBe(0);
   await page.screenshot({
     path: `test-results/${info.project.name}-landing.png`,
   });
@@ -31,11 +31,22 @@ test("approved landing opens the live desk and labels the illustrated learning e
   ).toBe(true);
   expect(errors).toEqual([]);
   await page
-    .getByRole("link", { name: "Try Finney", exact: false })
+    .getByRole("button", { name: "Try Finney", exact: false })
     .first()
     .click();
   await expect(page).toHaveURL(/\/desk\?demo=guided$/);
   await expect(
     page.getByRole("heading", { name: /Connect your event to begin|Sign in to Finney/ }),
   ).toBeVisible();
+});
+
+
+test("prototype view/state URLs cannot open the scripted desk; legacy app links survive", async ({page}) => {
+  await page.goto("/?view=desk&state=complete");
+  await expect(page.locator(".hero h1")).toBeVisible();
+  await expect(page.locator(".desk-sidebar")).toHaveCount(0);
+  await page.getByRole("button", {name:"Open report",exact:false}).click();
+  await expect(page).toHaveURL(/\/desk\?demo=guided&section=reports$/);
+  await page.goto("/?signin=1");
+  await expect(page).toHaveURL(/\/desk$/);
 });
