@@ -3,6 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { publicConfig } from "@/lib/config";
 
 export async function proxy(request: NextRequest) {
+  // A short-lived provider callback must not depend on dashboard login or
+  // forward its query through unrelated session-refresh operations.
+  if (request.nextUrl.pathname === "/oauth/coinbase/callback")
+    return NextResponse.next();
   const config = publicConfig();
   if (!config) return NextResponse.next();
   let response = NextResponse.next({ request });

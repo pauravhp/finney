@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import ipaddress
 import math
 import re
 import secrets
@@ -118,11 +119,37 @@ async def _metadata(client: httpx.AsyncClient) -> OAuthMetadata:
     return metadata
 
 
-def _client_info(value: dict) -> OAuthClientInformationFull:
+def _validate_redirect(value: str) -> str:
+    if value == REDIRECT_URI:
+        return value
+    try:
+        url = urlsplit(value)
+        host = url.hostname or ""
+        valid = (url.scheme == "https" and url.netloc == host and "." in host
+            and host == host.lower() and not host.endswith((".localhost", ".local", ".internal"))
+            and url.path == "/oauth/coinbase/callback" and not url.query and not url.fragment
+            and bool(re.fullmatch(r"[a-z0-9]+(?:[a-z0-9.-]*[a-z0-9])?", host)))
+        try:
+            ipaddress.ip_address(host)
+            valid = False
+        except ValueError:
+            pass
+    except (ValueError, TypeError):
+        valid = False
+    if not valid:
+        raise CoinbaseAuthorizationError("coinbase_public_https_callback_required")
+    return value
+
+
+def _client_info(value: dict, *, redirect_uri: str | None = None) -> OAuthClientInformationFull:
     try:
         client=OAuthClientInformationFull.model_validate(value)
+        redirects = [str(uri) for uri in client.redirect_uris or []]
+        if len(redirects) != 1:
+            raise ValueError
+        _validate_redirect(redirects[0])
         if not client.client_id or len(client.client_id)>512 or client.client_secret or client.token_endpoint_auth_method!="none" \
-            or [str(uri) for uri in client.redirect_uris or []]!=[REDIRECT_URI] or client.issuer!=SERVER \
+            or (redirect_uri is not None and redirects != [redirect_uri]) or client.issuer!=SERVER \
             or set(client.grant_types)!={"authorization_code","refresh_token"} or client.response_types!=["code"] \
             or set((client.scope or "").split())!=set(SCOPES.split()):
             raise ValueError
@@ -154,12 +181,13 @@ def _stored(client: OAuthClientInformationFull, token: OAuthToken, user: str) ->
         "expires_at":None if token.expires_in is None else (now+timedelta(seconds=token.expires_in)).isoformat()}
 
 
-def _callback(value: str) -> tuple[str,str,str]:
+def _callback(value: str, redirect_uri: str = REDIRECT_URI) -> tuple[str,str,str]:
     if not isinstance(value,str) or len(value)>16384:
-        raise CoinbaseAuthorizationError("coinbase_full_loopback_callback_required")
+        raise CoinbaseAuthorizationError("coinbase_full_callback_required")
     url=urlsplit(value)
-    if (url.scheme,url.netloc,url.path)!=("http","127.0.0.1:8768","/oauth/coinbase/callback") or url.fragment:
-        raise CoinbaseAuthorizationError("coinbase_full_loopback_callback_required")
+    expected = urlsplit(redirect_uri)
+    if (url.scheme,url.netloc,url.path)!=(expected.scheme,expected.netloc,expected.path) or url.fragment:
+        raise CoinbaseAuthorizationError("coinbase_full_callback_required")
     try:
         params=parse_qs(url.query,keep_blank_values=True,max_num_fields=10)
     except ValueError:
@@ -177,10 +205,11 @@ def _callback(value: str) -> tuple[str,str,str]:
 async def begin(settings: Settings, director_user_id: UUID) -> dict:
     """Explicit invocation registers one public client and prepares user consent."""
     org,run,cipher=_configuration(settings)
+    redirect_uri = _validate_redirect(settings.coinbase_redirect_uri)
     user=str(UUID(str(director_user_id)))
     async with SupabaseClient(settings.supabase_url,settings.backend_key) as db:
         await _require_director(db,org,run,user)
-        metadata=OAuthClientMetadata(redirect_uris=[REDIRECT_URI],token_endpoint_auth_method="none",
+        metadata=OAuthClientMetadata(redirect_uris=[redirect_uri],token_endpoint_auth_method="none",
             grant_types=["authorization_code","refresh_token"],response_types=["code"],scope=SCOPES,client_name="Finney finance")
         async with httpx.AsyncClient(follow_redirects=False,timeout=20) as http:
             await _metadata(http)
@@ -188,7 +217,7 @@ async def begin(settings: Settings, director_user_id: UUID) -> dict:
             registered=await _json_request(http,"registration","POST",SERVER+"/register",json=request)
         if registered.get("issuer",SERVER)!=SERVER:
             raise CoinbaseAuthorizationError("coinbase_registered_public_client_invalid")
-        client=_client_info({**request,**registered,"issuer":SERVER})
+        client=_client_info({**request,**registered,"issuer":SERVER}, redirect_uri=redirect_uri)
         pkce=PKCEParameters.generate()
         state=secrets.token_urlsafe(32)
         digest=hashlib.sha256(state.encode()).hexdigest()
@@ -197,8 +226,8 @@ async def begin(settings: Settings, director_user_id: UUID) -> dict:
         pending={"state":state,"code_verifier":pkce.code_verifier,"client":client.model_dump(mode="json"),"created_at":now.timestamp()}
         await db.insert("oauth_pending",{"state_hash":digest,"organization_id":org,"run_id":run,"provider":PENDING_PROVIDER,
             "user_id":user,"encrypted_verifier":cipher.seal(pending,organization_id=org,connection_id=digest),
-            "redirect_uri":REDIRECT_URI,"expires_at":(now+timedelta(seconds=PENDING_SECONDS)).isoformat()})
-    url=SERVER+"/authorize?"+urlencode({"response_type":"code","client_id":client.client_id,"redirect_uri":REDIRECT_URI,
+            "redirect_uri":redirect_uri,"expires_at":(now+timedelta(seconds=PENDING_SECONDS)).isoformat()})
+    url=SERVER+"/authorize?"+urlencode({"response_type":"code","client_id":client.client_id,"redirect_uri":redirect_uri,
         "state":state,"code_challenge":pkce.code_challenge,"code_challenge_method":"S256","scope":SCOPES})
     return {"status":"authorization_required","auth_backend":"mcp_oauth","authorization_url":url,
         "next_step":"Authorize your existing Coinbase Wallet, then complete with the full loopback redirect through hidden terminal input."}
@@ -207,15 +236,16 @@ async def begin(settings: Settings, director_user_id: UUID) -> dict:
 async def finish(settings: Settings, callback_url: str) -> dict:
     """Consume callback once, exchange once and atomically commit the grant."""
     org,run,cipher=_configuration(settings)
-    state,digest,code=_callback(callback_url)
+    redirect_uri = _validate_redirect(settings.coinbase_redirect_uri)
+    state,digest,code=_callback(callback_url, redirect_uri)
     async with SupabaseClient(settings.supabase_url,settings.backend_key) as db:
         rows=await db.update("oauth_pending",{"expires_at":"1970-01-01T00:00:00+00:00"},filters={"state_hash":"eq."+digest,
-            "organization_id":"eq."+org,"run_id":"eq."+run,"provider":"eq."+PENDING_PROVIDER,"redirect_uri":"eq."+REDIRECT_URI,
+            "organization_id":"eq."+org,"run_id":"eq."+run,"provider":"eq."+PENDING_PROVIDER,"redirect_uri":"eq."+redirect_uri,
             "expires_at":"gt."+datetime.now(UTC).isoformat()})
         if len(rows)!=1:
             raise CoinbaseAuthorizationError("coinbase_authorization_expired_or_already_used")
         attempt=rows[0]
-        if any(attempt.get(key)!=value for key,value in (("organization_id",org),("run_id",run),("state_hash",digest),("provider",PENDING_PROVIDER),("redirect_uri",REDIRECT_URI))):
+        if any(attempt.get(key)!=value for key,value in (("organization_id",org),("run_id",run),("state_hash",digest),("provider",PENDING_PROVIDER),("redirect_uri",redirect_uri))):
             raise CoinbaseAuthorizationError("coinbase_authorization_scope_changed")
         user=str(UUID(attempt["user_id"]))
         await _require_director(db,org,run,user)
@@ -225,11 +255,11 @@ async def finish(settings: Settings, callback_url: str) -> dict:
             or not isinstance(pending.get("state"),str) or not hmac.compare_digest(pending["state"],state) \
             or not re.fullmatch(r"[A-Za-z0-9._~-]{43,128}",str(pending.get("code_verifier",""))):
             raise CoinbaseAuthorizationError("coinbase_authorization_state_invalid")
-        client=_client_info(pending.get("client",{}))
+        client=_client_info(pending.get("client",{}), redirect_uri=redirect_uri)
         async with httpx.AsyncClient(follow_redirects=False,timeout=20) as http:
             await _metadata(http)
             token=_token(await _json_request(http,"token_exchange","POST",SERVER+"/token",data={"grant_type":"authorization_code",
-                "client_id":client.client_id,"code":code,"redirect_uri":REDIRECT_URI,"code_verifier":pending["code_verifier"]}))
+                "client_id":client.client_id,"code":code,"redirect_uri":redirect_uri,"code_verifier":pending["code_verifier"]}))
         sealed=cipher.seal(_stored(client,token,user),organization_id=org,connection_id=run+":"+PROVIDER)
         result=await db.rpc("connect_coinbase_wallet",{"p_organization_id":org,"p_run_id":run,"p_director_user_id":user,
             "p_pending_state_hash":digest,"p_encrypted_token":sealed})

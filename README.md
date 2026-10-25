@@ -360,7 +360,8 @@ Realtime channels; the app subscribes to
 private `finance:<organization_id>:<run_id>` channels under the migration's policy.
 Keep the durable worker/backend supervised on the chosen host, with its server
 credentials there. Follow [deployment](docs/DEPLOYMENT.md) for the full sequence.
-Public Vercel deployment remains unverified.
+The authenticated baseline deployment was verified; see
+[validation](docs/VALIDATION.md) for its scope and remaining gates.
 
 ## Checks and troubleshooting
 

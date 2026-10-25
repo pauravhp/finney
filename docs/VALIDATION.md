@@ -8,6 +8,9 @@ state are excluded from this repository.
 
 ## Verified
 
+These results describe the frozen Hermes baseline at `13ed80d`; later OpenCode +
+Harness2 integration and comparisons have separate ownership and evidence.
+
 - 639 Python tests and 28 subtests passed, including isolated PostgreSQL integration
   for authorization, finance invariants, version checks, migrations and concurrency.
 - 48 web unit tests, 15 desktop/mobile browser checks, production build and TypeScript
@@ -20,6 +23,10 @@ state are excluded from this repository.
 - Real Claude vision OCR with a durable call reservation and unverified-source status.
 - Actual authenticated guided-demo seeding and two real source reviews. Cash remained
   unknown; no payment, approval or successful learning result was seeded.
+- The authenticated baseline was deployed to [finney-beta.vercel.app](https://finney-beta.vercel.app).
+  Actual hosted browser password sign-in, director membership, scoped snapshot and
+  Gmail connected status passed. Unauthenticated scope requests returned401. No
+  financial mutation or worker runtime switch was performed for the deployment.
 - Actual director conversation persisted and rendered the provider's answer and
   consulted-source provenance without changing financial findings or financial records.
 
@@ -49,8 +56,8 @@ is not counted as an improvement. See the build summaries for these distinctions
 
 - Live learned improvement, untouched-transfer success and promotion.
 - Coinbase wallet consent, funding and actual testnet payout/x402 settlement.
-- Public Vercel deployment and anonymous guest Auth. Guest entry is opt-in and needs
-  provider/anti-abuse configuration before public use.
+- Anonymous guest Auth and public signup confirmation/callback. Guest entry remains
+  disabled and needs provider/anti-abuse configuration before public use.
 - Nonempty live Gmail intake. The isolated readonly profile/history/empty-label path
   ran live; attachment processing also has local transport and SQL tests.
 - Bank/Plaid reconciliation, tax filing and outbound vendor/sponsor messaging.

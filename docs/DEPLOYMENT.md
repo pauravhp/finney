@@ -2,9 +2,11 @@
 
 The intended layout is a Next.js dashboard on Vercel, event-owned Supabase for
 Postgres/Auth/private Storage/Realtime, and a durable Python/Hermes worker on a
-separate host. This is a deployment guide, not evidence of a completed deployment.
-Public Vercel hosting, anonymous guest Auth, actual Coinbase testnet settlement
-and measured live skill improvement remain unverified. See [validation](VALIDATION.md).
+separate host. The frozen Hermes baseline at `13ed80d` was deployed and its
+authenticated browser flow verified at [finney-beta.vercel.app](https://finney-beta.vercel.app).
+Anonymous guest Auth, public signup confirmation, actual Coinbase testnet settlement
+and measured live skill improvement remain unverified for that baseline. See
+[validation](VALIDATION.md).
 
 ## Prepare Supabase and the worker
 

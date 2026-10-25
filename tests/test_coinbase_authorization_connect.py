@@ -239,10 +239,10 @@ def sql_director(conn,org,user):
     identity(conn,service=True)
 
 
-def sql_connect(conn,org,run,user,digest=None):
+def sql_connect(conn,org,run,user,digest=None,redirect_uri=oauth.REDIRECT_URI):
     digest=digest or hashlib.sha256(str(run).encode()).hexdigest()
     conn.execute("insert into oauth_pending(state_hash,organization_id,run_id,provider,user_id,encrypted_verifier,redirect_uri,expires_at) values(%s,%s,%s,%s,%s,'fixture-encrypted-pending',%s,'1970-01-01T00:00:00+00:00')",
-        (digest,org,run,oauth.PENDING_PROVIDER,user,oauth.REDIRECT_URI))
+        (digest,org,run,oauth.PENDING_PROVIDER,user,redirect_uri))
     return conn.execute("select connect_coinbase_wallet(%s,%s,%s,%s,%s)",(org,run,user,digest,"fixture-ciphertext-"*8)).fetchone()[0]
 
 
@@ -310,3 +310,86 @@ def test_sql_refresh_rotation_requires_current_director_and_exact_claim(state):
     assert conn.execute(rotate,(org,run,users[0],version,claim["claim_id"],"fixture-refreshed-ciphertext-"*5)).fetchone()[0]["status"]=="refreshed"
     saved=conn.execute("select encrypted_token,updated_at,refresh_claim_id from connector_secrets where run_id=%s and provider=%s",(run,oauth.PROVIDER)).fetchone()
     assert saved[0]=="fixture-refreshed-ciphertext-"*5 and saved[1]>version and saved[2] is None
+
+
+@pytest.mark.asyncio
+async def test_hosted_callback_is_pinned_through_registration_claim_and_exchange(flow):
+    settings, user, db, transport = flow
+    settings.coinbase_redirect_uri = "https://finney-beta.vercel.app/oauth/coinbase/callback"
+    started = await oauth.begin(settings, user)
+    query = parse_qs(urlsplit(started["authorization_url"]).query)
+    assert query["redirect_uri"] == [settings.coinbase_redirect_uri]
+    assert db.pending[0]["redirect_uri"] == settings.coinbase_redirect_uri
+    with pytest.raises(oauth.CoinbaseAuthorizationError):
+        await oauth.finish(settings, oauth.REDIRECT_URI + "?" + urlencode({
+            "code": "fixture-authorization-code", "state": query["state"][0]}))
+    assert db.pending[0]["expires_at"] != "1970-01-01T00:00:00+00:00"
+    result = await oauth.finish(settings, settings.coinbase_redirect_uri + "?" + urlencode({
+        "code": "fixture-authorization-code", "state": query["state"][0]}))
+    assert result["status"] == "connected"
+    exchange = next(body for method, url, body in transport["requests"] if url.endswith("/token"))
+    assert parse_qs(exchange.decode())["redirect_uri"] == [settings.coinbase_redirect_uri]
+    # A later default-config worker can use the encrypted grant. The registered
+    # client retains its original exact redirect; no personal runtime edits.
+    settings.coinbase_redirect_uri = oauth.REDIRECT_URI
+    assert await oauth.load_access_token(settings) == "fixture-access-token"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("redirect", [
+    "http://finney-beta.vercel.app/oauth/coinbase/callback",
+    "https://localhost/oauth/coinbase/callback",
+    "https://127.0.0.1/oauth/coinbase/callback",
+    "https://private.local/oauth/coinbase/callback",
+    "https://user:password@finney-beta.vercel.app/oauth/coinbase/callback",
+    "https://finney-beta.vercel.app/oauth/coinbase/callback?next=evil",
+    "https://finney-beta.vercel.app/oauth/coinbase/callback#secret",
+    "https://finney-beta.vercel.app/somewhere-else",
+])
+async def test_unsafe_configured_callback_is_rejected_before_provider_or_database_writes(flow, redirect):
+    settings, user, db, transport = flow
+    settings.coinbase_redirect_uri = redirect
+    with pytest.raises(oauth.CoinbaseAuthorizationError, match="public_https_callback"):
+        await oauth.begin(settings, user)
+    assert not db.pending and not transport["requests"]
+
+
+@pytest.mark.asyncio
+async def test_provider_cannot_replace_registered_hosted_redirect(flow, monkeypatch):
+    settings, user, db, _transport = flow
+    settings.coinbase_redirect_uri = "https://finney-beta.vercel.app/oauth/coinbase/callback"
+    original = oauth._json_request
+
+    async def changed(client, step, method, url, **kwargs):
+        response = await original(client, step, method, url, **kwargs)
+        if step == "registration":
+            response["redirect_uris"] = ["https://other.example.org/oauth/coinbase/callback"]
+        return response
+
+    monkeypatch.setattr(oauth, "_json_request", changed)
+    with pytest.raises(oauth.CoinbaseAuthorizationError, match="registered_public_client_invalid"):
+        await oauth.begin(settings, user)
+    assert not db.pending
+
+
+def test_sql_hosted_callback_preserves_private_scope_claim_and_replay_checks(state):
+    conn, org, run, users = state
+    sql_director(conn, org, users[0])
+    assert sql_connect(conn, org, run, users[0], redirect_uri=
+        "https://finney-beta.vercel.app/oauth/coinbase/callback")["status"] == "connected"
+    assert conn.execute("select count(*) from oauth_pending where run_id=%s", (run,)).fetchone()[0] == 0
+    with pytest.raises(psycopg.errors.CheckViolation, match="claimed"):
+        conn.execute("select connect_coinbase_wallet(%s,%s,%s,%s,%s)",
+            (org, run, users[0], hashlib.sha256(str(run).encode()).hexdigest(), "fixture-ciphertext-" * 8))
+
+
+@pytest.mark.parametrize("redirect", [
+    "http://example.org/oauth/coinbase/callback",
+    "https://user:password@example.org/oauth/coinbase/callback",
+    "https://example.org/oauth/coinbase/callback?extra=yes",
+])
+def test_sql_rejects_non_https_or_ambiguous_hosted_callbacks(state, redirect):
+    conn, org, run, users = state
+    sql_director(conn, org, users[0])
+    with pytest.raises(psycopg.errors.CheckViolation, match="claimed"):
+        sql_connect(conn, org, run, users[0], redirect_uri=redirect)
