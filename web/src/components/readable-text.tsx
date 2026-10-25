@@ -188,13 +188,27 @@ export function friendlyTitle(value: string): string {
     .replace(/[_]/g, " ");
 }
 
-export function sourceDocumentText(value: unknown): string {
+export function sourceDocumentText(
+  value: unknown,
+  omitDescription?: string,
+): string {
   if (typeof value === "string") return value;
   if (value === null || value === undefined) return "";
   if (Array.isArray(value))
-    return value.map(sourceDocumentText).filter(Boolean).join("\n\n");
+    return value
+      .map((entry) => sourceDocumentText(entry))
+      .filter(Boolean)
+      .join("\n\n");
   if (typeof value !== "object") return String(value);
   const row = value as Record<string, unknown>;
+  // Request artifacts are conversation text, never a user/operation dump.
+  if (
+    typeof row.message === "string" &&
+    ("submitted_by" in row ||
+      "meaning" in row ||
+      row.source_type === "director_message")
+  )
+    return row.message;
   // A bundle's top-level description is an introduction, never the document.
   const technical = new Set([
     "input_kind",
@@ -209,9 +223,20 @@ export function sourceDocumentText(value: unknown): string {
     "artifact_path",
     "kind",
     "external_id",
+    "meaning",
+    "submitted_by",
+    "submitted_by_user_id",
   ]);
   return Object.entries(row)
-    .filter(([key]) => !technical.has(key))
+    .filter(
+      ([key, entry]) =>
+        !technical.has(key) &&
+        !(
+          omitDescription !== undefined &&
+          key === "description" &&
+          entry === omitDescription
+        ),
+    )
     .map(([key, entry]) => {
       const content = sourceDocumentText(entry);
       if (!content) return "";

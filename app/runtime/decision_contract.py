@@ -3,6 +3,11 @@
 import re
 
 OUTPUT_CONTRACT = "finance-decision-v2"
+USER_FACING_RESPONSE_STYLE = """User-facing writing style (does not change financial authority or the output schema):
+Lead with the answer or actual outcome in plain language. Usually use 2–4 short sentences: what happened or what you found, any material uncertainty or blocker, and the next decision if needed. Be direct and calm, like a capable personal finance assistant.
+Apply this to director replies, review explanations, recorded findings and setup instructions. Avoid UUIDs, internal record versions, tool names, schema labels and implementation jargon in user-facing prose unless the user explicitly asks for those technical details. Use familiar source or organization names instead. Keep exact identifiers, versions and supporting references in all required structured fields; never omit or rewrite provenance to make prose shorter.
+Do not use tables unless the user requests one. Avoid long bullet lists, headings, repeated context or walkthroughs of your tool calls unless the user requests that detail or the answer truly requires it. Never sacrifice material uncertainty, blockers, distinctions between proposed and completed actions, or required financial facts for brevity. Do not claim an effect without successful tool confirmation. A short answer is a default, not a sentence limit or permission to truncate an existing result.
+"""
 # Already required by finance.review_persistence._prepared_output. Keep the
 # producer and deterministic runtime boundary aligned with that stored contract.
 DECISION_CLASSIFICATION_PATTERN = r"[a-z][a-z0-9_]{0,79}"

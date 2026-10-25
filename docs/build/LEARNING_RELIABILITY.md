@@ -184,6 +184,25 @@ under the new context before diagnosis/search. The old phase remains terminal
 `no_defect`; no holdout or gate changes, historical rescore, or director-message
 learning eligibility changes accompany this repair.
 
+## Subsequent companion response contract
+
+The protected native OpenCode/Hermes prompts and runtime guide now default
+user-facing replies, review explanations, recorded findings and setup instructions
+to an answer-first, plain-language response, normally two to four sentences. They
+preserve material uncertainty, blockers, actual-effect distinctions and every
+required structured evidence field. There is no client-side clipping, historical
+reply rewrite, stricter financial scoring, or claim of a measured learned gain.
+Tables require an explicit user request; machine identifiers remain in structured
+provenance unless the user requests technical detail.
+
+This is another protected-context change. Earlier preflight receipts remain
+historical and cannot authorize new learning with these prompt bytes. No learning
+attempt is resumed and no model call accompanies this implementation. Snapshot
+migration 025 adds only safe case association for actual review/conversation jobs;
+migration 026 provides explicit owner-only fresh practice without clearing prior
+financial evidence or shared inference allowances. Their hosted application and
+live acceptance belong to the coordinator.
+
 The coordinator subsequently ran a separate preflight with the updated protected
 context and schema. Both exposed development cases completed correctly (two and
 three provider calls); the current trusted receipt binds this new configuration.

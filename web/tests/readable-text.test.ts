@@ -194,3 +194,30 @@ test("actual reply shape formats adjacent headings, tables, lists and italic wit
   assert.doesNotMatch(malicious, /<script>/);
   assert.match(malicious, /<table>/);
 });
+
+test("director request artifacts reveal only the conversation, never submission metadata", () => {
+  assert.equal(
+    sourceDocumentText({
+      message: "Please check the revised invoice.",
+      submitted_by: "private-user-id",
+      meaning: "Director request; not approval",
+    }),
+    "Please check the revised invoice.",
+  );
+});
+
+test("source preview omits only a packet description identical to its case title", async () => {
+  const { guidedSources } = await import("./fixtures/guided-source");
+  const packet = guidedSources._REVISED;
+  const output = sourceDocumentText(packet, String(packet.description));
+  assert.ok(!output.includes(String(packet.description)));
+  for (const document of packet.documents as { text: string }[])
+    assert.ok(output.includes(document.text));
+  assert.match(
+    sourceDocumentText(
+      { ...packet, description: "A distinct document description" },
+      String(packet.description),
+    ),
+    /A distinct document description/,
+  );
+});

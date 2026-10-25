@@ -223,7 +223,7 @@ test("a delayed source switch never pairs a new identity or path with old conten
   );
 });
 
-test("a later stored reply leads while the earlier review and amount remain explicitly historical", async ({
+test("a later reply leads without stale amounts or audit chrome in the primary view", async ({
   page,
 }) => {
   await page.goto("/desk");
@@ -239,26 +239,21 @@ test("a later stored reply leads while the earlier review and amount remain expl
   await expect(page.locator(".source-content")).toContainText("USD 500.00");
   await page.evaluate(() => (window as any).__TEST_ONLY_LATER_REPLY__());
   const latest = page.locator(".case-latest-response");
-  const earlier = page.locator(".earlier-prepared-review");
   await expect(latest).toContainText(
     "revised 420 recorded, budget rejected, cash unknown",
   );
-  await expect(earlier).toContainText(
-    "Earlier prepared review · based on case v8",
-  );
-  await expect(earlier).toContainText("manually fix the record");
-  await expect(earlier).toContainText("Earlier proposed amount");
-  await expect(earlier.locator(".case-amount")).toContainText("500.00");
-  await expect(page.locator(".live-case-heading .badge")).toHaveText(
-    "needs review",
-  );
-  expect((await latest.boundingBox())!.y).toBeLessThan(
-    (await earlier.boundingBox())!.y,
-  );
+  await expect(
+    page.getByText("manually fix the record", { exact: false }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Earlier proposed amount", { exact: true }),
+  ).toHaveCount(0);
+  await expect(page.locator(".live-case-heading")).not.toContainText("Version");
+  await expect(page.locator(".live-case-heading")).not.toContainText("Updated");
   await expect(
     page.getByText("TEST ONLY earlier stored conversation.", { exact: true }),
   ).toBeHidden();
-  await page.locator(".case-response-history > summary").click();
+  await page.locator(".case-conversation > summary").click();
   await expect(
     page.getByText("TEST ONLY earlier stored conversation.", { exact: true }),
   ).toBeVisible();

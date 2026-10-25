@@ -1,0 +1,43 @@
+.companion-experience { display:block; min-height:100dvh; }
+.companion-experience > .sidebar { display:none; }
+.companion-experience > .workspace { margin:0; width:100%; min-width:0; }
+.companion-experience main { max-width:1080px; margin:0 auto; padding:24px 32px 56px; }
+.companion-experience .page-heading.case-parent-heading { display:none; }
+.companion-experience .page-heading .primary { display:none; }
+.companion-topbar { max-width:1080px; margin:auto; padding:20px 32px; display:flex; justify-content:space-between; align-items:center; }
+.companion-topbar button,.companion-topbar summary { background:transparent; border:0; padding:8px 12px; font:inherit; cursor:pointer; }
+.companion-topbar nav { display:flex; align-items:center; gap:8px; }
+.companion-home-link { font-size:20px!important; font-weight:600!important; }
+.companion-more { position:relative; }
+.companion-more summary { list-style:none; }
+.companion-more summary::-webkit-details-marker { display:none; }
+.companion-more > div { position:absolute; right:0; top:100%; z-index:40; min-width:190px; padding:8px; border-radius:12px; background:var(--surface,#fff); box-shadow:0 8px 32px #1112; display:grid; }
+.companion-more > div button { text-align:left; border-radius:6px; }
+.companion-more > div button:hover { background:var(--surface-2,#edf0e7); }
+.companion-experience .position-footer { justify-content:flex-end; }
+.companion-experience .position-footer > span { display:none; }
+.companion-experience .position-actions > .badge { display:none; }
+.companion-experience .position-grid { gap:24px; }
+.companion-experience .scope-switcher { margin-bottom:24px; }
+.companion-restart { border:0; border-radius:16px; padding:0; background:var(--surface,#fff); max-width:calc(100vw - 40px); }
+.companion-restart::backdrop { background:#1115; }
+.companion-restart > div { max-width:380px; padding:28px; border-radius:16px; background:var(--surface,#fff); }
+.companion-restart h2 { margin:0 0 12px; font-size:22px; }
+.companion-restart p { margin:0 0 24px; }
+.companion-restart footer { display:flex; gap:12px; justify-content:flex-end; }
+@media(max-width:680px) {
+ .companion-experience main { padding:16px 20px 40px; }
+ .companion-topbar { padding:12px 16px; }
+ .companion-topbar nav { gap:0; }
+ .companion-experience .position-grid { grid-template-columns:1fr 1fr; gap:24px; }
+}
+
+.companion-budget { max-width:680px; margin-top:36px; }
+.companion-budget h2 { font-size:18px; margin-bottom:20px; }
+.companion-budget ul { padding:0; margin:0 0 20px; list-style:none; }
+.companion-budget li { display:flex; justify-content:space-between; align-items:center; padding:14px 0; gap:20px; }
+.companion-budget li strong { font-weight:500; font-variant-numeric:tabular-nums; }
+
+.companion-experience .work-desk > .finney-companion { margin:24px auto 0; }
+.companion-home .companion-topbar .companion-home-link { visibility:hidden; }
+.companion-home .companion-topbar nav > button { display:none; }

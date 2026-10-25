@@ -36,6 +36,6 @@ test("approved landing opens the live desk and labels the illustrated learning e
     .click();
   await expect(page).toHaveURL(/\/desk\?demo=guided$/);
   await expect(
-    page.getByRole("heading", { name: "Work", exact: true }),
+    page.getByRole("heading", { name: /Connect your event to begin|Sign in to Finney/ }),
   ).toBeVisible();
 });
