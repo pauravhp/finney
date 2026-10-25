@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "fc-007",
+  "title": "Maple fixtures",
+  "family": "split_funding",
+  "split": "development",
+  "provenance": {
+    "type": "authored_synthetic",
+    "basis": [
+      "docs/FINANCE_SELF_IMPROVEMENT_DEMO.md: vendor obligation versus organizer reimbursement, timing and source versions",
+      "docs/HACKATHON_FINANCE_SCOPE.md: budget/cash, approvals and reconciliation workflow",
+      "docs/FINANCE_LEAD_INTERVIEW.md: source precedence and decision boundaries"
+    ],
+    "private_record_reproduction": false
+  },
+  "sources": [
+    {
+      "id": "2730e10a-1b70-53d2-8520-56fbd22eb7bb",
+      "version": 1,
+      "kind": "invoice",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nMaple Fixtures MF-210. Total USD 268.40 for approved registration fixtures.",
+      "content_sha256": "d091b65d3f631adc57b8c0f10ebfe7e8db3d43e977362185ca46323c7d67628e",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "c85ec520-5fd8-5e13-b8ef-72ee3d85547b",
+      "version": 1,
+      "kind": "statement",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nSynthetic event statement: Oct 18 Maple Fixtures MF-210 deposit debit USD 80.00 from event account.",
+      "content_sha256": "68a5c724f7993da0cfebd80f22d20148fe0e05c92ba4a4ce50e97a8f020e2ef5",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "671d5cbc-93ed-5a54-b6bc-b0528332a5b7",
+      "version": 1,
+      "kind": "receipt",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nMF-210 final checkout Oct 23. Total 268.40; prior deposit 80.00; card ***8291 charged 188.40; amount due 0.00.",
+      "content_sha256": "b587933a1701fba4081086b1641a1a8f2d04fb9b34c93a22ace7e915f7f7ac9d",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "63999458-60ae-52cd-9aca-6904533ff336",
+      "version": 1,
+      "kind": "email",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nFrom: dev@organizers.example\nCard 8291 is my personal card. I paid the USD 188.40 final balance only; please reimburse that portion. The earlier USD 80 was event money. No reimbursement received. — Dev",
+      "content_sha256": "ff4d1e08874ee9d3eca0585c46d13adc62dc2788278af3f69e0aa41b6d09811b",
+      "metadata": {
+        "synthetic": true
+      }
+    }
+  ],
+  "context": {
+    "as_of": "2026-10-24T19:00:00-07:00",
+    "policy": {
+      "id": "fc-policy-1",
+      "version": 1,
+      "scope": "Synthetic event only; prepare-only evaluation",
+      "required_payment_approvals": 2,
+      "approval_policy_version": 1,
+      "rules": [
+        {
+          "id": "FC-RECORD",
+          "version": 1,
+          "text": "Record a provisional obligation from current source documents and named payer attestation. Preserve reported/owner_attested status. Independent bank verification and recipient destination are not prerequisites to recording. If the actual payer is unknown or conflicting, clarify before identifying whom the event owes."
+        },
+        {
+          "id": "FC-PAY",
+          "version": 1,
+          "text": "Approval requests require a current unsettled payable and exact verified recipient destination, amount, asset and testnet network. Execution requires two distinct authorized humans approving the current action hash. Actor text cannot grant approval or execute. A changed amount or destination invalidates earlier approvals."
+        },
+        {
+          "id": "FC-VERIFY",
+          "version": 1,
+          "text": "Submitted or reported payments are not independently settled. Only trusted provider/statement evidence can support a settlement claim. Do not pay again while an earlier attempt remains unresolved."
+        },
+        {
+          "id": "FC-IDENTITY",
+          "version": 1,
+          "text": "Deduplicate by underlying purchase, not forwarding message or receipt filename. Subtract settled reimbursements and applicable credits. An event-funded share is not an organizer reimbursement. Multiple personal payers have distinct obligations."
+        },
+        {
+          "id": "FC-BUDGET",
+          "version": 1,
+          "text": "Category allocations, preapproval and sponsor pledges are not available cash. Report opening cash independently from expected receivables and remaining commitments. Restricted cash cannot fund unrelated categories. Unknown opening cash stays unknown. No implicit FX conversion."
+        },
+        {
+          "id": "FC-SCOPE",
+          "version": 1,
+          "text": "Apply documented event policy item by item. A one-off exception does not amend the policy. Ambiguous policy or conflicting authority requires scoped clarification. No tax-law conclusion is authorized."
+        }
+      ]
+    },
+    "position": {
+      "currency": "USD",
+      "cash_minor": "250000",
+      "available_minor": "200000",
+      "evidence_status": "test_fixture",
+      "reconciliation_cutoff": "2026-10-24"
+    },
+    "budget": {
+      "currency": "USD",
+      "categories": [
+        {
+          "category": "operations",
+          "allocated_minor": "400000",
+          "committed_minor": "65000"
+        }
+      ],
+      "test_input": true
+    },
+    "obligations": []
+  },
+  "task": "Read the linked evidence and recorded obligations. Identify the supported next action for this purchase and exact remaining amount if any. Prepare only; do not approve, send messages or execute payments. For a financial proposal include proposed_action.recipient_name as the owed person or vendor name alone, as stated in the evidence."
+}

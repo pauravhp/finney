@@ -6,8 +6,10 @@ resolution-markers = [
     "python_full_version >= '3.15' and sys_platform != 'win32'",
     "python_full_version == '3.14.*' and sys_platform == 'win32'",
     "python_full_version == '3.14.*' and sys_platform != 'win32'",
-    "python_full_version < '3.14' and sys_platform == 'win32'",
-    "python_full_version < '3.14' and sys_platform != 'win32'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32'",
+    "python_full_version < '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'win32'",
+    "python_full_version < '3.12' and sys_platform != 'win32'",
 ]
 
 [[package]]
@@ -923,6 +925,9 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "ruff" },
 ]
+learning = [
+    { name = "harness2", marker = "python_full_version >= '3.12' and python_full_version < '3.14'" },
+]
 payments = [
     { name = "x402", extra = ["evm", "httpx"] },
 ]
@@ -931,6 +936,7 @@ payments = [
 requires-dist = [
     { name = "cryptography", specifier = ">=44,<47" },
     { name = "fastapi", specifier = ">=0.115,<1" },
+    { name = "harness2", marker = "python_full_version >= '3.12' and python_full_version < '3.14' and extra == 'learning'", git = "https://github.com/google-research/harness2.git?rev=1cfe254e8d25b15f37048c3730134686abe60335" },
     { name = "httpx", specifier = ">=0.28,<1" },
     { name = "mcp", specifier = ">=1.12,<2" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2,<4" },
@@ -943,7 +949,7 @@ requires-dist = [
     { name = "uvicorn", specifier = ">=0.34,<1" },
     { name = "x402", extras = ["evm", "httpx"], marker = "extra == 'payments'", specifier = "==2.25.0" },
 ]
-provides-extras = ["dev", "payments"]
+provides-extras = ["dev", "payments", "learning"]
 
 [[package]]
 name = "eth-abi"
@@ -1194,6 +1200,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/01/ee/02a2c011bdab74c6f
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl", hash = "sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86", size = 37515, upload-time = "2025-04-24T03:35:24.344Z" },
 ]
+
+[[package]]
+name = "harness2"
+version = "0.1.0"
+source = { git = "https://github.com/google-research/harness2.git?rev=1cfe254e8d25b15f37048c3730134686abe60335#1cfe254e8d25b15f37048c3730134686abe60335" }
 
 [[package]]
 name = "hexbytes"

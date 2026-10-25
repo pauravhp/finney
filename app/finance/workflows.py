@@ -109,11 +109,11 @@ async def persist_director_message(tools, db, job: dict) -> dict:
     return {"case_id": case["id"], "source_id": source["id"]}
 
 
-async def queue_automatic_improvement(db, job: dict, outcome: dict) -> dict:
+async def queue_automatic_improvement(db, job: dict, outcome: dict, *, suite_id: str | None = None) -> dict:
     from app.improvement.fresh import FRESH_SUITE_ID
     from app.runtime.jobs import automatic_improvement_request
 
-    request = automatic_improvement_request(job, outcome, suite_id=FRESH_SUITE_ID)
+    request = automatic_improvement_request(job, outcome, suite_id=suite_id or FRESH_SUITE_ID)
     if request is None:
         return {"status": "not_requested"}
     filters = {"organization_id": "eq." + job["organization_id"], "run_id": "eq." + job["run_id"],

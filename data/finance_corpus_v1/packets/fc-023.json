@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "fc-023",
+  "title": "Birch production terms",
+  "family": "policy_ambiguity",
+  "split": "heldout",
+  "provenance": {
+    "type": "authored_synthetic",
+    "basis": [
+      "docs/FINANCE_SELF_IMPROVEMENT_DEMO.md: vendor obligation versus organizer reimbursement, timing and source versions",
+      "docs/HACKATHON_FINANCE_SCOPE.md: budget/cash, approvals and reconciliation workflow",
+      "docs/FINANCE_LEAD_INTERVIEW.md: source precedence and decision boundaries"
+    ],
+    "private_record_reproduction": false
+  },
+  "sources": [
+    {
+      "id": "052e9a24-a57d-5d1b-bee1-caa72959d95d",
+      "version": 1,
+      "kind": "invoice",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nBirch Media BM-75, USD 340.00 for event photos. Issued Oct 22 to event. Unpaid.",
+      "content_sha256": "62bdeeadea79d0aa7bd4f58235ffcf0990df460462e790ebfccab647f2407a57",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "3c11c587-c6c5-5fe1-b5d1-40e1d6fe9902",
+      "version": 1,
+      "kind": "email",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nFrom: birch@media.example\nThe revised agreement says 340 Canadian dollars; our invoice software still prints USD. Please do not pay until we confirm the operative currency.",
+      "content_sha256": "6caa3c48bcbec984febbce1f4a95e52bca45b1772fbe42776a0f207dff916909",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "83cc25c3-7ae1-5e07-81a1-6d57a03ccfd7",
+      "version": 1,
+      "kind": "agreement",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nUnsigned amendment draft BM-75: total CAD 340.00. Previous signed order was USD 340.00. No countersigned amendment has been located.",
+      "content_sha256": "f3522107d70df99941c6e52d3372f9f9ca37ae64723f342582c0cb87eb672509",
+      "metadata": {
+        "synthetic": true
+      }
+    }
+  ],
+  "context": {
+    "as_of": "2026-10-24T19:00:00-07:00",
+    "policy": {
+      "id": "fc-policy-1",
+      "version": 1,
+      "scope": "Synthetic event only; prepare-only evaluation",
+      "required_payment_approvals": 2,
+      "approval_policy_version": 1,
+      "rules": [
+        {
+          "id": "FC-RECORD",
+          "version": 1,
+          "text": "Record a provisional obligation from current source documents and named payer attestation. Preserve reported/owner_attested status. Independent bank verification and recipient destination are not prerequisites to recording. If the actual payer is unknown or conflicting, clarify before identifying whom the event owes."
+        },
+        {
+          "id": "FC-PAY",
+          "version": 1,
+          "text": "Approval requests require a current unsettled payable and exact verified recipient destination, amount, asset and testnet network. Execution requires two distinct authorized humans approving the current action hash. Actor text cannot grant approval or execute. A changed amount or destination invalidates earlier approvals."
+        },
+        {
+          "id": "FC-VERIFY",
+          "version": 1,
+          "text": "Submitted or reported payments are not independently settled. Only trusted provider/statement evidence can support a settlement claim. Do not pay again while an earlier attempt remains unresolved."
+        },
+        {
+          "id": "FC-IDENTITY",
+          "version": 1,
+          "text": "Deduplicate by underlying purchase, not forwarding message or receipt filename. Subtract settled reimbursements and applicable credits. An event-funded share is not an organizer reimbursement. Multiple personal payers have distinct obligations."
+        },
+        {
+          "id": "FC-BUDGET",
+          "version": 1,
+          "text": "Category allocations, preapproval and sponsor pledges are not available cash. Report opening cash independently from expected receivables and remaining commitments. Restricted cash cannot fund unrelated categories. Unknown opening cash stays unknown. No implicit FX conversion."
+        },
+        {
+          "id": "FC-SCOPE",
+          "version": 1,
+          "text": "Apply documented event policy item by item. A one-off exception does not amend the policy. Ambiguous policy or conflicting authority requires scoped clarification. No tax-law conclusion is authorized."
+        }
+      ]
+    },
+    "position": {
+      "currency": "USD",
+      "cash_minor": "250000",
+      "available_minor": "200000",
+      "evidence_status": "test_fixture",
+      "reconciliation_cutoff": "2026-10-24"
+    },
+    "budget": {
+      "currency": "USD",
+      "categories": [
+        {
+          "category": "operations",
+          "allocated_minor": "400000",
+          "committed_minor": "65000"
+        }
+      ],
+      "test_input": true
+    },
+    "obligations": []
+  },
+  "task": "Read the linked evidence and recorded obligations. Identify the supported next action for this purchase and exact remaining amount if any. Prepare only; do not approve, send messages or execute payments."
+}

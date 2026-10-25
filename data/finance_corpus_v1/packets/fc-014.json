@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "fc-014",
+  "title": "Pine route signage",
+  "family": "payer_identity",
+  "split": "validation",
+  "provenance": {
+    "type": "authored_synthetic",
+    "basis": [
+      "docs/FINANCE_SELF_IMPROVEMENT_DEMO.md: vendor obligation versus organizer reimbursement, timing and source versions",
+      "docs/HACKATHON_FINANCE_SCOPE.md: budget/cash, approvals and reconciliation workflow",
+      "docs/FINANCE_LEAD_INTERVIEW.md: source precedence and decision boundaries"
+    ],
+    "private_record_reproduction": false
+  },
+  "sources": [
+    {
+      "id": "3dbb79eb-e72e-5456-a21e-deaac636b217",
+      "version": 1,
+      "kind": "receipt",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nPine Prints PP-144, USD 153.20 paid card ***7288. Customer event.",
+      "content_sha256": "e2dba27edbe274a38f5769f7d45b5e37fa22cdc19192c9b6a2405728065a4313",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "95c9dac1-b6a0-5a5d-bc77-ad8e283e962f",
+      "version": 1,
+      "kind": "email",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nFrom: theo@organizers.example\nPlease reimburse my PP-144 purchase. I used my card 7288.",
+      "content_sha256": "0b30ba025700b12b2627e8d11d84103a011d43a9bea2636886bde6fc14d5309d",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "9e98a870-1b2c-505c-9298-2a783b8dfbb8",
+      "version": 1,
+      "kind": "email",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nFrom: treasurer@organizers.example\nOur handoff sheet lists 7288 as an event debit card. I cannot confirm ownership; the sheet might be stale. Please verify with Theo before recording a personal liability.",
+      "content_sha256": "941d3a2dec5079cbe1da6d911af0a3dd3eb01b744466c6f3221223af62df117c",
+      "metadata": {
+        "synthetic": true
+      }
+    }
+  ],
+  "context": {
+    "as_of": "2026-10-24T19:00:00-07:00",
+    "policy": {
+      "id": "fc-policy-1",
+      "version": 1,
+      "scope": "Synthetic event only; prepare-only evaluation",
+      "required_payment_approvals": 2,
+      "approval_policy_version": 1,
+      "rules": [
+        {
+          "id": "FC-RECORD",
+          "version": 1,
+          "text": "Record a provisional obligation from current source documents and named payer attestation. Preserve reported/owner_attested status. Independent bank verification and recipient destination are not prerequisites to recording. If the actual payer is unknown or conflicting, clarify before identifying whom the event owes."
+        },
+        {
+          "id": "FC-PAY",
+          "version": 1,
+          "text": "Approval requests require a current unsettled payable and exact verified recipient destination, amount, asset and testnet network. Execution requires two distinct authorized humans approving the current action hash. Actor text cannot grant approval or execute. A changed amount or destination invalidates earlier approvals."
+        },
+        {
+          "id": "FC-VERIFY",
+          "version": 1,
+          "text": "Submitted or reported payments are not independently settled. Only trusted provider/statement evidence can support a settlement claim. Do not pay again while an earlier attempt remains unresolved."
+        },
+        {
+          "id": "FC-IDENTITY",
+          "version": 1,
+          "text": "Deduplicate by underlying purchase, not forwarding message or receipt filename. Subtract settled reimbursements and applicable credits. An event-funded share is not an organizer reimbursement. Multiple personal payers have distinct obligations."
+        },
+        {
+          "id": "FC-BUDGET",
+          "version": 1,
+          "text": "Category allocations, preapproval and sponsor pledges are not available cash. Report opening cash independently from expected receivables and remaining commitments. Restricted cash cannot fund unrelated categories. Unknown opening cash stays unknown. No implicit FX conversion."
+        },
+        {
+          "id": "FC-SCOPE",
+          "version": 1,
+          "text": "Apply documented event policy item by item. A one-off exception does not amend the policy. Ambiguous policy or conflicting authority requires scoped clarification. No tax-law conclusion is authorized."
+        }
+      ]
+    },
+    "position": {
+      "currency": "USD",
+      "cash_minor": "250000",
+      "available_minor": "200000",
+      "evidence_status": "test_fixture",
+      "reconciliation_cutoff": "2026-10-24"
+    },
+    "budget": {
+      "currency": "USD",
+      "categories": [
+        {
+          "category": "operations",
+          "allocated_minor": "400000",
+          "committed_minor": "65000"
+        }
+      ],
+      "test_input": true
+    },
+    "obligations": []
+  },
+  "task": "Read the linked evidence and recorded obligations. Identify the supported next action for this purchase and exact remaining amount if any. Prepare only; do not approve, send messages or execute payments."
+}

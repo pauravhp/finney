@@ -1,5 +1,9 @@
 # Acceptance evidence
 
+The baseline evidence below is preserved. The later OpenCode + Harness2
+comparison is recorded in [LEARNING_ACCEPTANCE.md](LEARNING_ACCEPTANCE.md): an
+observed synthetic validation gain, rejected final transfer, no activation.
+
 ## Frozen baseline acceptance — October 25, 2026 Pacific
 
 The tested Hermes baseline is public commit `13ed80d` and uses migrations001–016.

@@ -23,8 +23,12 @@ def organizer_expense_suite(tools: object, suite_id: str) -> ProtectedSuite:
     if not hasattr(tools, "for_evaluation") or not hasattr(tools, "scope"):
         raise ModelError("scoped_prepare_only_kernel_required")
     from .blockers import BLOCKER_SUITE_ID, LEGACY_BLOCKER_SUITE_ID, blocker_suite
+    from .corpus_online import CORPUS_ONLINE_SUITE_ID, corpus_online_suite
     from .fresh import FRESH_SUITE_ID, fresh_transfer_suite
     from .multidoc import MULTIDOC_SUITE_ID, multidocument_suite
+
+    if suite_id == CORPUS_ONLINE_SUITE_ID:
+        return corpus_online_suite(tools)
 
     if suite_id == FRESH_SUITE_ID:
         return fresh_transfer_suite(tools)

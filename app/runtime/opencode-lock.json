@@ -1,0 +1,24 @@
+{
+  "runtime": "opencode",
+  "version": "1.19.4",
+  "revision": "148842ef7cb1bc34192b3fff57d0f9721ab9c801",
+  "repository": "https://github.com/anomalyco/opencode",
+  "release": "https://github.com/anomalyco/opencode/releases/tag/v1.19.4",
+  "platform": "linux-x86_64",
+  "asset": "opencode-linux-x64-baseline.tar.gz",
+  "archive_url": "https://github.com/anomalyco/opencode/releases/download/v1.19.4/opencode-linux-x64-baseline.tar.gz",
+  "archive_sha256": "1697ef40558d378bd2f72efa8fafe1bed1f0e664f09247b9357556b95dbc7cbc",
+  "binary_sha256": "538fcb1b6408c8d4608822acee19f7ff5b3a3eb3383c0633c4f06170857312a7",
+  "source_archive_sha256": "2e553ed005b2df4a7efb9edd26db8fc3caafb1b4dfc3c5c3869192334584d8bb",
+  "license": "MIT",
+  "inspected_source": [
+    "packages/opencode/src/session/prompt.ts",
+    "packages/opencode/src/session/tools.ts",
+    "packages/opencode/src/session/llm/request.ts",
+    "packages/opencode/src/mcp/index.ts",
+    "packages/opencode/src/mcp/catalog.ts",
+    "packages/core/src/v1/config/agent.ts",
+    "packages/core/src/v1/config/provider.ts",
+    "packages/schema/src/v1/session.ts"
+  ]
+}

@@ -1,6 +1,5 @@
 "use client";
 
-import { createPatch } from "diff";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Activity,
@@ -26,6 +25,7 @@ import {
 } from "lucide-react";
 import { browserSupabase } from "@/lib/supabase/browser";
 import { AuthPanel } from "@/components/auth-panel";
+import { Procedure } from "@/components/procedure";
 import { PaymentExecution } from "@/components/payment-execution";
 import { DirectorResponses } from "@/components/director-responses";
 import {
@@ -1448,102 +1448,6 @@ function asRecord(value: unknown): StateRecord {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as StateRecord)
     : {};
-}
-function generation(row: StateRecord) {
-  return asRecord(asRecord(asRecord(row.metadata).generation).output);
-}
-function Procedure({
-  row,
-  baseline,
-  scope,
-}: {
-  row: StateRecord;
-  baseline?: StateRecord;
-  scope: Scope;
-}) {
-  const [artifact, setArtifact] = useState<string | null>(null);
-  const [failure, setFailure] = useState<string | null>(null);
-  const [fetching, setFetching] = useState(false);
-  const candidate = textValue(generation(row).procedure, "");
-  const prior = baseline ? textValue(generation(baseline).procedure, "") : "";
-  async function inspectArtifact() {
-    const path = textValue(row.artifact_path, "");
-    if (!path.startsWith(`${scope.organization_id}/${scope.run_id}/`)) {
-      setFailure("The artifact path does not belong to this run.");
-      return;
-    }
-    setFetching(true);
-    setFailure(null);
-    try {
-      const { data, error } = await browserSupabase()
-        .storage.from("finance-artifacts")
-        .download(path);
-      if (error || !data)
-        throw new Error("The private artifact is unavailable to this account.");
-      if (data.size > 1048576)
-        throw new Error(
-          "This artifact is too large to inspect inline. Use the authorized export tool.",
-        );
-      setArtifact(await data.text());
-    } catch (cause) {
-      setFailure(
-        cause instanceof Error
-          ? cause.message
-          : "The artifact could not be read.",
-      );
-    } finally {
-      setFetching(false);
-    }
-  }
-  return (
-    <div>
-      {Boolean(generation(row).rationale) && (
-        <p>{textValue(generation(row).rationale)}</p>
-      )}
-      {candidate && prior ? (
-        <details className="record-details">
-          <summary>Inspect procedure diff</summary>
-          <pre>
-            {createPatch(
-              textValue(row.skill_name, "procedure"),
-              prior,
-              candidate,
-              "baseline",
-              "candidate",
-            )}
-          </pre>
-          <div className="procedure-comparison">
-            <div>
-              <h4>Baseline</h4>
-              <pre>{prior}</pre>
-            </div>
-            <div>
-              <h4>Candidate</h4>
-              <pre>{candidate}</pre>
-            </div>
-          </div>
-        </details>
-      ) : candidate ? (
-        <details className="record-details">
-          <summary>Inspect candidate procedure</summary>
-          <pre>{candidate}</pre>
-        </details>
-      ) : (
-        <p className="muted">
-          Procedure text must be read from the stored artifact.
-        </p>
-      )}
-      {Boolean(row.artifact_path) && (
-        <button onClick={inspectArtifact} disabled={fetching}>
-          {fetching
-            ? "Reading artifact…"
-            : "Inspect private procedure artifact"}
-        </button>
-      )}
-      {failure && <p role="alert">{failure}</p>}
-      {artifact !== null && <pre className="diff">{artifact}</pre>}
-    </div>
-  );
 }
 function Learning({
   snapshot,

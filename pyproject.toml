@@ -23,9 +23,11 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8.3,<10", "pytest-asyncio>=0.25,<2", "ruff>=0.11,<1"]
 payments = ["x402[evm,httpx]==2.25.0"]
+learning = ["harness2 @ git+https://github.com/google-research/harness2.git@1cfe254e8d25b15f37048c3730134686abe60335 ; python_version >= '3.12' and python_version < '3.14'"]
 
 [project.scripts]
 finance = "app.cli:main"
+finance-learning = "app.improvement.benchmark:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
@@ -33,6 +35,10 @@ packages = ["app"]
 [tool.hatch.build.targets.wheel.force-include]
 "skills" = "app/assets/skills"
 "supabase/migrations" = "app/assets/supabase/migrations"
+"data/finance_corpus_v1" = "app/assets/data/finance_corpus_v1"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "fc-011",
+  "title": "Westwind van hire",
+  "family": "vendor_balance",
+  "split": "validation",
+  "provenance": {
+    "type": "authored_synthetic",
+    "basis": [
+      "docs/FINANCE_SELF_IMPROVEMENT_DEMO.md: vendor obligation versus organizer reimbursement, timing and source versions",
+      "docs/HACKATHON_FINANCE_SCOPE.md: budget/cash, approvals and reconciliation workflow",
+      "docs/FINANCE_LEAD_INTERVIEW.md: source precedence and decision boundaries"
+    ],
+    "private_record_reproduction": false
+  },
+  "sources": [
+    {
+      "id": "c9b0fe54-fc9b-5e15-94a8-960df73f1087",
+      "version": 1,
+      "kind": "invoice",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nWestwind Transport WT-662 | van hire USD 689.00 | due Oct 28.",
+      "content_sha256": "e8dedafb8e98750baf2b8838d06fb5e61cdad0fa1e17b2ac30c753b63f1ff34d",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "0a314e24-9f9c-5b31-8def-4f3e838e8f2d",
+      "version": 1,
+      "kind": "email",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nFrom: bookings@westwind.example\nAccount WT-662: event ACH deposit 240.00 received Oct 17. Remaining USD 449.00. No other credits. Coordinator Zain did not pay personally.",
+      "content_sha256": "52c16f464dd68a3dade454f7a7e5df97ac347001156c4ec28c0fca1e9b4ab8fd",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "83d33f69-7d7a-507f-9c45-b7a4ab35186c",
+      "version": 1,
+      "kind": "statement",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nSynthetic event statement Oct 17: ACH Westwind WT-662 USD 240.00.",
+      "content_sha256": "5c1a543555dd2ec7f9106e821eee26fdb8c3392fca4ddf5d9406dd321fe06920",
+      "metadata": {
+        "synthetic": true
+      }
+    }
+  ],
+  "context": {
+    "as_of": "2026-10-24T19:00:00-07:00",
+    "policy": {
+      "id": "fc-policy-1",
+      "version": 1,
+      "scope": "Synthetic event only; prepare-only evaluation",
+      "required_payment_approvals": 2,
+      "approval_policy_version": 1,
+      "rules": [
+        {
+          "id": "FC-RECORD",
+          "version": 1,
+          "text": "Record a provisional obligation from current source documents and named payer attestation. Preserve reported/owner_attested status. Independent bank verification and recipient destination are not prerequisites to recording. If the actual payer is unknown or conflicting, clarify before identifying whom the event owes."
+        },
+        {
+          "id": "FC-PAY",
+          "version": 1,
+          "text": "Approval requests require a current unsettled payable and exact verified recipient destination, amount, asset and testnet network. Execution requires two distinct authorized humans approving the current action hash. Actor text cannot grant approval or execute. A changed amount or destination invalidates earlier approvals."
+        },
+        {
+          "id": "FC-VERIFY",
+          "version": 1,
+          "text": "Submitted or reported payments are not independently settled. Only trusted provider/statement evidence can support a settlement claim. Do not pay again while an earlier attempt remains unresolved."
+        },
+        {
+          "id": "FC-IDENTITY",
+          "version": 1,
+          "text": "Deduplicate by underlying purchase, not forwarding message or receipt filename. Subtract settled reimbursements and applicable credits. An event-funded share is not an organizer reimbursement. Multiple personal payers have distinct obligations."
+        },
+        {
+          "id": "FC-BUDGET",
+          "version": 1,
+          "text": "Category allocations, preapproval and sponsor pledges are not available cash. Report opening cash independently from expected receivables and remaining commitments. Restricted cash cannot fund unrelated categories. Unknown opening cash stays unknown. No implicit FX conversion."
+        },
+        {
+          "id": "FC-SCOPE",
+          "version": 1,
+          "text": "Apply documented event policy item by item. A one-off exception does not amend the policy. Ambiguous policy or conflicting authority requires scoped clarification. No tax-law conclusion is authorized."
+        }
+      ]
+    },
+    "position": {
+      "currency": "USD",
+      "cash_minor": "250000",
+      "available_minor": "200000",
+      "evidence_status": "test_fixture",
+      "reconciliation_cutoff": "2026-10-24"
+    },
+    "budget": {
+      "currency": "USD",
+      "categories": [
+        {
+          "category": "operations",
+          "allocated_minor": "400000",
+          "committed_minor": "65000"
+        }
+      ],
+      "test_input": true
+    },
+    "obligations": []
+  },
+  "task": "Read the linked evidence and recorded obligations. Identify the supported next action for this purchase and exact remaining amount if any. Prepare only; do not approve, send messages or execute payments. For a financial proposal include proposed_action.recipient_name as the owed person or vendor name alone, as stated in the evidence."
+}

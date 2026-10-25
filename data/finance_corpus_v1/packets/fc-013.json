@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "fc-013",
+  "title": "Canopy invoice thread",
+  "family": "source_revision",
+  "split": "validation",
+  "provenance": {
+    "type": "authored_synthetic",
+    "basis": [
+      "docs/FINANCE_SELF_IMPROVEMENT_DEMO.md: vendor obligation versus organizer reimbursement, timing and source versions",
+      "docs/HACKATHON_FINANCE_SCOPE.md: budget/cash, approvals and reconciliation workflow",
+      "docs/FINANCE_LEAD_INTERVIEW.md: source precedence and decision boundaries"
+    ],
+    "private_record_reproduction": false
+  },
+  "sources": [
+    {
+      "id": "a604374b-467e-5c1b-a39e-0be39212b027",
+      "version": 1,
+      "kind": "invoice",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nCanopy Shelters CS-501 invoice Oct 18. USD 920.00 total, no deposits.",
+      "content_sha256": "1cbb1a4e84afe06afd7cf51aea5a5807188bf70d628b4e1b19f427d3524981c8",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "00254cda-7364-5d9a-9f26-013db7cb8a1f",
+      "version": 1,
+      "kind": "email",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nFrom: accounts@canopy.example\nThe duplicate table line was our mistake. Credit note CN-77 for USD 125.00 applies to CS-501; please pay the remainder.",
+      "content_sha256": "bd534d7505d3d2e671cbe66d0e90dc87cfe318495ac563dad3666527bc8728a4",
+      "metadata": {
+        "synthetic": true
+      }
+    },
+    {
+      "id": "4feb6847-711d-56e3-99a7-392325d6c673",
+      "version": 1,
+      "kind": "credit_note",
+      "content": "SYNTHETIC FINANCE EVIDENCE — invented people, records and amounts; not real approval or settlement.\nCN-77 / Oct 24 / invoice CS-501 / credit USD 125.00 / revised outstanding USD 795.00. No cash refund was issued.",
+      "content_sha256": "87e83e7d2c25495f5530bce3c08c9e534a3ef5b3c839b222ed07af515d68f17e",
+      "metadata": {
+        "synthetic": true
+      }
+    }
+  ],
+  "context": {
+    "as_of": "2026-10-24T19:00:00-07:00",
+    "policy": {
+      "id": "fc-policy-1",
+      "version": 1,
+      "scope": "Synthetic event only; prepare-only evaluation",
+      "required_payment_approvals": 2,
+      "approval_policy_version": 1,
+      "rules": [
+        {
+          "id": "FC-RECORD",
+          "version": 1,
+          "text": "Record a provisional obligation from current source documents and named payer attestation. Preserve reported/owner_attested status. Independent bank verification and recipient destination are not prerequisites to recording. If the actual payer is unknown or conflicting, clarify before identifying whom the event owes."
+        },
+        {
+          "id": "FC-PAY",
+          "version": 1,
+          "text": "Approval requests require a current unsettled payable and exact verified recipient destination, amount, asset and testnet network. Execution requires two distinct authorized humans approving the current action hash. Actor text cannot grant approval or execute. A changed amount or destination invalidates earlier approvals."
+        },
+        {
+          "id": "FC-VERIFY",
+          "version": 1,
+          "text": "Submitted or reported payments are not independently settled. Only trusted provider/statement evidence can support a settlement claim. Do not pay again while an earlier attempt remains unresolved."
+        },
+        {
+          "id": "FC-IDENTITY",
+          "version": 1,
+          "text": "Deduplicate by underlying purchase, not forwarding message or receipt filename. Subtract settled reimbursements and applicable credits. An event-funded share is not an organizer reimbursement. Multiple personal payers have distinct obligations."
+        },
+        {
+          "id": "FC-BUDGET",
+          "version": 1,
+          "text": "Category allocations, preapproval and sponsor pledges are not available cash. Report opening cash independently from expected receivables and remaining commitments. Restricted cash cannot fund unrelated categories. Unknown opening cash stays unknown. No implicit FX conversion."
+        },
+        {
+          "id": "FC-SCOPE",
+          "version": 1,
+          "text": "Apply documented event policy item by item. A one-off exception does not amend the policy. Ambiguous policy or conflicting authority requires scoped clarification. No tax-law conclusion is authorized."
+        }
+      ]
+    },
+    "position": {
+      "currency": "USD",
+      "cash_minor": "250000",
+      "available_minor": "200000",
+      "evidence_status": "test_fixture",
+      "reconciliation_cutoff": "2026-10-24"
+    },
+    "budget": {
+      "currency": "USD",
+      "categories": [
+        {
+          "category": "operations",
+          "allocated_minor": "400000",
+          "committed_minor": "65000"
+        }
+      ],
+      "test_input": true
+    },
+    "obligations": []
+  },
+  "task": "Read the linked evidence and recorded obligations. Identify the supported next action for this purchase and exact remaining amount if any. Prepare only; do not approve, send messages or execute payments. For a financial proposal include proposed_action.recipient_name as the owed person or vendor name alone, as stated in the evidence."
+}
