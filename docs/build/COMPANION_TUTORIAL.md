@@ -32,7 +32,7 @@ Current and previous documents remain available through plain document labels;
 their identifiers and exact versions stay in backend records and validation.
 
 Native OpenCode and Hermes prompts now ask for answer-first, plain-language
-responses, usually two to four short sentences. Material uncertainty, blockers
+responses, usually one to three short sentences. Material uncertainty, blockers
 and differences between proposed/completed actions remain mandatory. Required
 structured IDs/references are unchanged. The UI does not rewrite or discard
 stored financial statements to fake concision. A typed companion question is
@@ -69,3 +69,40 @@ passed, with 11 explicit optional/viewport skips. Production build, TypeScript,
 Ruff and diff checks passed. The full pass caught an unconfigured-view heading
 mismatch and an obsolete landing assertion; both were corrected and rechecked.
 Desktop/mobile alert, working, result and companion-answer captures were inspected.
+
+## Hosted acceptance
+
+The production companion release was tested through an actual signed-in Chromium
+browser against hosted Supabase and the Sonnet 5.5 worker, without network
+interception. The opening situation, alert, blocked unrelated action, clean invoice
+view, real working state, exact-job completion and budget transition passed.
+The review used six provider calls and changed the existing Harbor AV liability
+from USD 480 to USD 420 once; cash stayed USD 7,800 and settled amount stayed zero.
+Current commitments were USD 3,620 and availability USD 4,180.
+
+The first browser receipt remains marked failed: its whole-reply text assertion
+failed after the real review and follow-up had completed successfully. The original
+96-word review and 90-word reply are preserved. They also exposed unnecessary
+payment setup and event totals, so response guidance was narrowed to the requested
+task. A subsequent real read-only question produced a 65-word answer, displayed
+inside the companion; the exact visible answer matched the stored response.
+Desktop/mobile capture, mobile overflow and Skip restoring controls passed.
+No stored result was rewritten or simulated to satisfy the check. The response
+style is a default, not a hard sentence limit or truncation rule.
+
+The remaining encoded blocker labels are translated into plain descriptions of
+what the affected operation needs. A short companion answer receives enough room
+to read before the conversation needs to scroll. These are presentation changes;
+financial requirements remain enforced by the same backend.
+
+Migrations 025 and 026 are hosted. The previous practice histories are retained,
+and a fresh event is prepared for the presenter rather than clearing old evidence.
+The original owner test allowance was raised from 120 to 1,000 reserved calls under
+the owner's explicit testing authorization; prior usage, other users' defaults,
+daily/run limits and financial/promotion gates were retained. No learned promotion
+or final-holdout exposure occurred in this UI verification.
+
+The final response-scope/blocker-label correction passed 25 backend contract tests,
+11 case UI unit checks, eight desktop/mobile browser checks, and a fresh production
+build with TypeScript. The presenter event is freshly seeded and has no review or
+conversation attempt yet; prior accepted runs remain archived.

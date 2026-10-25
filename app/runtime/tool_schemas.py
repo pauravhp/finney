@@ -25,7 +25,7 @@ def schema_for(name: str) -> dict:
         "record_finding": {
             "case_id": {"type": "string"},
             "expected_version": {"type": "integer", "minimum": 1},
-            "finding": {"type": "string", "description": "Plain-language, answer-first review outcome, usually 2–4 short sentences. Preserve material blockers and uncertainty; avoid internal IDs, versions and tool jargon in prose."},
+            "finding": {"type": "string", "description": "Plain-language, answer-first review outcome, usually 1–3 short sentences focused on the current task. Preserve material blockers and uncertainty; omit unrelated totals, setup questions and future payment checklists. Avoid internal IDs, versions and tool jargon in prose."},
             "idempotency_key": {"type": "string"},
         },
         "propose_obligation_update": {

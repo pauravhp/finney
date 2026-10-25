@@ -6,6 +6,7 @@ import {
   CaseWorkspace,
   caseSourceIds,
   sourceDisplayTitle,
+  caseBlockerNotes,
 } from "../src/components/case-workspace";
 import { snapshotSchema } from "../src/lib/contracts";
 
@@ -289,4 +290,98 @@ test("director requests never appear as source tabs and current result keeps its
   assert.match(html, /Please compare the invoices/);
   assert.match(html, /data-tutorial="view-budget"/);
   assert.match(html, /See budget/);
+});
+
+test("blocker notes distinguish recording, payment and settlement without schema jargon", () => {
+  assert.deepEqual(
+    caseBlockerNotes([
+      { stage: "obligation_recording", requirement: "payer_identity" },
+      { stage: "approval_request", requirement: "recipient_destination" },
+      { stage: "approval_request", requirement: "recipient_destination" },
+      { stage: "execution", requirement: "human_approvals" },
+      {
+        stage: "settlement_claim",
+        requirement: "independent_payment_verification",
+      },
+    ]),
+    [
+      {
+        heading: "Needs your help",
+        messages: ["Confirm who paid and whom the event owes."],
+      },
+      {
+        heading: "Before payment",
+        messages: [
+          "Payment needs verified bank or wallet details.",
+          "Get the required human approval before sending payment.",
+        ],
+      },
+      {
+        heading: "Before marking it paid",
+        messages: [
+          "Wait for independent confirmation before marking the payment as settled.",
+        ],
+      },
+    ],
+  );
+});
+test("an exact visible blocker note is not repeated, but hidden or differently worded caveats retain the note", () => {
+  const blockers = [
+    { stage: "approval_request", requirement: "recipient_destination" },
+  ];
+  const explanation =
+    "The invoice is recorded. Payment needs verified bank or wallet details.";
+  assert.deepEqual(caseBlockerNotes(blockers, explanation), []);
+  const hidden =
+    "The invoice is recorded.\n\n" +
+    "Supporting details remain on file. ".repeat(40) +
+    explanation;
+  assert.deepEqual(caseBlockerNotes(blockers, hidden), [
+    {
+      heading: "Before payment",
+      messages: ["Payment needs verified bank or wallet details."],
+    },
+  ]);
+  assert.equal(
+    caseBlockerNotes(
+      blockers,
+      "The payment destination was missing but is now verified.",
+    ).length,
+    1,
+  );
+  assert.equal(
+    caseBlockerNotes(
+      [{ stage: "obligation_recording", requirement: "recipient_destination" }],
+      "Invoice recorded.",
+    )[0].heading,
+    "Needs your help",
+  );
+});
+test("payment requirements do not imply the invoice still needs recording or block viewing budget", () => {
+  const state = snapshot();
+  (
+    state.cases[0].data.finding as Record<string, unknown>
+  ).blocking_requirements = [
+    { stage: "approval_request", requirement: "recipient_destination" },
+  ];
+  const html = renderToStaticMarkup(
+    createElement(CaseWorkspace, {
+      item: state.cases[0],
+      snapshot: state,
+      onBack: () => {},
+      onReview: () => {},
+      onViewBudget: () => {},
+      busy: false,
+      canWork: true,
+      decisions: null,
+      evidenceForm: null,
+    }),
+  );
+  assert.match(html, /Before payment/);
+  assert.match(html, /Payment needs verified bank or wallet details/);
+  assert.doesNotMatch(
+    html,
+    /Before we go ahead|recipient destination|approval request|recipient_destination|approval_request/,
+  );
+  assert.match(html, /data-tutorial="view-budget"/);
 });

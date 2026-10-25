@@ -246,3 +246,18 @@ This is an engineering correction. Because the protected context changed, the
 earlier preflight receipt was not reused: a separately reserved quiet-host
 preflight completed both exposed development cases correctly in five actual calls.
 No new candidate or final evaluation occurred after that correction.
+
+
+### Companion interaction and response scope
+
+The dashboard-oriented demo exposed internal versions, raw identities and verbose
+agent explanations. The replacement uses the approved personal companion design
+and a real interaction tutorial: situation, latest alert, invoice review, actual
+working state and budget. Hosted review corrected the existing USD 480 obligation
+to USD 420 using six provider calls, with no payment. Initial 96-word/90-word outputs
+still overexplained unrelated payment setup; protected style was narrowed again.
+A fresh read-only answer then rendered in the companion at 65 words, with the same
+correct USD 420/unpaid facts. Original outputs and the initially failed browser text
+assertion are preserved separately from the successful follow-up. These are UI and
+prompt engineering changes, not a learned promotion. Prior preflight bindings are
+stale and fresh final holdouts remain unopened.

@@ -14,7 +14,10 @@ import {
   friendlyTitle,
   sourceDocumentText,
 } from "@/components/readable-text";
-import { DirectorResponses } from "@/components/director-responses";
+import {
+  DirectorResponses,
+  currentReplyParts,
+} from "@/components/director-responses";
 import { FinneyCharacter, caseWorkState } from "@/components/finney-companion";
 
 type Row = Record<string, unknown>;
@@ -182,6 +185,61 @@ function SourcePaper({
   );
 }
 
+type BlockerNote = { heading: string; messages: string[] };
+export function caseBlockerNotes(
+  values: unknown,
+  explanation = "",
+): BlockerNote[] {
+  if (!Array.isArray(values)) return [];
+  // Only the visible answer can replace a duplicate note. A caveat hidden in
+  // Read full response must not silently remove a meaningful payment condition.
+  const visible = currentReplyParts(explanation, true)?.lead ?? explanation;
+  const wording: Record<string, string> = {
+    payer_identity: "Confirm who paid and whom the event owes.",
+    source_documents:
+      "Add the missing documents or resolve the conflicting evidence.",
+    recipient_destination: "Payment needs verified bank or wallet details.",
+    current_obligation:
+      "Confirm the current unpaid balance before preparing a payment.",
+    exact_payment_terms:
+      "Confirm the amount, currency, asset and network for this payment.",
+    human_approvals: "Get the required human approval before sending payment.",
+    human_approval: "Get the required human approval before sending payment.",
+    independent_payment_verification:
+      "Wait for independent confirmation before marking the payment as settled.",
+    duplicate_resolution:
+      "Check whether this bill or payment has already been recorded or paid.",
+    policy_clarification: "Clarify which event rule applies.",
+  };
+  const sections = new Map<string, Set<string>>();
+  for (const value of values) {
+    const blocker = record(value);
+    const stage = textValue(blocker.stage, "");
+    const requirement = textValue(blocker.requirement, "");
+    const heading =
+      stage === "settlement_claim"
+        ? "Before marking it paid"
+        : ["approval_request", "execution"].includes(stage)
+          ? "Before payment"
+          : "Needs your help";
+    const fallback =
+      blocker.reason ?? blocker.description ?? blocker.requirement;
+    const message =
+      wording[requirement] ??
+      (typeof fallback === "string" && /\s/.test(fallback)
+        ? fallback
+        : "Clarify what is missing before we continue.");
+    if (visible.includes(message)) continue;
+    const messages = sections.get(heading) ?? new Set<string>();
+    messages.add(message);
+    sections.set(heading, messages);
+  }
+  return [...sections.entries()].map(([heading, messages]) => ({
+    heading,
+    messages: [...messages],
+  }));
+}
+
 export function CaseWorkspace({
   item,
   snapshot,
@@ -267,9 +325,10 @@ export function CaseWorkspace({
     : /receipt|reimbursement/i.test(item.title)
       ? "receipt"
       : "document";
-  const blockers = Array.isArray(finding.blocking_requirements)
-    ? finding.blocking_requirements
-    : [];
+  const blockerNotes = caseBlockerNotes(
+    finding.blocking_requirements,
+    typeof finding.explanation === "string" ? finding.explanation : "",
+  );
   return (
     <section
       className="live-case-workspace companion-case-workspace"
@@ -383,34 +442,18 @@ export function CaseWorkspace({
               )}
             </dl>
           )}
-          {hasResult && !newerResponse && blockers.length > 0 && (
-            <section className="case-blockers">
-              <h3>Before we go ahead</h3>
-              <ul>
-                {blockers.map((value, index) => {
-                  const blocker = record(value);
-                  return (
-                    <li key={index}>
-                      <strong>
-                        {textValue(blocker.stage, "Review").replaceAll(
-                          "_",
-                          " ",
-                        )}
-                      </strong>
-                      <span>
-                        {textValue(
-                          blocker.requirement ??
-                            blocker.reason ??
-                            blocker.description,
-                          "More evidence is needed.",
-                        ).replaceAll("_", " ")}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          )}
+          {hasResult &&
+            !newerResponse &&
+            blockerNotes.map((note) => (
+              <section className="case-blockers" key={note.heading}>
+                <h3>{note.heading}</h3>
+                <ul>
+                  {note.messages.map((message) => (
+                    <li key={message}>{message}</li>
+                  ))}
+                </ul>
+              </section>
+            ))}
           {decisions}
           {hasResult && onViewBudget ? (
             <button
