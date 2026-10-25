@@ -1,5 +1,9 @@
 # Validation and current limits
 
+Latest OpenCode + Harness2 evidence: [complete bounded comparison](build/LEARNING_ACCEPTANCE.md).
+Validation improved from 6/16 to 11/16 correct attempts; final transfer was
+rejected and no learned skill was activated. These are synthetic test results.
+
 The implementation uses isolated Hermes, real provider calls and hosted Supabase.
 The financial inputs used for acceptance are explicitly synthetic. Model answers,
 provider responses, payments and improvement scores are never seeded as successes.

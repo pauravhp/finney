@@ -2,15 +2,16 @@
 
 An event-owned finance agent for hackathon directors. It keeps source evidence,
 budget commitments, decisions, reports, and evaluated procedures together in
-Supabase, with a Next.js browser workspace. Hermes performs scoped agent work;
-Jev reviews actual traces. Payment support uses Coinbase Wallet MCP and Base
+Supabase, with a Next.js browser workspace. OpenCode and Hermes support scoped
+agent work; Jev reviews actual traces. Payment support uses Coinbase Wallet MCP and Base
 Sepolia test funds, with exact-action human approvals and receipt verification.
 
 The [OpenCode + Harness2 integration](docs/HARNESS2_LEARNING.md) adds a pinned
-alternative actor, a reviewed 24-case synthetic finance corpus, and real
+actor, a reviewed 24-case synthetic finance corpus, and real
 Propose–Probe–Compose experiments. Both runtimes use the same finance controls.
 Learning results are measured and stored; a selected candidate is not assumed
-to be an improvement.
+to be an improvement. The [first complete comparison](docs/build/LEARNING_ACCEPTANCE.md)
+showed a validation gain, but its candidate failed the final gate and was not activated.
 
 The app never substitutes a fake successful Gmail intake, payment, model call,
 or improvement. Missing access is visible as blocked. See

@@ -93,6 +93,45 @@ class HostedExperiment:
         self.baseline_version = self.candidate_version = None
         self.evaluation_recorded = False
 
+    async def ensure_baseline_reference(self):
+        """Link the exact frozen bundle without changing any active skill.
+
+        A live active skill with different bytes is not the benchmark baseline.
+        Reference versions are deliberately non-active and never initialized.
+        """
+        baseline_hash = hashlib.sha256(self.baseline.encode()).hexdigest()
+        active = await self.tools.call("get_active_skill", {"skill_name": "organizer-expenses"})
+        if active and active.get("content_sha256") == baseline_hash and active.get("id"):
+            self.baseline_version = active["id"]
+            receipt = {"version_id": self.baseline_version, "content_sha256": baseline_hash,
+                       "artifact_path": active.get("artifact_path"), "reused_matching_active": True}
+        else:
+            artifact = await self.tools.call("put_artifact", {
+                "name": f"organizer-expenses-benchmark-baseline-{self.id}.md",
+                "content": self.baseline, "content_type": "text/markdown",
+                "idempotency_key": f"learning-baseline-artifact:{self.id}",
+            })
+            if artifact.get("content_sha256") != baseline_hash:
+                raise ModelError("benchmark_baseline_artifact_hash_mismatch")
+            reference = await self.tools.call("save_skill_version", {
+                "skill_name": "organizer-expenses", "version": "benchmark-baseline-" + self.id,
+                "artifact_path": artifact["artifact_path"], "content_sha256": baseline_hash,
+                "parent_version_id": None, "status": "baseline_reference",
+                "metadata": {"purpose": "frozen_benchmark_baseline_reference",
+                             "experiment_id": self.id, "activation": "not_performed"},
+                "idempotency_key": f"learning-baseline-reference:{self.id}",
+            })
+            if (not isinstance(reference, dict) or not reference.get("id")
+                    or reference.get("is_active") is True
+                    or reference.get("content_sha256", baseline_hash) != baseline_hash):
+                raise ModelError("benchmark_baseline_reference_invalid")
+            self.baseline_version = reference["id"]
+            receipt = {"version_id": self.baseline_version, "content_sha256": baseline_hash,
+                       "artifact_path": artifact["artifact_path"], "reused_matching_active": False,
+                       "status": "baseline_reference", "is_active": False}
+        await self.save("baseline-reference", receipt)
+        return receipt
+
     async def evaluation_state(self, status, metrics, artifact_path=None):
         await self.tools.call("record_eval_run", {"id": self.id, "skill_name": "organizer-expenses",
             "baseline_version_id": self.baseline_version, "candidate_version_id": self.candidate_version,
@@ -199,9 +238,7 @@ class HostedExperiment:
             "stopping_rule": "one fixed candidate, validation gate then untouched heldout; no answer edits or retries for a gain",
             "activation": "disabled", "effects_enabled": False}
         await self.save("frozen-plan", frozen)
-        active = await self.tools.call("get_active_skill", {"skill_name": "organizer-expenses"})
-        if active and active.get("content_sha256") == hashlib.sha256(self.baseline.encode()).hexdigest():
-            self.baseline_version = active["id"]
+        await self.ensure_baseline_reference()
         await self.tools.call("record_trace", {"event_type": "learning_experiment_started",
             "payload": {"experiment_id": self.id, "dataset_sha256": self.dataset.manifest["manifest_content_sha256"],
                         "validation_case_count": len(validation), "repetitions_per_variant": repetitions},

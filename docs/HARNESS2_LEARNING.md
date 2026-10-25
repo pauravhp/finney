@@ -52,7 +52,10 @@ failures even when they contain a plausible output object.
 ## Run one bounded comparison
 
 Use an existing authorized private synthetic test run with enough remaining
-inference allowance. Supply its organization/run identifiers; credentials come
+inference allowance. Run the live experiment on a quiet host; perform builds and
+scripted browser/runtime checks afterward. Concurrent release checks caused
+startup timeouts in the first complete heldout attempt, and those failures were
+retained without retries or scoring changes. Supply its organization/run identifiers; credentials come
 from the normal protected worker environment. This command does not send mail,
 request approval, pay money, or activate a skill.
 
@@ -98,4 +101,5 @@ Keep two visible paths ready:
 
 The demo remains useful when a candidate is rejected: the source-linked finance
 workflow still operates. A successful technical fixture test is not a learned
-gain. Live acceptance results and remaining setup gates are recorded separately.
+gain. The [first complete live comparison](build/LEARNING_ACCEPTANCE.md) records the
+validation gain, final rejection and remaining limits.
