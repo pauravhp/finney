@@ -5,8 +5,8 @@ candidate search. It keeps the existing source-supported diagnosis gate, frozen
 paired validation/regression, consumed transfer holdout, independent financial
 checks and SQL activation/CAS. Search selection alone never activates a skill.
 
-Default behavior remains `single_patch` until the online path passes live
-acceptance. To enable after installing the pinned OpenCode runtime, pinned
+The compatibility default remains `single_patch`. The deployed Finney worker
+explicitly selects OpenCode + Harness2; see [live acceptance](LIVE_DEMO_ACCEPTANCE.md). To enable after installing the pinned OpenCode runtime, pinned
 Harness2 dependency and migration **019**:
 
 ```dotenv
@@ -116,6 +116,6 @@ Final staged result: **124 passed, 2 skipped, 28 subtests passed** in 2.60 secon
 Ruff passed for all changed Python modules and new tests. Skips require the
 explicitly installed Hermes source and do not imply provider execution.
 
-No live model call, online learned gain, deployment, payment or canonical source
-change was performed by this work. The default stays single-patch until the
-coordinator records real online acceptance.
+The counts above describe the original scripted staging checks. Actual deployment,
+queued diagnosis and the separate provider-backed benchmark are recorded in
+[LIVE_DEMO_ACCEPTANCE.md](LIVE_DEMO_ACCEPTANCE.md). No learned promotion is claimed.

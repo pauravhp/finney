@@ -16,7 +16,8 @@ showed a validation gain, but its candidate failed the final gate and was not ac
 The app never substitutes a fake successful Gmail intake, payment, model call,
 or improvement. Missing access is visible as blocked. See
 [validation and current limits](docs/VALIDATION.md) for what has actually been
-verified, and [deployment](docs/DEPLOYMENT.md) for the dashboard/worker split.
+verified, [live demo acceptance](docs/build/LIVE_DEMO_ACCEPTANCE.md) for the actual
+operating flow, and [deployment](docs/DEPLOYMENT.md) for the dashboard/worker split.
 
 ## Start here
 
