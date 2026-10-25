@@ -38,10 +38,12 @@ class CapturedPort:
     def __init__(self):
         self.scope = Scope(UUID(int=1), UUID(int=2))
         self.finance = FinanceToolClient(self.scope, None)
-        self.artifacts, self.saved, self.snapshots = {}, [], []
+        self.artifacts, self.saved, self.snapshots, self.traces = {}, [], [], []
 
     async def call(self, name, args):
         if name == "record_trace":
+            assert isinstance(args.get("idempotency_key"), str) and 1 <= len(args["idempotency_key"]) <= 200
+            self.traces.append(copy.deepcopy(args))
             return {"id": "unit-search-trace"}
         if name == "read_artifact":
             return {"content": self.artifacts[args["artifact_path"]]}
@@ -160,6 +162,8 @@ async def test_actual_harness2_online_search_freezes_observations_and_reserves_b
     stored = json.loads(port.saved[-1]["content"])
     assert stored["parts"] and stored["training_context_artifact"]
     assert "UNSEEN_EXPECTED_SENTINEL" not in json.dumps(stored)
+    receipt_hash = result["generation"]["evidence"]["search_artifact"]["content_sha256"]
+    assert port.traces[-1]["idempotency_key"] == f"harness2-search:{source_trace()['id']}:{receipt_hash}"
 
 
 @pytest.mark.asyncio

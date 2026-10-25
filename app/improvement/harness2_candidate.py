@@ -335,6 +335,9 @@ def make_harness2_candidate_search(actor: OpenCodeActor, model: object):
             "record_trace",
             {
                 "event_type": "harness2_candidate_search",
+                # The kernel requires idempotency for every trace write. Bind
+                # this receipt to both its source and exact archived execution.
+                "idempotency_key": f"harness2-search:{trace.get('id')}:{artifact['content_sha256']}",
                 "payload": {
                     "source_trace_id": trace.get("id"),
                     "status": "failed" if failed else "selected",

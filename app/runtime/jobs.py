@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -24,6 +25,46 @@ if TYPE_CHECKING:
     from app.config import Settings
 
 DEFAULT_SKILL = resource_path("skills/finance/organizer-expenses.md")
+
+_RUNTIME_ERROR_TYPES = frozenset({
+    "SupabaseError", "FinanceError", "ValueError", "TypeError", "KeyError", "AttributeError",
+    "IndexError", "UnicodeDecodeError", "UnicodeEncodeError", "JSONDecodeError", "OSError",
+    "FileNotFoundError", "PermissionError", "TimeoutError", "RuntimeError", "AssertionError",
+    "ConnectionError", "ConnectError", "ConnectTimeout", "ReadTimeout", "WriteTimeout",
+    "PoolTimeout", "RemoteProtocolError", "HTTPStatusError", "MemoryError", "OverflowError",
+})
+
+
+def _runtime_failure_detail(error: Exception, stage: str) -> dict:
+    """No exception text, source lines, locals, absolute paths or provider bodies."""
+    from app.storage.supabase import SupabaseError
+
+    kind = type(error).__name__
+    kind = kind if kind in _RUNTIME_ERROR_TYPES else "Exception"
+    app_root = Path(__file__).resolve().parents[1]
+    frames = []
+    traceback = error.__traceback__
+    while traceback is not None:
+        code = traceback.tb_frame.f_code
+        try:
+            path = Path(code.co_filename).resolve().relative_to(app_root).as_posix()
+        except (ValueError, OSError):
+            path = None
+        if path is not None and re.fullmatch(r"[A-Za-z0-9_./-]{1,160}", path):
+            function = code.co_name
+            frames.append({"file": path, "line": traceback.tb_lineno,
+                           "function": function if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,79}", function) else "function"})
+        traceback = traceback.tb_next
+    detail = {"contract": "finance-runtime-failure-v1", "stage": stage,
+              "error_type": kind, "frames": frames[-16:], "frames_truncated": len(frames) > 16,
+              "raw_exception_text_retained": False}
+    if isinstance(error, SupabaseError):
+        if type(error.status) is int and 100 <= error.status <= 599:
+            detail["provider_status"] = error.status
+        detail["database_code"] = error.code if error.code in {
+            "22023", "23505", "23514", "42501", "40001", "P0001", "P0002",
+        } else "provider_error"
+    return detail
 
 
 def automatic_improvement_request(job: dict, outcome: dict, *, suite_id: str) -> dict | None:
@@ -136,16 +177,19 @@ async def run_job(
     if not job_id or not job.get("organization_id") or not job.get("run_id"):
         return {"status": "blocked", "reason": "job_scope_required"}
     failure_context = None
+    stage = "configuration"
     try:
         from app.config import Settings
 
         settings = settings if settings is not None else Settings()
         config = ModelConfig.from_settings(settings)
+        stage = "baseline_load"
         current = await ensure_baseline(tools)
         artifact = await tools.call("read_artifact", {"artifact_path": current["artifact_path"]})
         skill, skill_version = artifact["content"], current["id"]
         if current.get("content_sha256") != hashlib.sha256(skill.encode()).hexdigest():
             raise ModelError("active_skill_artifact_hash_mismatch")
+        stage = "actor_setup"
         if settings.finance_actor_runtime == "opencode":
             from app.runtime.opencode import OpenCodeActor
             actor = OpenCodeActor(config, binary=settings.finance_opencode_binary or None)
@@ -157,6 +201,7 @@ async def run_job(
             )
         gateway_key = settings.ai_gateway_api_key.get_secret_value()
         if command == "evaluate_improvement":
+            stage = "improvement_trace_load"
             from app.improvement.engine import (
                 HARNESS2_MAX_MODEL_CALLS,
                 MAX_MODEL_CALLS,
@@ -182,6 +227,7 @@ async def run_job(
                 raise ModelError("trace_baseline_version_is_not_active")
             fixed_context = None
             observed_policy = None
+            stage = "improvement_context"
             if trace.get("runtime_context_artifact"):
                 context_artifact = await tools.call(
                     "read_artifact",
@@ -210,12 +256,14 @@ async def run_job(
             from app.improvement.promotion_suite import PROMOTION_SUITE_ID, PromotionEvaluationTools
             from app.models import GenerativeModel
             from app.runtime.trace_contract import trace_contract_signals
+            stage = "improvement_suite"
             if payload.get("suite_id") in {CORPUS_ONLINE_SUITE_ID, PROMOTION_SUITE_ID}:
                 if settings.finance_improvement_method != "harness2":
                     raise ModelError("online_corpus_requires_harness2")
                 adapter = PromotionEvaluationTools if payload.get("suite_id") == PROMOTION_SUITE_ID else CorpusEvaluationTools
                 tools = adapter(tools, getattr(tools, "claim_corpus_holdout", None))
             suite = organizer_expense_suite(tools, payload.get("suite_id", ""))
+            stage = "improvement_diagnosis_context"
             # Check only the policy and source versions actually available during
             # this trace. An evaluation suite cannot retroactively authorize the
             # operating decision, and later source changes cannot rewrite it.
@@ -236,6 +284,7 @@ async def run_job(
                 "evaluation_policy_is_not_observed_policy": True,
             }
             reviewer = GenerativeModel(config)
+            stage = "improvement_setup"
             candidate_search = None
             if settings.finance_improvement_method == "harness2":
                 from dataclasses import replace
@@ -251,6 +300,7 @@ async def run_job(
                 actor, reviewer, JevClient(gateway_key),
                 **({"candidate_search": candidate_search} if candidate_search else {}),
             )
+            stage = "improvement_run"
             result = await engine.run(
                 trace=trace,
                 baseline=current,
@@ -268,6 +318,7 @@ async def run_job(
                 "improvement": result,
             }
         payload = job.get("payload", {})
+        stage = "actor_context"
         if not isinstance(payload, dict):
             raise ModelError("runtime_payload_invalid")
         if command == "director_message" and (
@@ -314,7 +365,9 @@ async def run_job(
             "case_provenance": {"id": case.get("id"), "version": case.get("version")}
             if isinstance(case, dict) else None,
         }
+        stage = "actor_run"
         result = await actor.run({"command_type": command, "payload": payload}, context, tools, policy=observed_policy)
+        stage = "actor_trace_persistence"
         diagnostic = result.pop("private_diagnostic", None)
         if diagnostic is not None:
             result["diagnostic_artifact"] = await tools.call("put_artifact", {
@@ -341,6 +394,7 @@ async def run_job(
             },
         )
         triage = {"status": "blocked", "reason": "jev_unconfigured"}
+        stage = "actor_triage"
         if gateway_key:
             try:
                 triage = {
@@ -389,8 +443,35 @@ async def run_job(
                 **({"failure_observations": observations} if observations is not None else {}),
                 **({"failure_trace": diagnostic_receipt} if diagnostic_receipt is not None else {})}
     except Exception as error:  # noqa: BLE001 -- job boundary reports a safe failure without provider bodies.
+        from app.storage.supabase import SupabaseError
+
+        detail = _runtime_failure_detail(error, stage)
+        reason = f"runtime_failure:{stage}:{detail['error_type']}"
+        receipt = {"status": "unavailable"}
+        if isinstance(error, SupabaseError) and error.status in {401, 403}:
+            # Do not make another privileged request after authorization failed.
+            receipt["reason"] = "authorization_failed"
+        else:
+            attempt = job.get("attempts", 1)
+            attempt = attempt if type(attempt) is int and 1 <= attempt <= 5 else 1
+            try:
+                receipt = await tools.call("record_trace", {
+                    "event_type": "runtime_job_failed",
+                    "payload": {**detail, "job_id": job_id, "command_type": command,
+                                "job_attempt": attempt, "reason": reason,
+                                "meaning": "Runtime failure; no successful outcome or promotion inferred. Inspect durable state before recovery."},
+                    "idempotency_key": f"job:{job_id}:runtime-failure:{attempt}",
+                })
+            except Exception as persistence_error:  # noqa: BLE001 -- preserve the primary failure.
+                receipt = {"status": "unavailable", "error_type":
+                           _runtime_failure_detail(persistence_error, "diagnostic_persistence")["error_type"]}
         return {
             "status": "failed",
-            "reason": "runtime_dependency_or_persistence_failure",
-            "error_type": type(error).__name__,
+            # The worker persists reason even when its failure path discards result.
+            "reason": reason,
+            "error_type": detail["error_type"],
+            "failure_stage": stage,
+            "failure_trace": receipt,
+            "retryable": False,
+            "improvement_eligible": False,
         }
