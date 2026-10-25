@@ -96,7 +96,7 @@ test("case source selection uses canonical source_ids and deduplicates them", ()
   assert.deepEqual(caseSourceIds({ source_ids: "invalid" }), []);
 });
 
-test("case workspace shows only linked documents and a proposed amount, never inferred settlement", () => {
+test("case workspace shows linked documents and the outcome without a duplicate prepared-amount card", () => {
   const state = snapshot();
   const html = renderToStaticMarkup(
     createElement(CaseWorkspace, {
@@ -112,8 +112,7 @@ test("case workspace shows only linked documents and a proposed amount, never in
   );
   assert.match(html, /original.txt/);
   assert.doesNotMatch(html, /unrelated-private/);
-  assert.match(html, /Proposed amount/);
-  assert.match(html, /\$75\.00/);
+  assert.doesNotMatch(html, /Proposed amount|\$75\.00/);
   assert.match(html, /human approval/);
   assert.doesNotMatch(html, /Invoice settled|Payment confirmed|>Paid</);
 });
@@ -333,7 +332,7 @@ test("an exact visible blocker note is not repeated, but hidden or differently w
     "The invoice is recorded. Payment needs verified bank or wallet details.";
   assert.deepEqual(caseBlockerNotes(blockers, explanation), []);
   const hidden =
-    "The invoice is recorded.\n\n" +
+    "The invoice is recorded.\n\nDetails:\n" +
     "Supporting details remain on file. ".repeat(40) +
     explanation;
   assert.deepEqual(caseBlockerNotes(blockers, hidden), [
@@ -384,4 +383,45 @@ test("payment requirements do not imply the invoice still needs recording or blo
     /Before we go ahead|recipient destination|approval request|recipient_destination|approval_request/,
   );
   assert.match(html, /data-tutorial="view-budget"/);
+});
+
+test("completed outcomes lead while document access, clarification and material blockers remain", () => {
+  const state = snapshot();
+  const finding = state.cases[0].data.finding as Record<string, unknown>;
+  finding.explanation =
+    "Invoice recorded at USD 420.00; nothing paid.\n\nDetails:\nPayment needs verified bank or wallet details. Which account should receive payment?";
+  finding.clarification = "Which account should receive payment?";
+  finding.blocking_requirements = [
+    { stage: "approval_request", requirement: "recipient_destination" },
+  ];
+  const render = () =>
+    renderToStaticMarkup(
+      createElement(CaseWorkspace, {
+        item: state.cases[0],
+        snapshot: state,
+        onBack: () => {},
+        onReview: () => {},
+        onViewBudget: () => {},
+        busy: false,
+        canWork: true,
+        decisions: null,
+        evidenceForm: null,
+      }),
+    );
+  const html = render();
+  assert.match(html, /<details class="case-source-disclosure">/);
+  assert.ok(
+    html.indexOf("Invoice recorded at USD 420.00") <
+      html.indexOf("View documents"),
+  );
+  assert.match(html, /case-clarification/);
+  assert.match(html, /Before payment/);
+  assert.match(html, /Payment needs verified bank or wallet details/);
+  assert.match(html, /data-tutorial="view-budget"/);
+  state.jobs = [
+    { case_id: caseId, command_type: "review_case", status: "running" },
+  ];
+  assert.doesNotMatch(render(), /case-source-disclosure/);
+  state.jobs[0].status = "failed";
+  assert.doesNotMatch(render(), /case-source-disclosure/);
 });

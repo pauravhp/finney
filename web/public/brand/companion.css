@@ -55,3 +55,12 @@
 .finney-companion .companion-question { font-size:15px; line-height:1.5; margin:0; overflow-wrap:anywhere; }
 /* Keep the accessible name without duplicating the visible placeholder. */
 .finney-companion .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; padding:0; border:0; }
+/* Once a real result arrives, the outcome leads; original documents stay nearby. */
+.companion-case-workspace.has-result .live-case-layout { grid-template-columns:minmax(0,1fr); max-width:760px; margin-inline:auto; gap:16px; }
+.companion-case-workspace.has-result .companion-case-panel { grid-row:auto; }
+.companion-case-workspace .case-review-sources,.companion-case-workspace .case-result-sources { min-width:0; }
+.companion-case-workspace .case-source-disclosure > summary { width:fit-content; cursor:pointer; padding:10px 0; color:#315526; font-size:15px; }
+.companion-case-workspace .case-source-disclosure[open] > summary { margin-bottom:12px; }
+.companion-case-workspace .reply-full-response > summary { cursor:pointer; font-size:15px; padding-block:6px; }
+.companion-case-workspace .reply-full-response[open] > summary { margin-bottom:12px; }
+.companion-case-workspace .case-result-sources .case-evidence-action { margin-top:8px; padding-top:8px; border:0; }

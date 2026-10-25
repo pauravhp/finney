@@ -90,7 +90,7 @@ test.beforeAll(async () => {
   script = (
     await build({
       stdin: {
-        contents: `import {createElement,useLayoutEffect} from 'react'; import {createRoot} from 'react-dom/client'; import {CaseWorkspace} from './src/components/case-workspace'; import {snapshotSchema} from './src/lib/contracts'; const snapshot=snapshotSchema.parse(${JSON.stringify(state)}); const root=createRoot(document.getElementById('fixture')); function Fixture({revision}){useLayoutEffect(()=>{if(revision)window.__TEST_ONLY_COMMIT__={text:document.querySelector('.source-content')?.textContent??null,loadState:document.querySelector('.source-paper-live')?.getAttribute('data-source-load-state')};},[revision]);return createElement(CaseWorkspace,{item:snapshot.cases[0],snapshot,onBack:()=>{},onReview:()=>{},busy:false,canWork:true,decisions:null,evidenceForm:createElement('p',null,'TEST ONLY upload surface')});} root.render(createElement(Fixture,{revision:0})); window.__TEST_ONLY_REPLACE_PATH__=path=>{snapshot.source_items=snapshot.source_items.map(row=>row.id==='${revised}'?{...row,artifact_path:path}:row);root.render(createElement(Fixture,{revision:1}));}; window.__TEST_ONLY_LATER_REPLY__=()=>{snapshot.cases[0].data.finding={...snapshot.cases[0].data.finding,provenance:{source_case_version:8},explanation:'TEST ONLY stale review says manually fix the record.',proposed_action:{action:'investigate',amount_minor:'50000',currency:'USD'}};snapshot.cases[0].data.director_responses=[{id:'TEST-OLD',message:'TEST ONLY earlier stored conversation.',provenance:{source_case_version:10}},{id:'TEST-NEW',message:'TEST ONLY latest: revised 420 recorded, budget rejected, cash unknown.',provenance:{source_case_version:12}}];root.render(createElement(Fixture,{revision:2}));};`,
+        contents: `import {createElement,useLayoutEffect} from 'react'; import {createRoot} from 'react-dom/client'; import {CaseWorkspace} from './src/components/case-workspace'; import {snapshotSchema} from './src/lib/contracts'; const snapshot=snapshotSchema.parse(${JSON.stringify(state)}); const root=createRoot(document.getElementById('fixture')); function Fixture({revision}){useLayoutEffect(()=>{if(revision)window.__TEST_ONLY_COMMIT__={text:document.querySelector('.source-content')?.textContent??null,loadState:document.querySelector('.source-paper-live')?.getAttribute('data-source-load-state')};},[revision]);return createElement(CaseWorkspace,{item:snapshot.cases[0],snapshot,onBack:()=>{},onReview:()=>{},busy:false,canWork:true,decisions:null,evidenceForm:createElement('p',null,'TEST ONLY upload surface')});} root.render(createElement(Fixture,{revision:0})); window.__TEST_ONLY_REPLACE_PATH__=path=>{snapshot.source_items=snapshot.source_items.map(row=>row.id==='${revised}'?{...row,artifact_path:path}:row);root.render(createElement(Fixture,{revision:1}));}; window.__TEST_ONLY_LATER_REPLY__=()=>{snapshot.cases[0].data.finding={...snapshot.cases[0].data.finding,provenance:{source_case_version:8},explanation:'TEST ONLY stale review says manually fix the record.',proposed_action:{action:'investigate',amount_minor:'50000',currency:'USD'}};snapshot.cases[0].data.director_responses=[{id:'TEST-OLD',message:'TEST ONLY earlier stored conversation.',provenance:{source_case_version:10}},{id:'TEST-NEW',message:'TEST ONLY latest: revised 420 recorded, budget rejected, cash unknown.',provenance:{source_case_version:12}}];root.render(createElement(Fixture,{revision:2}));}; window.__TEST_ONLY_EXPLICIT_DETAILS__=()=>{snapshot.cases[0].data.finding={...snapshot.cases[0].data.finding,explanation:'Recorded USD 420.00; nothing has been paid.\\n\\nDetails:\\nThe revised invoice replaces the original and applies the USD 60.00 credit once.',clarification:'Which payment account should I use?',blocking_requirements:[{stage:'approval_request',requirement:'recipient_destination'}]};root.render(createElement(Fixture,{revision:3}));};`,
         resolveDir: process.cwd(),
         loader: "tsx",
       },
@@ -120,7 +120,7 @@ test.beforeAll(async () => {
   ).outputFiles[0].text;
 });
 
-test("versioned source evidence stays beside the decision and source markup cannot execute", async ({
+test("result documents remain inspectable and source markup cannot execute", async ({
   page,
 }, info) => {
   await page.goto("/desk");
@@ -133,6 +133,7 @@ test("versioned source evidence stays beside the decision and source markup cann
       "#fixture{max-width:1200px;margin:auto;padding:28px}@media(max-width:680px){#fixture{padding:20px}}",
   });
   await page.addScriptTag({ content: script });
+  await page.getByText("View documents", { exact: true }).click();
   await expect(page.locator(".source-content")).toContainText("USD 500.00");
   await page
     .locator(`button[data-source-id="${revised}"][data-source-version="2"]`)
@@ -144,9 +145,12 @@ test("versioned source evidence stays beside the decision and source markup cann
   expect(await page.evaluate(() => Object.hasOwn(window, "injected"))).toBe(
     false,
   );
-  await expect(
-    page.getByText("Proposed amount", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Proposed amount", { exact: true })).toHaveCount(
+    0,
+  );
+  await expect(page.locator(".director-response-primary")).toContainText(
+    "director rejected",
+  );
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -172,6 +176,7 @@ test("a delayed source switch never pairs a new identity or path with old conten
   await page.goto("/desk");
   await page.setContent('<main id="fixture"></main>');
   await page.addScriptTag({ content: script });
+  await page.getByText("View documents", { exact: true }).click();
   await expect(page.locator(".source-content")).toContainText("USD 500.00");
   await page.evaluate(() =>
     Object.assign(window, { __TEST_ONLY_HOLD_SUFFIX__: "revised" }),
@@ -236,6 +241,7 @@ test("a later reply leads without stale amounts or audit chrome in the primary v
       "#fixture{max-width:1200px;margin:auto;padding:20px}",
   });
   await page.addScriptTag({ content: script });
+  await page.getByText("View documents", { exact: true }).click();
   await expect(page.locator(".source-content")).toContainText("USD 500.00");
   await page.evaluate(() => (window as any).__TEST_ONLY_LATER_REPLY__());
   const latest = page.locator(".case-latest-response");
@@ -257,4 +263,58 @@ test("a later reply leads without stale amounts or audit chrome in the primary v
   await expect(
     page.getByText("TEST ONLY earlier stored conversation.", { exact: true }),
   ).toBeVisible();
+});
+
+test("the financial outcome leads, Details is keyboard accessible, and material questions stay visible", async ({
+  page,
+}, info) => {
+  await page.goto("/desk");
+  await page.setContent(
+    '<html><head><link rel="stylesheet" href="/brand/mascot.css"></head><body><main id="fixture"></main></body></html>',
+  );
+  await page.addStyleTag({
+    content:
+      readFileSync(resolve("src/app/globals.css"), "utf8") +
+      "#fixture{max-width:1100px;margin:auto;padding:24px}",
+  });
+  await page.addScriptTag({ content: script });
+  await page.evaluate(() => (window as any).__TEST_ONLY_EXPLICIT_DETAILS__());
+  const primary = page.locator(".director-response-primary");
+  await expect(primary).toHaveText(
+    "Recorded USD 420.00; nothing has been paid.",
+  );
+  await expect(page.locator(".director-response-details")).toBeHidden();
+  await expect(page.locator(".source-paper-live")).toBeHidden();
+  await expect(
+    page.getByText("Which payment account should I use?", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Payment needs verified bank or wallet details.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  const details = page.locator(".reply-full-response > summary");
+  await details.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".director-response-details")).toContainText(
+    "USD 60.00 credit once",
+  );
+  await expect(page.locator(".director-response-details")).toBeVisible();
+  await details.focus();
+  await page.keyboard.press("Enter");
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  mkdirSync(resolve("../.impeccable/review"), { recursive: true });
+  await page.screenshot({
+    path: resolve(
+      `../.impeccable/review/${info.project.name}-outcome-primary.png`,
+    ),
+    fullPage: true,
+  });
+  await page.getByText("View documents", { exact: true }).click();
+  await expect(page.locator(".source-content")).toContainText("USD 500.00");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
 });

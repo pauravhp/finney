@@ -63,40 +63,53 @@ test("consultation metadata stays out of the conversation surface", () => {
   );
 });
 
-test("long current replies disclose the unchanged remainder and retain all financial caveats", () => {
-  const lead = "We owe USD 420.00, not USD 480.00. No payment has been made.";
+test("only an explicit Details marker discloses supplementary explanation", () => {
+  const lead =
+    "We owe USD 420.00. No payment has been made, and cash remains unreconciled.";
   const rest =
-    "\n\n## Evidence\n" +
-    "The allocation was declined; the liability remains USD 420.00. ".repeat(
-      20,
-    ) +
-    "\n\n## Limits\nNo approval or settlement. Cash remains unreconciled.";
-  const message = lead + rest;
+    "The vendor credited USD 60.00 against the original USD 480.00 invoice.";
+  const message = lead + "\n\nDetails:\n" + rest;
   assert.deepEqual(currentReplyParts(message, true), { lead, rest });
-  assert.equal(currentReplyParts(message, false), null);
-  assert.equal(currentReplyParts("Short answer.\n\nStill unpaid.", true), null);
-  assert.equal(
-    currentReplyParts("Long single paragraph. ".repeat(60), true),
-    null,
-  );
+  assert.deepEqual(currentReplyParts(message, false), { lead, rest });
   const html = renderToStaticMarkup(
     createElement(DirectorResponses, {
-      responses: [
-        {
-          message,
-          consulted_source_ids: ["fictional-source"],
-          job_id: "fictional-job",
-        },
-      ],
+      responses: [{ message, job_id: "private-job" }],
+    }),
+  );
+  assert.match(html, /director-response-primary/);
+  assert.match(html, /director-response-details/);
+  assert.match(html, /<summary>Details<\/summary>/);
+  assert.doesNotMatch(html, /<details[^>]*open/);
+  assert.ok(html.indexOf(lead) < html.indexOf("<summary>Details"));
+  assert.ok(html.includes(rest));
+  assert.doesNotMatch(html, /private-job/);
+  assert.equal(lead + "\n\nDetails:\n" + rest, message);
+});
+
+test("long unmarked legacy replies remain whole, including late financial caveats", () => {
+  const message =
+    "The invoice was reviewed.\n\n" +
+    "Additional source evidence remains on file. ".repeat(40) +
+    "\n\nNo approval or settlement. Cash remains unreconciled.";
+  assert.equal(currentReplyParts(message, true), null);
+  const html = renderToStaticMarkup(
+    createElement(DirectorResponses, {
+      responses: [{ message }],
       collapseLong: true,
     }),
   );
-  assert.ok(html.indexOf(lead) < html.indexOf("Read full response"));
-  assert.match(html, /<details class="record-details reply-full-response">/);
-  assert.doesNotMatch(html, /<details[^>]*open/);
+  assert.doesNotMatch(html, /reply-full-response|<summary>/);
   assert.match(html, /No approval or settlement/);
   assert.match(html, /Cash remains unreconciled/);
-  assert.doesNotMatch(html, /fictional-source/);
-  assert.doesNotMatch(html, /fictional-job/);
-  assert.equal((html.match(/liability remains USD 420\.00/g) ?? []).length, 20);
+  assert.equal(
+    (html.match(/Additional source evidence remains on file/g) ?? []).length,
+    40,
+  );
+  for (const malformed of [
+    "Lead.\nDetails:\nBody.",
+    "Lead.\n\nDetails: Body.",
+    "\n\nDetails:\nBody.",
+    "Lead.\n\nDetails:\n",
+  ])
+    assert.equal(currentReplyParts(malformed), null);
 });

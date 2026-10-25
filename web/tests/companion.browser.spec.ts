@@ -46,9 +46,11 @@ const state = {
   worker: { status: "online", last_seen_at: null },
   updated_at: "2026-10-25",
 };
+const fixtureReply =
+  "The sponsor pledge is USD 2,500.00. It is not received cash.\n\nDetails:\nThe sponsor has not sent the contribution.";
 const script = buildSync({
   stdin: {
-    contents: `import{createElement,useState}from'react';import{createRoot}from'react-dom/client';import{FinneyCompanion}from'./src/components/finney-companion';import{snapshotSchema}from'./src/lib/contracts';const initial=snapshotSchema.parse(${JSON.stringify(state)});function Fixture(){const[snapshot,setSnapshot]=useState(initial);const[lastCommand,setLastCommand]=useState(null);window.__TEST_STATE__=status=>setSnapshot({...initial,cases:initial.cases.map(item=>({...item,data:status==='completed'?{finding:{explanation:'The invoice has been checked.',provenance:{job_id:'fixture-job'}}}:{}})),jobs:[{id:'fixture-job',case_id:'${id}',command_type:'review_case',status,created_at:'2026-10-25'}]});window.__TEST_REPLY__=()=>setSnapshot(current=>({...current,jobs:current.jobs.map(job=>({...job,status:'completed'})),cases:current.cases.map(item=>({...item,data:{director_responses:[{id:'prior-answer',job_id:'prior-job',message:'IGNORE THIS OLDER ANSWER'},{id:'ask-job',job_id:'ask-job',message:'The sponsor pledge is USD 2,500.00. It is not received cash.'}]}}))}));return createElement(FinneyCompanion,{snapshot,lastCommand,onOpenCase:id=>window.__TEST_OPENED__=id,onAsk:(message,caseId)=>{window.__TEST_MESSAGE__={message,caseId};setLastCommand({jobId:'ask-job',type:'director_message',caseId});setSnapshot(current=>({...current,jobs:[{id:'ask-job',case_id:caseId,command_type:'director_message',status:'running'}],cases:current.cases.map(item=>({...item,data:{director_responses:[{id:'prior-answer',job_id:'prior-job',message:'IGNORE THIS OLDER ANSWER'}]}}))}));return true},onViewBudget:()=>window.__TEST_BUDGET__=true});}createRoot(document.getElementById('fixture')).render(createElement(Fixture));`,
+    contents: `import{createElement,useState}from'react';import{createRoot}from'react-dom/client';import{FinneyCompanion}from'./src/components/finney-companion';import{snapshotSchema}from'./src/lib/contracts';const initial=snapshotSchema.parse(${JSON.stringify(state)});function Fixture(){const[snapshot,setSnapshot]=useState(initial);const[lastCommand,setLastCommand]=useState(null);window.__TEST_STATE__=status=>setSnapshot({...initial,cases:initial.cases.map(item=>({...item,data:status==='completed'?{finding:{explanation:'The invoice has been checked.',provenance:{job_id:'fixture-job'}}}:{}})),jobs:[{id:'fixture-job',case_id:'${id}',command_type:'review_case',status,created_at:'2026-10-25'}]});window.__TEST_REPLY__=()=>setSnapshot(current=>({...current,jobs:current.jobs.map(job=>({...job,status:'completed'})),cases:current.cases.map(item=>({...item,data:{director_responses:[{id:'prior-answer',job_id:'prior-job',message:'IGNORE THIS OLDER ANSWER'},{id:'ask-job',job_id:'ask-job',message:${JSON.stringify(fixtureReply)}}]}}))}));return createElement(FinneyCompanion,{snapshot,lastCommand,onOpenCase:id=>window.__TEST_OPENED__=id,onAsk:(message,caseId)=>{window.__TEST_MESSAGE__={message,caseId};setLastCommand({jobId:'ask-job',type:'director_message',caseId});setSnapshot(current=>({...current,jobs:[{id:'ask-job',case_id:caseId,command_type:'director_message',status:'running'}],cases:current.cases.map(item=>({...item,data:{director_responses:[{id:'prior-answer',job_id:'prior-job',message:'IGNORE THIS OLDER ANSWER'}]}}))}));return true},onViewBudget:()=>window.__TEST_BUDGET__=true});}createRoot(document.getElementById('fixture')).render(createElement(Fixture));`,
     loader: "tsx",
     resolveDir: process.cwd(),
   },
@@ -130,11 +132,21 @@ test("companion presents one actual task, accepts a prompt and reflects truthful
     companion.getByRole("heading", { name: "On it.", exact: true }),
   ).toBeVisible();
   await expect(companion).not.toContainText("IGNORE THIS OLDER ANSWER");
+  await expect(companion.getByText("Details", { exact: true })).toHaveCount(0);
   await page.evaluate(() => (window as any).__TEST_REPLY__());
-  await expect(companion.locator(".companion-answer")).toHaveText(
+  await expect(companion.locator(".director-response-primary")).toHaveText(
     "The sponsor pledge is USD 2,500.00. It is not received cash.",
   );
   await expect(companion).not.toContainText("IGNORE THIS OLDER ANSWER");
+  await expect(companion.locator(".director-response-details")).toBeHidden();
+  await companion.getByText("Details", { exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await expect(companion.locator(".director-response-details")).toHaveText(
+    "The sponsor has not sent the contribution.",
+  );
+  await expect(companion.locator(".director-response-details")).toBeVisible();
+  await companion.getByText("Details", { exact: true }).focus();
+  await page.keyboard.press("Enter");
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await page.screenshot({
     path: resolve(

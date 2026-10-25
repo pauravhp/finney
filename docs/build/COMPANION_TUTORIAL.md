@@ -1,5 +1,8 @@
 # Companion and interaction tutorial
 
+Latest refinement: [the financial outcome is the primary response](PRIMARY_RESPONSE.md),
+with optional explicit Details and no automatic truncation of historical replies.
+
 The owner rejected the previous dashboard-first walkthrough and its technical
 text. The new default is the existing macOS companion design translated into the
 real web application: one mascot, one alert and a small conversation composer.
