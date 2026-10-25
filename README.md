@@ -6,6 +6,13 @@ Supabase, with a Next.js browser workspace. OpenCode and Hermes support scoped
 agent work; Jev reviews actual traces. Payment support uses Coinbase Wallet MCP and Base
 Sepolia test funds, with exact-action human approvals and receipt verification.
 
+[Open the guided practice event](https://finney-beta.vercel.app/desk?demo=guided)
+after signing in. You enter a fictional hackathon five days before doors open,
+with existing cash, budgets, vendor commitments and an unpaid sponsor pledge.
+The walkthrough performs real agent work and director decisions; it is optional
+and resumable. See [hosted acceptance](docs/demo/GUIDED_DEMO_ACCEPTANCE.md) and
+the [complete UI audit](docs/build/UI_TEXT_AUDIT.md).
+
 The [OpenCode + Harness2 integration](docs/HARNESS2_LEARNING.md) adds a pinned
 actor, a reviewed 24-case synthetic finance corpus, and real
 Propose–Probe–Compose experiments. Both runtimes use the same finance controls.

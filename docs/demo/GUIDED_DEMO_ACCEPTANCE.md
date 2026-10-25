@@ -74,3 +74,38 @@ and their results are recorded separately below after execution.
 - The subsequent normal queued 5.5 learning phase stopped after two diagnosis
   calls with no source-supported procedure defect. No patch or final evaluation
   occurred. Fresh final cases remain untouched and baseline-v1 remains active.
+
+## Actual hosted acceptance
+
+Functional release `025f278` is deployed on Vercel. A real browser signed in with
+the existing director account; no network interception, saved authenticated
+fixture or synthetic model reply was used. The opening documents and financial
+conditions remain explicitly fictional.
+
+| Actual action | Observed result |
+| --- | --- |
+| Guided entry | Resumed the prepared owner-isolated event; unauthorized scope request returned 401 |
+| Changed AV invoice | Same obligation changed USD 480 → USD 420, version 2; no duplicate payable; four finance actor calls |
+| Budget proposal | Actual pending AV allocation change USD 800 → USD 1,000; three actor calls |
+| Director rejection | Actual browser rejected that exact proposal; allocation stayed USD 800 |
+| Follow-up | Preserved the rejection and USD 420 liability; no replacement proposal or payment; two actor calls |
+| Organizer receipt | One USD 87 Mira reimbursement recorded; no duplicate supplier bill; six actor calls |
+| Typed judge-style question | A freely typed question challenged imprecise headroom wording; actor corrected it from current budget/position without financial mutation; two actor calls |
+| Report | Actual queued generation completed; authenticated browser downloaded the private artifact and verified its current financial figures |
+
+Final recorded position: USD 7,800 cash, USD 3,707 commitments, USD 4,093 available,
+and USD 2,500 expected sponsor receivable. No payment or payment approval exists.
+The cash evidence is `synthetic_scenario`, with no bank reconciliation claimed.
+
+Live source-version previews, contextual upload, source identity, collapsed/full
+response access and mobile overflow checks passed. The original erroneous cash
+simulation explanation and imprecise headroom wording remain in history. The
+kernel balances were correct; the former prompted a tool/guide clarification,
+and the latter was corrected through ordinary director conversation. These are
+recorded limitations and recoveries, not claims of perfect financial prose or
+learned promotion. Separately, current-runtime preflight passed both exposed development
+cases in five calls; final holdout claims remain zero and active skill remains
+`baseline-v1`.
+
+The private acceptance receipt and trace are stored in scoped Supabase Storage
+and the audit trail. Private login details and provider receipts are not published.

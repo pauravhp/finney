@@ -1,5 +1,14 @@
 # Deploying Finney
 
+Current production serves functional source `025f278`, including the guided
+practice event, at [finney-beta.vercel.app](https://finney-beta.vercel.app).
+The dedicated worker uses OpenCode + Harness2 and Sonnet 5.5, with its isolated
+Hermes retained for Gmail. Hosted migrations 001–024 are applied. Actual signed-in
+browser actions, source previews, budget rejection, typed prompts and private
+report download passed; see [guided acceptance](demo/GUIDED_DEMO_ACCEPTANCE.md).
+No learned promotion or new payment settlement is claimed by this release. The
+baseline deployment history below remains separate from the current acceptance.
+
 The intended layout is a Next.js dashboard on Vercel, event-owned Supabase for
 Postgres/Auth/private Storage/Realtime, and a durable Python/Hermes worker on a
 separate host. The frozen Hermes baseline at `13ed80d` was deployed and its

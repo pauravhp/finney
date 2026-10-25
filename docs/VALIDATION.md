@@ -1,6 +1,15 @@
 # Validation and current limits
 
-Latest OpenCode + Harness2 evidence: [complete bounded comparison](build/LEARNING_ACCEPTANCE.md).
+Current hosted evidence: [guided director demo](demo/GUIDED_DEMO_ACCEPTANCE.md).
+The prepared fictional event, actual invoice amendment, director budget rejection,
+organizer reimbursement, typed follow-up and private report download passed hosted
+acceptance on functional source `025f278`. Source/response formatting was checked
+against actual stored data after fixture gaps were found and corrected. Current
+learning remains unpromoted: the 5.5 phase stopped at `no_defect`, and fresh final
+cases remain unused. [Current loop](SELF_IMPROVEMENT_CURRENT.md) distinguishes the
+engineering repairs and runtime preflights from learned improvement.
+
+Earlier OpenCode + Harness2 evidence: [complete bounded comparison](build/LEARNING_ACCEPTANCE.md).
 Validation improved from 6/16 to 11/16 correct attempts; final transfer was
 rejected and no learned skill was activated. These are synthetic test results.
 
