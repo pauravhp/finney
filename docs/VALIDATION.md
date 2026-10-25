@@ -23,6 +23,18 @@ state are excluded from this repository.
 - Actual director conversation persisted and rendered the provider's answer and
   consulted-source provenance without changing financial findings or financial records.
 
+## Fresh standalone checkout
+
+The published repository was also installed and tested without inherited app
+runtime state:634 Python tests and28 subtests passed, with five explicit optional
+Hermes-runtime checks skipped. The production build, TypeScript,48 web unit tests
+and15 browser checks passed (the same11 documented browser skips).
+
+That check initially exposed12 test failures: subprocess fixtures assumed a
+bootstrapped Hermes interpreter existed. Their fixture now creates a temporary
+stdlib-only interpreter layout and executes the explicit test script. Production
+runtime verification remains unchanged. The full clean-checkout suite then passed.
+
 ## Learning evidence
 
 The control path includes trace diagnosis, bounded candidate generation, immutable

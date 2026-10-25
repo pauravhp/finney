@@ -13,8 +13,8 @@ put a GitHub token in a workflow or commit it to this repository.
 The workflow runs Python lint and unit/PostgreSQL integration tests using a
 disposable PostgreSQL 16 service, plus Node 22 production build, TypeScript,
 unit and Chromium browser tests. It has read-only repository permissions and
-requires no provider credentials. A test that requires a locally bootstrapped
-Hermes checkout skips when that runtime is absent; live provider acceptance is
+requires no provider credentials. Pinned-runtime smoke checks skip when the locally bootstrapped
+Hermes checkout/interpreter is absent; live provider acceptance is
 separate. Check the first actual Actions run before claiming hosted CI passed.
 
 After checks run successfully, protect `main` with the `python` and `web` checks

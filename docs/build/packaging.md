@@ -198,3 +198,15 @@ suite/browser/build checks after this freeze.
 
 The first scheduler lint pass flagged an unnecessary Z-to-offset substitution;
 Python 3.11+ accepts ISO Z directly. Removed it and reran scoped Ruff successfully.
+
+## Standalone publication verification
+
+A source-only checkout at the public repo root installed with uv frozen dev/payment
+extras and npm ci. Initial Python run exposed12 Gmail subprocess-fixture failures
+caused by an implicit dependency on an already bootstrapped Hermes interpreter.
+The fixture now creates its own temporary interpreter layout for its stdlib-only
+script. It does not weaken production runtime path/source validation or stand in
+for a real Gmail/provider integration. Full recheck:634passed,5 optional runtime
+skips,28subtests; Ruff passed. Web production build/typecheck,48unit and15browser
+checks passed, with11 explicit browser skips. GitHub hosted Actions has not run;
+workflow installation is pending publishing-credential scope.

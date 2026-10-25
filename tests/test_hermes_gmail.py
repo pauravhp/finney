@@ -333,6 +333,14 @@ def subprocess_fixture(tmp_path, monkeypatch, settings):
     """Execute fixture scripts through a real process; preserve launch inspection."""
     original = asyncio.create_subprocess_exec
     launches = []
+    # These tests execute their own stdlib-only fixture script, not Hermes.
+    # Give that explicit fixture a temporary runtime layout so a clean clone
+    # need not install the actual Hermes runtime to test subprocess isolation.
+    fixture_root = tmp_path / "fixture-application"
+    fixture_python = fixture_root / ".runtime/hermes-venv/bin/python"
+    fixture_python.parent.mkdir(parents=True)
+    fixture_python.symlink_to(Path(sys.executable).resolve())
+    monkeypatch.setattr(bridge, "APP_ROOT", fixture_root)
     monkeypatch.setattr(bridge, "verify_source", lambda source: None)
 
     def create(code, **limits):
