@@ -345,6 +345,29 @@ class ActualOpenCodeWithFixtureProvider(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(OpenCodeActorError, "invalid_finance_decision_schema"):
             await self.invoke([lambda: anthropic_response("StructuredOutput", output)], limit=1)
 
+    async def test_real_runtime_rejects_prose_or_nonstring_classification_privately(self):
+        for classification in ("Pause; await a verifiable invoice.", True):
+            with self.subTest(classification=classification):
+                output = {**DECISION, "decision": classification}
+                with self.assertRaisesRegex(OpenCodeActorError, "invalid_finance_decision_schema") as caught:
+                    await self.invoke([lambda output=output: anthropic_response("StructuredOutput", output)], limit=1)
+                private = caught.exception.private_diagnostic
+                self.assertEqual(json.loads(private["original_final_response"]), output)
+                self.assertEqual(private["api_calls"], 1)
+                self.assertEqual(private["tool_events"], [])
+                self.assertNotIn(str(classification), str(caught.exception))
+
+    async def test_real_runtime_advertises_classification_shape_and_preserves_80_character_token(self):
+        classification = "a" + "_" * 79
+        output = {**DECISION, "decision": classification}
+        result, _, seen, _ = await self.invoke([
+            lambda: anthropic_response("StructuredOutput", output),
+        ], limit=1)
+        self.assertEqual(result["output"]["decision"], classification)
+        schema = next(tool for tool in seen[0]["tools"] if tool["name"] == "StructuredOutput")["input_schema"]
+        self.assertEqual(schema["properties"]["decision"]["pattern"], "^[a-z][a-z0-9_]{0,79}$")
+        self.assertEqual(schema["properties"]["decision"]["maxLength"], 80)
+
     async def test_real_runtime_director_text_contract(self):
         result, tools, _, _ = await self.invoke([
             lambda: anthropic_response("finance_get_case", {"case_id": "unit-case"}),

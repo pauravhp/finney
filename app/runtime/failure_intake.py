@@ -23,7 +23,7 @@ ELIGIBLE_FAILURES = frozenset({
     "hermes_incomplete_outcome", "hermes_truncated_output",
     "hermes_provider_or_runtime_failure", "hermes_process_exited_without_result",
     "hermes_protocol_error", "hermes_invalid_api_call_count",
-    "opencode_structured_output_missing", "opencode_truncated_output",
+    "opencode_structured_output_missing", "opencode_truncated_output", "opencode_timeout",
     "opencode_incomplete_outcome", "opencode_tool_not_permitted",
     "opencode_provider_or_runtime_failure", "evaluation_model_call_budget_exhausted",
 })
@@ -109,5 +109,43 @@ def failed_improvement_request(job: dict, outcome: dict, *, suite_id: str) -> di
     trace_id = outcome["failure_trace"]["id"]
     return {
         "payload": {"trace_id": trace_id, "suite_id": suite_id, "trigger": "failed_case_review"},
+        "idempotency_key": f"improvement-review:{trace_id}",
+    }
+
+
+REJECTED_REVIEW_FEEDBACK = (
+    "The trusted operating review rejected the completed actor's prepared output with "
+    "unsupported_prepared_review_output. This may be an interface/output-contract defect; "
+    "it does not establish an editable skill defect. Diagnose against the original trace "
+    "and protected instructions. Existing tool-produced records and effects remain part "
+    "of the observed run. Do not replay the operating task or infer approval or settlement."
+)
+
+
+def rejected_review_improvement_request(job: dict, outcome: dict, *, suite_id: str) -> dict | None:
+    """Diagnose exactly one safe contract rejection after trusted trace validation.
+
+    Provenance, scope, source-version and concurrency rejections are deliberately
+    excluded. The original actor trace remains completed and the operating job
+    remains blocked; neither a correct finance decision nor a skill defect is inferred.
+    """
+    review = outcome.get("case_review")
+    triage, trace = outcome.get("triage"), outcome.get("trace")
+    if (
+        job.get("command_type") != "review_case" or not suite_id
+        or outcome.get("status") != "blocked" or outcome.get("actor_status") != "completed"
+        or outcome.get("improvement_eligible") is not True
+        or outcome.get("reason") != "unsupported_prepared_review_output"
+        or not isinstance(review, dict) or review.get("status") != "blocked"
+        or review.get("reason") != "unsupported_prepared_review_output"
+        or not isinstance(triage, dict) or triage.get("status") != "completed"
+        or not isinstance(trace, dict) or not isinstance(trace.get("id"), str)
+        or not trace["id"]
+    ):
+        return None
+    trace_id = outcome["trace"]["id"]
+    return {
+        "payload": {"trace_id": trace_id, "suite_id": suite_id, "trigger": "failed_case_review",
+                    "feedback": REJECTED_REVIEW_FEEDBACK},
         "idempotency_key": f"improvement-review:{trace_id}",
     }

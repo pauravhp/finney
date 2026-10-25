@@ -20,6 +20,8 @@ import httpx
 from app.models.providers import ModelConfig, ModelError
 
 from .decision_contract import (
+    DECISION_CLASSIFICATION_PATTERN,
+    DECISION_CLASSIFICATION_SCHEMA,
     EVIDENCE_REFS_SCHEMA,
     OUTPUT_CONTRACT,
     PREPARED_ACTIONS,
@@ -53,7 +55,7 @@ def output_schema(mode: str) -> dict:
         }, "required": ["status", "next_action", "instructions", "blocked_checks"],
             "additionalProperties": False}
     return {"type": "object", "properties": {
-        "decision": {"type": "string", "minLength": 1},
+        "decision": DECISION_CLASSIFICATION_SCHEMA.copy(),
         "explanation": {"type": "string", "minLength": 1},
         "evidence_source_ids": {"type": "array", "items": {"type": "string"}},
         "clarification": {"type": ["string", "null"]},
@@ -114,7 +116,10 @@ def _system(skill: str, mode: str, conversation: bool, policy: dict | None) -> s
     else:
         common += (
             "Return the required structured finance decision using StructuredOutput. A precise "
-            "snake_case classification and a valid clarification are allowed outcomes. proposed_action "
+            "snake_case classification and a valid clarification are allowed outcomes. "
+            f"decision must be one token matching ^{DECISION_CLASSIFICATION_PATTERN}$ exactly "
+            "(1 to 80 ASCII lowercase letters, digits or underscores, starting with a lowercase letter). "
+            "Put prose in explanation, never in decision. proposed_action "
             "may be null; when present use action, amount_minor, currency and evidence_refs as relevant. "
             "action must be pay_vendor, reimburse_organizer, investigate or no_action. These are "
             "prepare-only classifications: pay_vendor identifies a supplier liability and "

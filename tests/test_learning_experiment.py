@@ -70,7 +70,7 @@ def oracle_output(dataset, case_id):
         action.update(amount_minor=key["amount_minor"], currency=key["currency"],
                       evidence_refs=key["required_source_refs"], recipient_name=key["recipient_name"])
     output = {
-        "decision": "Scripted fixture decision",
+        "decision": "scripted_fixture_decision",
         "explanation": "Unit-test oracle input, not a real model result.",
         "evidence_source_ids": [ref["id"] for ref in key["required_source_refs"]],
         "clarification": "Please verify the missing or conflicting source fact." if key["clarification_required"] else None,

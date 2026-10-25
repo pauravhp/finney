@@ -1,6 +1,15 @@
 """Neutral decision representation; it does not define financial permissions."""
 
+import re
+
 OUTPUT_CONTRACT = "finance-decision-v2"
+# Already required by finance.review_persistence._prepared_output. Keep the
+# producer and deterministic runtime boundary aligned with that stored contract.
+DECISION_CLASSIFICATION_PATTERN = r"[a-z][a-z0-9_]{0,79}"
+DECISION_CLASSIFICATION_SCHEMA = {
+    "type": "string", "minLength": 1, "maxLength": 80,
+    "pattern": "^" + DECISION_CLASSIFICATION_PATTERN + "$",
+}
 PREPARED_ACTIONS = ("pay_vendor", "reimburse_organizer", "investigate", "no_action")
 EVIDENCE_REFS_SCHEMA = {
     "type": "array", "items": {
@@ -24,7 +33,9 @@ REQUIREMENTS = (
 
 
 def validate_decision_shape(output: dict) -> None:
-    if not isinstance(output.get("decision"), str) or not output["decision"].strip():
+    if not isinstance(output.get("decision"), str) or not re.fullmatch(
+        DECISION_CLASSIFICATION_PATTERN, output["decision"]
+    ):
         raise ValueError("decision")
     if not isinstance(output.get("explanation"), str) or not output["explanation"].strip():
         raise ValueError("explanation")

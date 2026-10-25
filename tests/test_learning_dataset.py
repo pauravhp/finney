@@ -37,7 +37,7 @@ class CorpusTests(unittest.TestCase):
         if expected['amount_minor'] is not None:
             action.update(amount_minor=expected['amount_minor'],currency=expected['currency'],evidence_refs=expected['required_source_refs'])
         if 'recipient_name' in expected:action['recipient_name']=expected['recipient_name']
-        return {'decision':'Prepared review','explanation':'Unit test input; not an observed model result.',
+        return {'decision':'prepared_review','explanation':'Unit test input; not an observed model result.',
                 'evidence_source_ids':[r['id'] for r in expected['required_source_refs']],
                 'clarification':'Please clarify the conflicting or missing fact.' if expected['clarification_required'] else None,
                 'proposed_action':action,

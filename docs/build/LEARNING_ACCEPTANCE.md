@@ -63,6 +63,14 @@ as a non-active reference. Any historical linkage repair is performed only after
 terminal completion against frozen hashes, audited separately, and preserves all
 scores, outputs, metrics, statuses and active skills. It is not another experiment.
 
+A later ordinary queued review exposed an output-contract mismatch: the runtime
+accepted a prose classification that the operating review persister already
+required to be an identifier. The producer schema, guidance and shared validator
+were aligned afterward. The historical experiment was not regraded, and its
+scores describe the original frozen checks, not full operating acceptance under
+the corrected contract. See [classification alignment](CLASSIFICATION_CONTRACT_ALIGNMENT.md)
+and [rejected-review intake](QUEUED_REVIEW_INTAKE.md).
+
 ## Demo interpretation
 
 The Learning view shows an actual recorded execution: candidate procedure,
