@@ -13,6 +13,7 @@ from uuid import uuid4
 from app.finance.types import FinanceError, minor_units
 from app.models import GenerativeModel, JevClient, ModelError
 from app.runtime.decision_contract import OUTPUT_CONTRACT
+from app.runtime.failure_intake import private_failure_artifact
 from app.runtime.hermes import FinanceTools, HermesActor
 
 from .decisions import EVALUATOR_VERSION
@@ -252,6 +253,111 @@ def promotion_gate(rows: list[dict]) -> tuple[bool, str, dict]:
     return False, "no_measured_improvement", metrics
 
 
+def evaluation_manifest(actor, suite: ProtectedSuite, *, fixed_context: dict | None,
+                        observed_policy: dict | None, method: str) -> str:
+    """Exact frozen serializer shared by initial execution and audited continuation."""
+    return json.dumps(
+        {
+            "suite_id": suite.suite_id,
+            "immutable_policy": suite.policy,
+            "observed_trace_policy": observed_policy,
+            "output_contract": OUTPUT_CONTRACT,
+            "evaluator_version": EVALUATOR_VERSION,
+            "fixed_runtime_context": fixed_context,
+            "improvement_method": method,
+            "model_settings": {
+                "model": actor.config.model,
+                "base_url": actor.config.base_url,
+                "api_mode": actor.config.api_mode,
+                "max_tokens": actor.config.max_tokens,
+                "max_iterations": actor.max_iterations,
+            },
+            "cases": [
+                {
+                    "case_key": case.case_key,
+                    "group": case.group,
+                    "snapshot": case.snapshot,
+                    "source_snapshot_hash": case.source_snapshot_hash,
+                    "expected_sha256": hashlib.sha256(
+                        json.dumps(case.expected, sort_keys=True).encode()
+                    ).hexdigest(),
+                }
+                for case in suite.cases
+            ],
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+class _AttemptState:
+    """One already-reserved attempt's counters and existing terminal receipts."""
+    def __init__(self, tools, attempt: str, evidence: dict, max_model_calls: int):
+        self.tools, self.attempt, self.evidence = tools, attempt, evidence
+        self.max_model_calls = max_model_calls
+        self.candidate = self.evaluation = None
+
+    def reserve_calls(self, count: int) -> None:
+        budget = self.evidence["model_call_budget"]
+        if (type(self.max_model_calls) is not int or self.max_model_calls < 1
+                or type(count) is not int or count < 1
+                or budget["used_upper_bound"] + count > self.max_model_calls):
+            raise ModelError("evaluation_model_call_budget_exhausted")
+        budget["used_upper_bound"] += count
+
+    async def state(self, status: str, **payload: Any) -> None:
+        self.evidence["status"] = status
+        await self.tools.call("record_trace", {
+            "event_type": "improvement_" + status,
+            "payload": {"attempt_id": self.attempt, **payload},
+            "idempotency_key": f"improvement:{self.attempt}:{status}",
+        })
+        if status in {"blocked", "rejected"} and self.evidence.get("attempt_claim", {}).get("claimed"):
+            await self.tools.call("finish_improvement_attempt", {
+                "attempt_id": self.attempt, "status": status,
+                "model_calls_used": self.evidence["model_call_budget"]["used_upper_bound"],
+                "reason": payload.get("reason", status),
+                "eval_run_id": self.evaluation["id"] if self.evaluation else None,
+            })
+
+    def usage(self, stage: str, result: dict) -> None:
+        observed = result.get("evidence", result)
+        self.evidence["provider_usage"].append({
+            "stage": stage, "usage": copy.deepcopy(observed.get("usage", {})),
+            "cost_usd": observed.get("cost_usd"),
+            "latency_seconds": observed.get("latency_seconds"), "model": observed.get("model"),
+        })
+
+
+async def _paired_failure_receipt(tools, *, error: ModelError, attempt: str,
+                                  case: EvaluationCase, variant: str) -> dict:
+    """Retain bounded private runtime evidence without treating it as a decision."""
+    observation = {"phase": "paired_actor_execution", "case_key": case.case_key,
+                   "variant": variant, "group": case.group,
+                   "source_snapshot_hash": case.source_snapshot_hash,
+                   "reason": error.code, "provider_status": error.status,
+                   "diagnostic_status": "not_supplied"}
+    try:
+        diagnostic = getattr(error, "private_diagnostic", None)
+        if not isinstance(diagnostic, dict):
+            return observation
+        identity = hashlib.sha256(case.case_key.encode()).hexdigest()[:16]
+        receipt = await tools.call("put_artifact", {
+            "name": f"paired-failure-{attempt}-{identity}-{variant}.json",
+            "content_type": "application/json", "content": private_failure_artifact(diagnostic),
+            "idempotency_key": f"improvement:{attempt}:paired-failure:{identity}:{variant}",
+        })
+        # Only the trusted artifact locator/hash cross into ordinary metrics.
+        observation.update(diagnostic_status="persisted", diagnostic_artifact={
+            "artifact_path": receipt["artifact_path"], "content_sha256": receipt["content_sha256"]})
+    except Exception as persistence_error:  # noqa: BLE001 -- preserve the original actor failure.
+        name = type(persistence_error).__name__
+        observation.update(diagnostic_status="unavailable", diagnostic_error_type=name if name in {
+            "SupabaseError", "TimeoutError", "OSError", "ValueError", "TypeError", "KeyError"
+        } else "Exception")
+    return observation
+
+
 class ImprovementEngine:
     def __init__(self, actor: HermesActor, reviewer: GenerativeModel, jev: JevClient,
                  *, candidate_search: Callable[..., Awaitable[dict]] | None = None):
@@ -289,52 +395,8 @@ class ImprovementEngine:
         method = "harness2" if self.candidate_search is not None else "single_patch"
         evidence["improvement_method"] = method
 
-        def reserve_calls(count: int) -> None:
-            budget = evidence["model_call_budget"]
-            if (
-                type(max_model_calls) is not int
-                or max_model_calls < 1
-                or type(count) is not int or count < 1
-                or budget["used_upper_bound"] + count > max_model_calls
-            ):
-                raise ModelError("evaluation_model_call_budget_exhausted")
-            budget["used_upper_bound"] += count
-
-        async def state(status: str, **payload: Any) -> None:
-            evidence["status"] = status
-            await tools.call(
-                "record_trace",
-                {
-                    "event_type": "improvement_" + status,
-                    "payload": {"attempt_id": attempt, **payload},
-                    "idempotency_key": f"improvement:{attempt}:{status}",
-                },
-            )
-            if status in {"blocked", "rejected"} and evidence.get("attempt_claim", {}).get(
-                "claimed"
-            ):
-                await tools.call(
-                    "finish_improvement_attempt",
-                    {
-                        "attempt_id": attempt,
-                        "status": status,
-                        "model_calls_used": evidence["model_call_budget"]["used_upper_bound"],
-                        "reason": payload.get("reason", status),
-                        "eval_run_id": evaluation["id"] if evaluation else None,
-                    },
-                )
-
-        def usage(stage: str, result: dict) -> None:
-            observed = result.get("evidence", result)
-            evidence["provider_usage"].append(
-                {
-                    "stage": stage,
-                    "usage": copy.deepcopy(observed.get("usage", {})),
-                    "cost_usd": observed.get("cost_usd"),
-                    "latency_seconds": observed.get("latency_seconds"),
-                    "model": observed.get("model"),
-                }
-            )
+        phase = _AttemptState(tools, attempt, evidence, max_model_calls)
+        reserve_calls, state, usage = phase.reserve_calls, phase.state, phase.usage
 
         try:
             cap = HARNESS2_MAX_MODEL_CALLS if self.candidate_search is not None else MAX_MODEL_CALLS
@@ -363,37 +425,9 @@ class ImprovementEngine:
                 or fixed_context["active_skill_sha256"] != baseline_hash
             ):
                 raise ModelError("fixed_runtime_context_invalid")
-            manifest_content = json.dumps(
-                {
-                    "suite_id": suite.suite_id,
-                    "immutable_policy": suite.policy,
-                    "observed_trace_policy": observed_policy,
-                    "output_contract": OUTPUT_CONTRACT,
-                    "evaluator_version": EVALUATOR_VERSION,
-                    "fixed_runtime_context": fixed_context,
-                    "improvement_method": method,
-                    "model_settings": {
-                        "model": self.actor.config.model,
-                        "base_url": self.actor.config.base_url,
-                        "api_mode": self.actor.config.api_mode,
-                        "max_tokens": self.actor.config.max_tokens,
-                        "max_iterations": self.actor.max_iterations,
-                    },
-                    "cases": [
-                        {
-                            "case_key": case.case_key,
-                            "group": case.group,
-                            "snapshot": case.snapshot,
-                            "source_snapshot_hash": case.source_snapshot_hash,
-                            "expected_sha256": hashlib.sha256(
-                                json.dumps(case.expected, sort_keys=True).encode()
-                            ).hexdigest(),
-                        }
-                        for case in suite.cases
-                    ],
-                },
-                sort_keys=True,
-                separators=(",", ":"),
+            manifest_content = evaluation_manifest(
+                self.actor, suite, fixed_context=fixed_context,
+                observed_policy=observed_policy, method=method,
             )
             manifest_hash = hashlib.sha256(manifest_content.encode()).hexdigest()
             claim = await tools.call(
@@ -521,6 +555,50 @@ class ImprovementEngine:
                 )
                 usage("proposal", generated)
                 content = replace_procedure(baseline_content, generated["output"].get("procedure"))
+            return await self._evaluate_selected(
+                phase=phase, baseline=baseline, baseline_content=baseline_content,
+                suite=suite, content=content, generated=generated, fixed_context=fixed_context,
+                manifest_hash=manifest_hash, inputs=inputs, started=started,
+            )
+        except ModelError as error:
+            status = "rejected" if error.code.startswith("candidate_") else "blocked"
+            if evaluation and candidate:
+                await tools.call(
+                    "record_eval_run",
+                    {
+                        "id": evaluation["id"],
+                        "skill_name": SKILL_NAME,
+                        "baseline_version_id": baseline["id"],
+                        "candidate_version_id": candidate["id"],
+                        "status": status,
+                        "metrics": {
+                            "attempt_id": attempt,
+                            "suite_id": suite.suite_id,
+                            "suite_manifest_sha256": evidence.get("suite_manifest_sha256"),
+                            "evaluator_version": EVALUATOR_VERSION,
+                            "gate_version": GATE_VERSION,
+                            "gate_passed": False,
+                            "reason": error.code,
+                            "model_call_budget": evidence["model_call_budget"],
+                            "completed_rows": len(evidence["rows"]),
+                        },
+                        "idempotency_key": f"improvement:{attempt}:eval-incomplete",
+                    },
+                )
+            await state(status, reason=error.code, provider_status=error.status)
+            return {**evidence, "reason": error.code, "provider_status": error.status}
+
+    async def _evaluate_selected(
+        self, *, phase: _AttemptState, baseline: dict, baseline_content: str,
+        suite: ProtectedSuite, content: str, generated: dict, fixed_context: dict | None,
+        manifest_hash: str, inputs: dict, started: float,
+    ) -> dict:
+        """Shared original post-search path; callers must establish a real claim first."""
+        tools, attempt, evidence = phase.tools, phase.attempt, phase.evidence
+        max_model_calls = phase.max_model_calls
+        reserve_calls, state, usage = phase.reserve_calls, phase.state, phase.usage
+        candidate = evaluation = None
+        try:
             artifact = await tools.call(
                 "put_artifact",
                 {
@@ -546,6 +624,7 @@ class ImprovementEngine:
                     "idempotency_key": f"improvement:{attempt}:candidate",
                 },
             )
+            phase.candidate = candidate
             evidence["candidate"] = candidate
             evidence["review_and_proposal_overhead_seconds"] = time.perf_counter() - started
             await state("candidate_created", version_id=candidate["id"], generation=generated)
@@ -568,6 +647,7 @@ class ImprovementEngine:
                     "idempotency_key": f"improvement:{attempt}:eval",
                 },
             )
+            phase.evaluation = evaluation
             await state("evaluating", eval_run_id=evaluation["id"])
             # Transfer snapshots remain untouched until a candidate clears validation+regression.
             for group in ("validation", "regression", "transfer"):
@@ -614,16 +694,22 @@ class ImprovementEngine:
                         if limit < 1:
                             raise ModelError("evaluation_model_call_budget_exhausted")
                         reserve_calls(limit)
-                        result = await self.actor.run(
-                            {"case": copy.deepcopy(case.snapshot), "mode": "prepare_only"},
-                            (fixed_context["prefix"] + skill + fixed_context["suffix"])
-                            if fixed_context
-                            else skill,
-                            scoped,
-                            allowed_tools=READ_TOOLS,
-                            policy=copy.deepcopy(suite.policy),
-                            max_model_calls=limit,
-                        )
+                        try:
+                            result = await self.actor.run(
+                                {"case": copy.deepcopy(case.snapshot), "mode": "prepare_only"},
+                                (fixed_context["prefix"] + skill + fixed_context["suffix"])
+                                if fixed_context
+                                else skill,
+                                scoped,
+                                allowed_tools=READ_TOOLS,
+                                policy=copy.deepcopy(suite.policy),
+                                max_model_calls=limit,
+                            )
+                        except ModelError as error:
+                            evidence["paired_actor_failure"] = await _paired_failure_receipt(
+                                tools, error=error, attempt=attempt, case=case, variant=variant,
+                            )
+                            raise
                         usage(f"evaluation:{case.case_key}:{variant}", result)
                         actual_calls = result["evidence"].get("api_calls")
                         if type(actual_calls) is int and 0 <= actual_calls <= limit:
@@ -712,12 +798,17 @@ class ImprovementEngine:
                             "reason": error.code,
                             "model_call_budget": evidence["model_call_budget"],
                             "completed_rows": len(evidence["rows"]),
+                            **({"paired_actor_failure": evidence["paired_actor_failure"]}
+                               if "paired_actor_failure" in evidence else {}),
                         },
                         "idempotency_key": f"improvement:{attempt}:eval-incomplete",
                     },
                 )
-            await state(status, reason=error.code, provider_status=error.status)
+            await state(status, reason=error.code, provider_status=error.status,
+                        **({"paired_actor_failure": evidence["paired_actor_failure"]}
+                           if "paired_actor_failure" in evidence else {}))
             return {**evidence, "reason": error.code, "provider_status": error.status}
+
 
     async def _finish(
         self,
@@ -845,7 +936,7 @@ class ImprovementEngine:
                     "metrics": metrics,
                     "promotion_id": promotion["id"],
                 },
-                "idempotency_key": f"improvement:{attempt}:{status}",
+                "idempotency_key": f"improvement:{attempt}:{status}:result-trace",
             },
         )
         await tools.call(

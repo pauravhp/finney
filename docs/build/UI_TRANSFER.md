@@ -124,3 +124,73 @@ It verifies the actual request and persisted rejection without changed payments
 or budget allocations. An already-rejected decision is read back without another
 click. It never clicks payment execution, queues a model request or overrides a
 learning gate. The script was prepared, not executed, by this UI task.
+
+## Actual hosted read-only verification
+
+The deployed UI at public commit `4d0f737` passed actual owner-browser verification:
+landing CTA to `/desk`, password sign-in/session cookie, director membership,
+unauthenticated scopes 401, scoped snapshot, case version 11, linked source
+versions 1 and 2, and both original USD480.00 and amended USD420.00 source text.
+The case decision pane, old hash-verified learning diff, 56 historical paired rows
+and unchanged `rejected_transfer` result remained visible. The general prompt
+composer was accessible. No requests were intercepted and no financial mutation
+or denial was attempted during this verification.
+
+The first acceptance attempt counted case rows before the asynchronous UI snapshot
+finished loading. Waiting for the intended visible row fixed that race. A second
+attempt found both the case title and source-document title as headings; selecting
+the case's level-one heading resolved ambiguity. These were acceptance-helper
+repairs, not weakened source-visibility checks or frontend financial changes.
+The private read-only receipt is `.state/exception-ui-verify.json`.
+
+## After-denial check and source-preview identity guard
+
+The actual hosted after-denial read-only check passed at case version 13: both
+source versions and USD480.00/USD420.00 text, the latest response mentioning 420,
+rejected approval and unknown cash, persisted rejected budget decision, historical
+learning evidence, and prompt access. No denial was repeated. The initially
+reported `source_v2_expected_text` failure was a misleading helper stage: the next
+reply assertion expected “denied” while the actual domain response said
+“rejected.” The helper now labels the reply stage correctly and checks the explicit
+420/rejected/unknown facts. There is no observed hosted source misattribution.
+
+As additional hardening, source preview state now carries a receipt bound to
+organization, run, source ID, version and artifact path. Rendering immediately
+hides any content or error whose receipt does not match the currently requested
+identity; it does not wait for a passive effect to clear the previous text. Loading
+remains visible until a matching fetch finishes. Loaded-source attributes make
+browser acceptance able to verify that identity directly.
+
+The targeted delayed-fetch regression checks both a version switch and a changed
+artifact path with the same source ID/version and React key. It observes the DOM
+at layout commit, before passive effects, and requires the previous text to be
+absent. After releasing the fetch, only the new text appears. TypeScript, 57 units,
+production build and all four targeted desktop/mobile source-preview checks passed.
+This extra patch is separate from the already-passed hosted read-only acceptance.
+
+## Case chronology after later director work
+
+A prepared review can describe an earlier failure even after a later director
+request successfully changes the record and records a newer response. Keeping the
+old review first made that historical instruction look current. The case pane now
+compares recorded provenance case versions. When the latest stored director reply
+used a later case version, that reply appears first, followed by the actual current
+approval controls. The previous finding, clarification, blockers and proposed
+amount remain visible under an explicit Earlier prepared review label naming the
+case version on which they were based. Earlier replies remain in a history
+disclosure; nothing is deleted from stored records.
+
+The interface does not parse amounts, approval authority or settlement from reply
+prose. The case-status badge remains the persisted case status, action controls
+remain bound to real proposals, and an older proposed amount stays explicitly
+historical. An older response cannot demote a newer prepared review. Targeted
+render tests exercise both directions and preserve the exact approval control.
+TypeScript and 59 web unit tests passed. Heavy build/browser checks were deferred
+while the coordinator's normal provider-backed actor was running.
+
+After the normal actor finished, final production build and all 12 impacted serial
+browser checks passed on desktop/mobile. Coverage includes latest-reply ordering,
+explicit earlier-review/version labels, preserved historical replies, unchanged
+prepared amounts and case status, delayed source identity/path changes, normal desk
+and protected-route behavior, and landing-to-desk navigation. UI source was then
+frozen for the coordinator’s release; no new provider calls were made.

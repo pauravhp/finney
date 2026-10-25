@@ -46,3 +46,22 @@ ingests the evidence and starts work without a prompt. Directors can also give i
 work in the app. It catches up after restart and retains approvals and an audit
 trail.” The current discovery cadence is one minute; it is not an all-inbox or
 instant-delivery guarantee.
+
+## Current demonstration state
+
+The live event has completed this scenario: the one Harbor AV liability is
+USD 420.00, its allocation was rejected in the actual browser, nothing is settled,
+and a current report is saved. Start with that case's two source tabs and latest
+stored reply. The new 5.5 reply explicitly identifies the older finding as stale;
+the UI preserves that earlier review as history rather than erasing it.
+
+The private test-run cap is 1,100 reserved calls with 1,040 consumed at final
+readback. An ordinary agent request reserves up to nine calls, so roughly six
+more requests fit before additional automatic work/OCR. Reading records, showing
+the saved experiment, rejecting a proposal and generating the deterministic report
+do not themselves request model inference. All four learning attempts are consumed;
+no further learning phase is authorized by the remaining ordinary-call allowance.
+
+Sign in at `/desk` using the existing owner account; credentials remain in the
+owner's password manager. Anonymous guest access is not enabled. Do not present the old learning
+candidate as promoted: the latest phase blocked before final transfer evaluation.

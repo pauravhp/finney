@@ -61,9 +61,13 @@ safe failure observations; they are not treated as correct finance decisions.
 No-op selection is explicitly rejected; it does not fall back to another editor.
 
 The candidate then follows the original paired engine and independent gates.
-Automatic Harness2 jobs select the fixed four-case [corpus subset](../CORPUS_ONLINE_SUBSET.md),
-including its shared final-partition consumption marker.
-Existing unseen-transfer consumption and SQL promotion conditions are unchanged.
+Automatic Harness2 jobs now select the separately authored four-case
+[promotion suite](PROMOTION_HOLDOUT_V1.md): one validation, one regression and two
+transfer cases. The old [corpus subset](../CORPUS_ONLINE_SUBSET.md) remains a
+historical route with its consumed final partition. Each dataset keeps its own
+shared manifest claim; native unseen-transfer and SQL promotion conditions remain
+unchanged. The current run's four authorized attempts are consumed. A future 5.5
+learning phase needs a model-matched baseline and newly allocated attempt budget.
 
 ## Budget
 

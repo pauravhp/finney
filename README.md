@@ -21,6 +21,13 @@ while its worker runs; directors can also give it work through the desk's prompt
 composer. [Autonomy and wake behavior](docs/build/AUTONOMOUS_INTAKE.md) documents
 the exact scope, catch-up and queue behavior.
 
+The deployed worker explicitly selects `FINANCE_MODEL=claude-sonnet-5-5` after
+real native actor, structured editor and OCR checks. Historical 4.6 learning
+results retain their original model identity. The
+[current finance/model acceptance](docs/build/EXCEPTION_AND_MODEL_ACCEPTANCE.md)
+records the completed amended-invoice/denied-allocation flow and the still-blocked
+learning promotion.
+
 The app never substitutes a fake successful Gmail intake, payment, model call,
 or improvement. Missing access is visible as blocked. See
 [validation and current limits](docs/VALIDATION.md) for what has actually been

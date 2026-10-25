@@ -2,7 +2,13 @@ import { displayRecord } from "@/lib/contracts";
 
 type Reply = Record<string, unknown> & { message: string };
 
-export function DirectorResponses({ responses }: { responses: unknown }) {
+export function DirectorResponses({
+  responses,
+  heading = "Finney’s replies",
+}: {
+  responses: unknown;
+  heading?: string;
+}) {
   const replies = Array.isArray(responses)
     ? responses.filter((value): value is Reply =>
         Boolean(
@@ -16,7 +22,7 @@ export function DirectorResponses({ responses }: { responses: unknown }) {
   if (!replies.length) return null;
   return (
     <section className="director-responses">
-      <h3>Finney’s replies</h3>
+      <h3>{heading}</h3>
       {replies.map((reply, index) => (
         <article
           className="director-response"

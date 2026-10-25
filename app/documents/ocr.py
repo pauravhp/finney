@@ -83,6 +83,10 @@ class ClaudeVisionOCR:
                    "system": system, "messages": [{"role": "user", "content": [block,
                        {"type": "text", "text": "Transcribe only these original page numbers: "
                         + ", ".join(map(str, expected))}]}]}
+        if c.model == "claude-sonnet-5-5":
+            payload.pop("temperature", None)
+            payload["thinking"] = {"type": "between_tools"}
+            payload["output_config"] = {"effort": "high"}
         try:
             request = asyncio.to_thread(
                 _post, c.base_url.rstrip("/") + "/messages",

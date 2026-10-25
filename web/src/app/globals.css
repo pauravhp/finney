@@ -2817,3 +2817,11 @@ main#main {
 .case-conversation .workbench-modes {
   flex-wrap: wrap;
 }
+
+.case-latest-response { margin-top: 20px; }
+.case-chronology-label { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 15px; }
+.earlier-prepared-review { border-top: 1px solid var(--line); margin-top: 25px; padding-top: 20px; }
+.earlier-prepared-review > .case-chronology-label { font-size: 13px; font-weight: 500; }
+.case-response-history { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 18px; font-size: 13px; }
+.case-response-history > summary { cursor: pointer; }
+.case-response-history .director-responses { margin-top: 20px; }

@@ -132,3 +132,81 @@ test("a case without a prepared amount does not invent money or completed work",
   assert.doesNotMatch(html, /\$0\.00|Proposed amount|Payment confirmed/);
   assert.match(html, /disabled=""[^>]*>Request review/);
 });
+
+test("a later stored reply precedes the earlier review without changing its amount or hiding decisions", () => {
+  const state = snapshot();
+  state.cases[0].version = 13;
+  const finding = state.cases[0].data.finding as Record<string, unknown>;
+  finding.provenance = { source_case_version: 8 };
+  finding.explanation =
+    "TEST ONLY earlier update failed; manual fix requested.";
+  state.cases[0].data.director_responses = [
+    {
+      message: "TEST ONLY earlier conversation",
+      provenance: { source_case_version: 10 },
+    },
+    {
+      message:
+        "TEST ONLY latest: revised 420 obligation recorded; budget rejected; cash unknown.",
+      provenance: { source_case_version: 12 },
+    },
+  ];
+  const html = renderToStaticMarkup(
+    createElement(CaseWorkspace, {
+      item: state.cases[0],
+      snapshot: state,
+      onBack: () => {},
+      onReview: () => {},
+      busy: false,
+      canWork: true,
+      decisions: createElement(
+        "button",
+        null,
+        "TEST ONLY exact approval control",
+      ),
+      evidenceForm: null,
+    }),
+  );
+  assert.ok(
+    html.indexOf("TEST ONLY latest:") <
+      html.indexOf("TEST ONLY earlier update failed"),
+  );
+  assert.ok(
+    html.indexOf("TEST ONLY exact approval control") <
+      html.indexOf("Earlier prepared review"),
+  );
+  assert.match(html, /Earlier prepared review · based on case v8/);
+  assert.match(html, /Based on case v12 · Stored agent response/);
+  assert.match(html, /Earlier replies \(1\)/);
+  assert.match(html, /TEST ONLY earlier conversation/);
+  assert.match(html, /Earlier proposed amount/);
+  assert.match(html, /\$75\.00/); // Retains the prepared action; never parses money from reply prose.
+  assert.doesNotMatch(html, /\$420\.00|Payment confirmed|>Paid</);
+});
+
+test("a response from an older case version does not demote a newer prepared review", () => {
+  const state = snapshot();
+  (state.cases[0].data.finding as Record<string, unknown>).provenance = {
+    source_case_version: 8,
+  };
+  state.cases[0].data.director_responses = [
+    { message: "TEST ONLY old reply", provenance: { source_case_version: 7 } },
+  ];
+  const html = renderToStaticMarkup(
+    createElement(CaseWorkspace, {
+      item: state.cases[0],
+      snapshot: state,
+      onBack: () => {},
+      onReview: () => {},
+      busy: false,
+      canWork: true,
+      decisions: null,
+      evidenceForm: null,
+    }),
+  );
+  assert.ok(
+    html.indexOf("TEST ONLY: the revised amount needs review.") <
+      html.indexOf("TEST ONLY old reply"),
+  );
+  assert.doesNotMatch(html, /Earlier prepared review|Finney’s latest reply/);
+});

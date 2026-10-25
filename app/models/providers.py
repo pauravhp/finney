@@ -126,6 +126,10 @@ class GenerativeModel:
                 "system": system,
                 "messages": [{"role": "user", "content": prompt}],
             }
+            if c.model == "claude-sonnet-5-5":
+                payload.pop("temperature", None)
+                payload["thinking"] = {"type": "between_tools"}
+                payload["output_config"] = {"effort": "high"}
         else:
             path, headers = "/chat/completions", {"Authorization": "Bearer " + c.api_key}
             payload = {
@@ -140,6 +144,14 @@ class GenerativeModel:
         data, request_id = await asyncio.to_thread(
             _post, c.base_url.rstrip("/") + path, headers, payload, c.timeout_seconds
         )
+        if c.api_mode == "anthropic_messages" and c.model == "claude-sonnet-5-5":
+            # A JSON-looking partial/refusal is not a completed review. Keep the
+            # legacy model's frozen behavior unchanged during staged migration.
+            stop_reason = data.get("stop_reason") if isinstance(data, dict) else None
+            if stop_reason == "refusal":
+                raise ModelError("provider_refusal")
+            if stop_reason != "end_turn":
+                raise ModelError("provider_incomplete_response")
         try:
             if c.api_mode == "anthropic_messages":
                 output = "".join(
