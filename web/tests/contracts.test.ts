@@ -201,3 +201,16 @@ test("opening cash form preserves exact units, permits zero, and requires real o
   assert.throws(() => openingCashPayload({ ...input, as_of: "2026-02-30" }));
   assert.throws(() => openingCashPayload({ ...input, note: " " }));
 });
+
+
+test("document revisions require a scoped case and valid source ids", async () => {
+  const { uploadLinkSchema } = await import("../src/lib/contracts");
+  const caseId = "11111111-1111-4111-8111-111111111111";
+  const sourceId = "22222222-2222-4222-8222-222222222222";
+  assert.deepEqual(uploadLinkSchema.parse({}), {});
+  assert.deepEqual(uploadLinkSchema.parse({case_id: caseId, replaces_source_id: sourceId}), {case_id: caseId, replaces_source_id: sourceId});
+  assert.equal(uploadLinkSchema.safeParse({replaces_source_id: sourceId}).success, false);
+  assert.equal(uploadLinkSchema.safeParse({case_id: "../another-run"}).success, false);
+  assert.equal(uploadLinkSchema.safeParse({case_id: caseId, replaces_source_id: "not-a-source"}).success, false);
+  assert.equal(uploadLinkSchema.safeParse({case_id: caseId, organization_id: sourceId}).success, false);
+});

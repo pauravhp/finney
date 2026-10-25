@@ -7,7 +7,7 @@ import {
   requestOrigin,
   rpcFailure,
 } from "@/lib/api";
-import { scopeSchema } from "@/lib/contracts";
+import { scopeSchema, uploadLinkSchema } from "@/lib/contracts";
 
 export async function POST(request: Request) {
   try {
@@ -25,6 +25,12 @@ export async function POST(request: Request) {
     const scope = scopeSchema.parse({
       organization_id: data.get("organization_id"),
       run_id: data.get("run_id"),
+    });
+    const links = uploadLinkSchema.parse({
+      ...(data.get("case_id") ? { case_id: data.get("case_id") } : {}),
+      ...(data.get("replaces_source_id")
+        ? { replaces_source_id: data.get("replaces_source_id") }
+        : {}),
     });
     const file = data.get("file");
     if (
@@ -58,6 +64,7 @@ export async function POST(request: Request) {
       );
     const payload = {
       source: "upload",
+      ...links,
       artifact_path: path,
       filename: file.name,
       content_type: file.type,

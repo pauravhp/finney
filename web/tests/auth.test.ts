@@ -10,13 +10,13 @@ test("sign-in preserves only a complete event scope, never arbitrary redirects",
     financeReturnPath(
       `?organization_id=${org}&run_id=${run}&next=https://outside.invalid`,
     ),
-    `/?organization_id=${org}&run_id=${run}`,
+    `/desk?organization_id=${org}&run_id=${run}`,
   );
   assert.equal(
     financeReturnPath(
       `?organization_id=${org}&run_id=invalid&next=//outside.invalid`,
     ),
-    "/",
+    "/desk",
   );
 });
 

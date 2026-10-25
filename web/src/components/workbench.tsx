@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowRight,
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import {
   commandSchema,
+  uploadLinkSchema,
   formatMoney,
   parseMajorUnits,
   safeEvidenceUrl,
@@ -100,7 +101,17 @@ export function Workbench({
   busy,
   onCommand,
   onRefresh,
+  initialCaseId = "",
+  initialMode = "message",
+  sources = [],
+  messageDraft,
+  onMessageDraftChange,
 }: {
+  sources?: FinanceSnapshot["source_items"];
+  messageDraft?: string;
+  onMessageDraftChange?: (message: string) => void;
+  initialCaseId?: string;
+  initialMode?: Mode;
   scope: Scope;
   currency: string;
   cases: FinanceSnapshot["cases"];
@@ -109,9 +120,39 @@ export function Workbench({
   onCommand: (type: FinanceCommand, payload: RecordValue) => Promise<boolean>;
   onRefresh: () => Promise<void>;
 }) {
-  const [mode, setMode] = useState<Mode>("message");
-  const [message, setMessage] = useState("");
-  const [caseId, setCaseId] = useState("");
+  const [mode, setMode] = useState<Mode>(initialMode);
+  const [message, setMessage] = useState(messageDraft ?? "");
+  const [caseId, setCaseId] = useState(initialCaseId);
+  const [uploadCaseId, setUploadCaseId] = useState(initialCaseId);
+  const [replacesSourceId, setReplacesSourceId] = useState("");
+  const fieldId = useId();
+  const uploadCase = cases.find((row) => row.id === uploadCaseId);
+  const sourceValues =
+    uploadCase?.data.source_ids ??
+    uploadCase?.data.source_refs ??
+    uploadCase?.data.sources ??
+    uploadCase?.data.evidence;
+  const sourceChoices = Array.isArray(sourceValues)
+    ? sourceValues.flatMap((value) => {
+        const row: RecordValue =
+          typeof value === "object" && value !== null
+            ? (value as RecordValue)
+            : { id: value };
+        const id = row.source_id ?? row.id ?? row.reference;
+        if (typeof id !== "string" || !/^[0-9a-f-]{36}$/i.test(id)) return [];
+        const source = sources.find((value) => value.id === id);
+        const metadata =
+          source?.metadata && typeof source.metadata === "object"
+            ? (source.metadata as RecordValue)
+            : {};
+        return [
+          {
+            id,
+            title: `${textValue(metadata.filename ?? source?.external_id ?? row.title ?? row.name, id)} · v${textValue(source?.version ?? row.version, "unknown")}`,
+          },
+        ];
+      })
+    : [];
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [direction, setDirection] = useState("payable");
@@ -137,6 +178,11 @@ export function Workbench({
       data.set("organization_id", scope.organization_id);
       data.set("run_id", scope.run_id);
       data.set("file", file);
+      const links = uploadLinkSchema.parse({
+        ...(uploadCaseId ? { case_id: uploadCaseId } : {}),
+        ...(replacesSourceId ? { replaces_source_id: replacesSourceId } : {}),
+      });
+      for (const [key, value] of Object.entries(links)) data.set(key, value);
       const response = await fetch("/api/finance/upload", {
         method: "POST",
         body: data,
@@ -201,9 +247,18 @@ export function Workbench({
   }
 
   return (
-    <section className="finance-workbench" aria-labelledby="workbench-title">
+    <section
+      className="finance-workbench"
+      aria-labelledby={`${fieldId}-workbench-title`}
+    >
       <div className="section-heading">
-        <h2 id="workbench-title">Work with Finney</h2>
+        <img
+          className="workbench-mascot"
+          src="/brand/finney.svg"
+          alt=""
+          aria-hidden="true"
+        />
+        <h2 id={`${fieldId}-workbench-title`}>Work with Finney</h2>
       </div>
       <div className="workbench-modes" aria-label="Choose a finance task">
         {(
@@ -247,26 +302,33 @@ export function Workbench({
                 message: message.trim(),
                 ...(caseId ? { case_id: caseId } : {}),
               })
-            )
+            ) {
               setMessage("");
+              onMessageDraftChange?.("");
+            }
           }}
         >
-          <label htmlFor="finney-message">What should Finney work on?</label>
+          <label htmlFor={`${fieldId}-finney-message`}>
+            What should Finney work on?
+          </label>
           <textarea
-            id="finney-message"
+            id={`${fieldId}-finney-message`}
             rows={3}
             maxLength={4000}
             required
             disabled={locked}
             value={message}
-            onChange={(event) => setMessage(event.target.value)}
+            onChange={(event) => {
+              setMessage(event.target.value);
+              onMessageDraftChange?.(event.target.value);
+            }}
             placeholder="Review the catering quote against our food budget and show the missing evidence."
           />
           <div className="workbench-fields">
-            <label htmlFor="finney-case">
+            <label htmlFor={`${fieldId}-finney-case`}>
               Related case
               <select
-                id="finney-case"
+                id={`${fieldId}-finney-case`}
                 value={caseId}
                 disabled={locked}
                 onChange={(event) => setCaseId(event.target.value)}
@@ -320,9 +382,11 @@ export function Workbench({
             }
           }}
         >
-          <label htmlFor="manual-description">Expense or expected income</label>
+          <label htmlFor={`${fieldId}-manual-description`}>
+            Expense or expected income
+          </label>
           <textarea
-            id="manual-description"
+            id={`${fieldId}-manual-description`}
             rows={2}
             required
             maxLength={4000}
@@ -332,10 +396,10 @@ export function Workbench({
             placeholder="Catering quote for Saturday lunch, awaiting the final invoice."
           />
           <div className="workbench-fields">
-            <label htmlFor="manual-amount">
+            <label htmlFor={`${fieldId}-manual-amount`}>
               Amount ({currency})
               <input
-                id="manual-amount"
+                id={`${fieldId}-manual-amount`}
                 inputMode="decimal"
                 required
                 maxLength={40}
@@ -345,10 +409,10 @@ export function Workbench({
                 placeholder="0.00"
               />
             </label>
-            <label htmlFor="manual-direction">
+            <label htmlFor={`${fieldId}-manual-direction`}>
               Direction
               <select
-                id="manual-direction"
+                id={`${fieldId}-manual-direction`}
                 value={direction}
                 disabled={locked}
                 onChange={(event) => setDirection(event.target.value)}
@@ -379,11 +443,54 @@ export function Workbench({
             void upload();
           }}
         >
-          <label htmlFor="finance-document">
+          <label htmlFor={`${fieldId}-upload-case`}>
+            Related case
+            <select
+              id={`${fieldId}-upload-case`}
+              value={uploadCaseId}
+              disabled={locked || Boolean(retry)}
+              onChange={(event) => {
+                setUploadCaseId(event.target.value);
+                setReplacesSourceId("");
+              }}
+            >
+              <option value="">Start a new case</option>
+              {cases.map((row) => (
+                <option key={row.id} value={row.id}>
+                  {row.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          {uploadCaseId && (
+            <label htmlFor={`${fieldId}-upload-replaces`}>
+              Document relationship
+              <select
+                id={`${fieldId}-upload-replaces`}
+                value={replacesSourceId}
+                disabled={locked || Boolean(retry)}
+                onChange={(event) => setReplacesSourceId(event.target.value)}
+              >
+                <option value="">Additional evidence</option>
+                {sourceChoices.map((row) => (
+                  <option key={row.id} value={row.id}>
+                    Revises: {row.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {replacesSourceId && (
+            <p>
+              The earlier source remains in the audit history. This revision
+              will trigger a new review.
+            </p>
+          )}
+          <label htmlFor={`${fieldId}-finance-document`}>
             Invoice, agreement or receipt
           </label>
           <input
-            id="finance-document"
+            id={`${fieldId}-finance-document`}
             ref={fileInput}
             type="file"
             disabled={locked || Boolean(retry)}
@@ -667,7 +774,10 @@ export function BudgetWorkbench({
         <div className="budget-decisions">
           <h3>Allocation decisions</h3>
           {budget.decisions.map((decision) => (
-            <article key={textValue(decision.id)}>
+            <article
+              key={textValue(decision.id)}
+              data-decision-id={textValue(decision.id)}
+            >
               <div>
                 <strong>
                   {textValue(decision.name)} ·{" "}

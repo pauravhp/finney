@@ -10,9 +10,11 @@ test("unconfigured workspace stays honest and usable at every viewport", async (
 }, info) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/desk");
+  if (info.project.name === "mobile") await page.getByRole("button", {name: "Open navigation"}).click();
+  await page.getByRole("button", {name: "Overview", exact: true}).click();
   await expect(
-    page.getByRole("heading", { name: "A clear view of your finances." }),
+    page.getByRole("heading", { name: "Overview", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Connect your event to begin" }),
@@ -40,7 +42,7 @@ test("unconfigured workspace stays honest and usable at every viewport", async (
   });
   if (info.project.name === "mobile")
     await page.getByRole("button", { name: "Open navigation" }).click();
-  await page.getByRole("button", { name: "Learning", exact: true }).click();
+  await page.getByRole("button", { name: "Agent", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Improvement needs evidence" }),
   ).toBeVisible();
@@ -49,7 +51,7 @@ test("unconfigured workspace stays honest and usable at every viewport", async (
   ).toBeVisible();
   if (info.project.name === "mobile")
     await page.getByRole("button", { name: "Open navigation" }).click();
-  await page.getByRole("button", { name: "Approvals", exact: true }).click();
+  await page.getByRole("button", { name: "To review", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "No proposals to approve" }),
   ).toBeVisible();
@@ -130,6 +132,6 @@ test("protected endpoints reject foreign origins, invalid scope, and unconfigure
     maxRedirects: 0,
   });
   expect(callback.headers().location).toBe(
-    "http://127.0.0.1:3317/?auth_error=1",
+    "http://127.0.0.1:3317/desk?auth_error=1",
   );
 });

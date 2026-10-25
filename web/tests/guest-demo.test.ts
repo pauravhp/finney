@@ -111,7 +111,7 @@ test("anonymous SDK sign-in then same-origin POST opens only the validated run",
   });
   assert.equal(
     destination,
-    `/?organization_id=${organization_id}&run_id=${run_id}`,
+    `/desk?organization_id=${organization_id}&run_id=${run_id}`,
   );
 });
 
@@ -343,6 +343,6 @@ test("returned scope must be a complete UUID pair before redirect construction",
   );
   assert.equal(
     guestDemoReturnPath({ organization_id, run_id }),
-    `/?organization_id=${organization_id}&run_id=${run_id}`,
+    `/desk?organization_id=${organization_id}&run_id=${run_id}`,
   );
 });

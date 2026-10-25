@@ -12,7 +12,7 @@ let status = 0;
 try {
   for (const args of [
     ["run", "build"],
-    ["exec", "playwright", "test", "auth.browser.spec.ts"],
+    ["exec", "--", "playwright", "test", "auth.browser.spec.ts", "--workers=1"],
   ]) {
     const result = spawnSync("npm", args, { env, stdio: "inherit" });
     if (result.error) throw result.error;

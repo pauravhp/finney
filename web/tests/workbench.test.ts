@@ -139,6 +139,6 @@ test("readonly workbench labels the editor requirement and disables submissions"
     }),
   );
   assert.match(html, /An active director or finance team member/);
-  assert.match(html, /id="finney-message"[^>]*disabled/);
+  assert.match(html, /id="[^"]*-finney-message"[^>]*disabled/);
   assert.match(html, /disabled=""[^>]*>Queue request/);
 });

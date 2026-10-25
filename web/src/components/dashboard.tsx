@@ -27,6 +27,7 @@ import { browserSupabase } from "@/lib/supabase/browser";
 import { AuthPanel } from "@/components/auth-panel";
 import { Procedure } from "@/components/procedure";
 import { PaymentExecution } from "@/components/payment-execution";
+import { CaseWorkspace } from "@/components/case-workspace";
 import { DirectorResponses } from "@/components/director-responses";
 import {
   ArtifactDownload,
@@ -55,12 +56,12 @@ import {
 } from "@/lib/contracts";
 
 const tabs = [
+  { id: "cases", title: "Work", icon: FolderOpen },
+  { id: "approvals", title: "To review", icon: ClipboardCheck },
   { id: "overview", title: "Overview", icon: LayoutDashboard },
-  { id: "cases", title: "Cases & evidence", icon: FolderOpen },
-  { id: "approvals", title: "Approvals", icon: ClipboardCheck },
-  { id: "activity", title: "Activity", icon: Activity },
-  { id: "learning", title: "Learning", icon: Sparkles },
   { id: "reports", title: "Reports", icon: FileText },
+  { id: "learning", title: "Agent", icon: Sparkles },
+  { id: "activity", title: "Activity", icon: Activity },
   { id: "connections", title: "Connections", icon: Link2 },
 ] as const;
 type Tab = (typeof tabs)[number]["id"];
@@ -221,7 +222,8 @@ export function Dashboard({
   gmailAvailable: boolean;
   user: User | null;
 }) {
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>("cases");
+  const [messageDraft, setMessageDraft] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scopes, setScopes] = useState<ScopeChoice[]>([]);
   const [scope, setScope] = useState<Scope | null>(null);
@@ -342,6 +344,7 @@ export function Dashboard({
 
   useEffect(() => {
     setSnapshot(null);
+    setMessageDraft("");
     setShowOpening(false);
     if (!scope || !user) return;
     setExpanded(null);
@@ -574,6 +577,139 @@ export function Dashboard({
     (row) => row.id === scope?.run_id,
   );
 
+  const selectedCase = snapshot?.cases.find((row) => row.id === expanded);
+  const renderProposal = (proposal: FinanceSnapshot["approvals"][number]) => {
+    if (!snapshot) return null;
+
+    const canDecide =
+      canApprove &&
+      (proposal.required_approvals !== 1 || organization?.role === "director");
+    const alreadyDecided = proposal.decisions.some(
+      (row) => row.user_id === user?.id || row.actor_user_id === user?.id,
+    );
+    const expired = Boolean(
+      proposal.expires_at && Date.parse(proposal.expires_at) <= Date.now(),
+    );
+    return (
+      <article className="proposal" key={proposal.id}>
+        <div className="section-heading">
+          <h2>
+            {textValue(
+              proposal.action.title ??
+                proposal.action.type ??
+                proposal.action.action_type,
+              "Proposed financial action",
+            )}
+          </h2>
+          <Badge status={expired ? "expired" : proposal.status} />
+        </div>
+        <dl className="action-facts">
+          {[
+            "destination",
+            "asset",
+            "network",
+            "amount_minor",
+            "amount_base_units",
+            "currency",
+            "case_id",
+          ]
+            .filter((key) => proposal.action[key] !== undefined)
+            .map((key) => (
+              <div key={key}>
+                <dt>{key.replaceAll("_", " ")}</dt>
+                <dd>{textValue(proposal.action[key])}</dd>
+              </div>
+            ))}
+        </dl>
+        <RecordDetails
+          value={proposal.action}
+          label="Inspect complete exact action"
+        />
+        <div className="proposal-meta">
+          <span>
+            {proposal.approval_count} of {proposal.required_approvals} approvals
+          </span>
+          <span>Expires {dateTime(proposal.expires_at)}</span>
+        </div>
+        <p className="hash">
+          Action hash <code>{proposal.action_hash}</code>
+        </p>
+        {proposal.decisions.length > 0 && (
+          <RecordDetails
+            value={proposal.decisions}
+            label="Inspect recorded human decisions"
+          />
+        )}
+        {proposal.status === "pending" && !expired && (
+          <>
+            <label className="review-check">
+              <input
+                type="checkbox"
+                checked={Boolean(reviewed[proposal.id])}
+                onChange={(event) =>
+                  setReviewed({
+                    ...reviewed,
+                    [proposal.id]: event.target.checked,
+                  })
+                }
+                disabled={!canDecide || alreadyDecided}
+              />
+              I reviewed this exact action and its source evidence.
+            </label>
+            <div className="proposal-actions">
+              <button
+                disabled={!canDecide || Boolean(busy) || alreadyDecided}
+                onClick={() => decide(proposal, "reject")}
+              >
+                Reject action
+              </button>
+              <button
+                className="primary"
+                disabled={
+                  !canDecide ||
+                  !reviewed[proposal.id] ||
+                  Boolean(busy) ||
+                  alreadyDecided
+                }
+                onClick={() => decide(proposal, "approve")}
+              >
+                <Check size={16} />
+                {alreadyDecided ? "Decision recorded" : "Approve exact action"}
+              </button>
+            </div>
+            {!canDecide && (
+              <p className="muted">
+                {proposal.required_approvals === 1
+                  ? "The event director must make this decision under the director-only policy."
+                  : "A director or designated approver must make this decision."}
+              </p>
+            )}
+          </>
+        )}
+        <PaymentExecution
+          proposal={proposal}
+          payments={snapshot.payments}
+          jobs={snapshot.payment_jobs}
+          canOperate={
+            canApprove &&
+            (proposal.required_approvals !== 1 ||
+              organization?.role === "director")
+          }
+          isDemo={Boolean(selectedRun?.is_demo)}
+          busy={Boolean(busy)}
+          onExecute={(proposalId) =>
+            command("execute_payment", {
+              proposal_id: proposalId,
+            })
+          }
+        />
+      </article>
+    );
+  };
+  const openCase = (id: string) => {
+    setExpanded(id);
+    setTab("cases");
+  };
   const caseList = (limit?: number) =>
     recentCases.length ? (
       <div className="case-list">
@@ -581,7 +717,7 @@ export function Dashboard({
           <article className="case" key={row.id}>
             <button
               className="case-heading"
-              onClick={() => setExpanded(expanded === row.id ? null : row.id)}
+              onClick={() => openCase(row.id)}
               aria-expanded={expanded === row.id}
             >
               <span className="case-icon">
@@ -599,23 +735,6 @@ export function Dashboard({
                 className={expanded === row.id ? "rotated" : ""}
               />
             </button>
-            {expanded === row.id && (
-              <div className="case-body">
-                <DirectorResponses responses={row.data.director_responses} />
-                <Evidence data={row.data} />
-                <button
-                  disabled={!canWork || Boolean(busy)}
-                  onClick={() =>
-                    command("review_case", {
-                      case_id: row.id,
-                      expected_version: row.version,
-                    })
-                  }
-                >
-                  Request review
-                </button>
-              </div>
-            )}
           </article>
         ))}
       </div>
@@ -655,13 +774,14 @@ export function Dashboard({
         Skip to finance workspace
       </a>
       <aside className={`sidebar ${mobileMenu ? "is-open" : ""}`}>
-        <a className="brand" href="/" aria-label="Director Finance home">
-          <span className="brand-mark">
-            <Sparkles size={23} strokeWidth={1.6} />
-          </span>
-          <span>
-            Director<span className="brand-subtitle">Finance workspace</span>
-          </span>
+        <a className="brand" href="/" aria-label="Finney home">
+          <img
+            className="finney"
+            src="/brand/finney.svg"
+            alt=""
+            aria-hidden="true"
+          />
+          <span>finney</span>
         </a>
         <button
           className="mobile-close icon-button"
@@ -743,6 +863,27 @@ export function Dashboard({
             <strong>{tabs.find((row) => row.id === tab)?.title}</strong>
           </div>
           <div className="topbar-right">
+            {user && (
+              <button
+                className="text-button"
+                onClick={() => {
+                  setTab("cases");
+                  setExpanded(null);
+                  setMobileMenu(false);
+                  setTimeout(
+                    () =>
+                      document
+                        .querySelector<HTMLTextAreaElement>(
+                          'textarea[id$="-finney-message"]',
+                        )
+                        ?.focus(),
+                    0,
+                  );
+                }}
+              >
+                Ask Finney <ArrowRight size={14} />
+              </button>
+            )}
             <span
               className={`live-state ${live === "Live" ? "connected" : ""}`}
             >
@@ -762,23 +903,27 @@ export function Dashboard({
           </div>
         </header>
         <main id="main">
-          <div className="page-heading">
+          <div
+            className={`page-heading ${tab === "cases" && selectedCase ? "case-parent-heading" : ""}`}
+          >
             <div>
               <h1>
                 {tab === "overview"
-                  ? "A clear view of your finances."
+                  ? "Overview"
                   : tabs.find((row) => row.id === tab)?.title}
               </h1>
               <p>
                 {tab === "overview"
                   ? "Know what is confirmed, what is committed, and what needs your decision."
-                  : tab === "learning"
-                    ? "From observed behavior to evaluated procedure changes. Every result stays inspectable."
-                    : tab === "approvals"
-                      ? "Review the exact action. Decisions are bound to its current version."
-                      : tab === "connections"
-                        ? "Real provider access and worker health, with clear ownership."
-                        : "Source-linked records for your event and selected run."}
+                  : tab === "cases"
+                    ? "Give Finney a document or a task. Follow the work here."
+                    : tab === "learning"
+                      ? "From observed behavior to evaluated procedure changes. Every result stays inspectable."
+                      : tab === "approvals"
+                        ? "Review the exact action. Decisions are bound to its current version."
+                        : tab === "connections"
+                          ? "Real provider access and worker health, with clear ownership."
+                          : "Source-linked records for your event and selected run."}
               </p>
             </div>
             {user && (
@@ -1138,6 +1283,9 @@ export function Dashboard({
                     scope={scope}
                     currency={snapshot.run.currency}
                     cases={snapshot.cases}
+                    sources={snapshot.source_items}
+                    messageDraft={messageDraft}
+                    onMessageDraftChange={setMessageDraft}
                     canEdit={
                       canWork &&
                       ["director", "finance"].includes(organization?.role ?? "")
@@ -1218,24 +1366,105 @@ export function Dashboard({
             </>
           )}
           {tab === "cases" && (
-            <section>
-              {scope && snapshot && (
-                <Workbench
-                  key={`cases-workbench:${scopeKey}`}
-                  scope={scope}
-                  currency={snapshot.run.currency}
-                  cases={snapshot.cases}
-                  canEdit={
-                    canWork &&
-                    ["director", "finance"].includes(organization?.role ?? "")
-                  }
+            <section className="work-desk">
+              {selectedCase && snapshot && scope ? (
+                <CaseWorkspace
+                  item={selectedCase}
+                  snapshot={snapshot}
+                  onBack={() => setExpanded(null)}
                   busy={Boolean(busy)}
-                  onCommand={command}
-                  onRefresh={() => refresh(scope)}
+                  canWork={canWork}
+                  onReview={() =>
+                    void command("review_case", {
+                      case_id: selectedCase.id,
+                      expected_version: selectedCase.version,
+                    })
+                  }
+                  decisions={snapshot.approvals
+                    .filter(
+                      (proposal) => proposal.action.case_id === selectedCase.id,
+                    )
+                    .map(renderProposal)}
+                  conversationForm={
+                    <Workbench
+                      key={`conversation:${scopeKey}:${selectedCase.id}`}
+                      scope={scope}
+                      currency={snapshot.run.currency}
+                      cases={[selectedCase]}
+                      sources={snapshot.source_items}
+                      initialCaseId={selectedCase.id}
+                      initialMode="message"
+                      canEdit={
+                        canWork &&
+                        ["director", "finance"].includes(
+                          organization?.role ?? "",
+                        )
+                      }
+                      busy={Boolean(busy)}
+                      onCommand={command}
+                      onRefresh={() => refresh(scope)}
+                    />
+                  }
+                  evidenceForm={
+                    <Workbench
+                      key={`evidence:${scopeKey}:${selectedCase.id}`}
+                      scope={scope}
+                      currency={snapshot.run.currency}
+                      cases={snapshot.cases}
+                      sources={snapshot.source_items}
+                      initialCaseId={selectedCase.id}
+                      initialMode="upload"
+                      canEdit={
+                        canWork &&
+                        ["director", "finance"].includes(
+                          organization?.role ?? "",
+                        )
+                      }
+                      busy={Boolean(busy)}
+                      onCommand={command}
+                      onRefresh={() => refresh(scope)}
+                    />
+                  }
                 />
+              ) : (
+                <div className="work-intake-layout">
+                  <div className="work-intake-main">
+                    {scope && snapshot ? (
+                      <Workbench
+                        key={`cases-workbench:${scopeKey}`}
+                        scope={scope}
+                        currency={snapshot.run.currency}
+                        cases={snapshot.cases}
+                        sources={snapshot.source_items}
+                        messageDraft={messageDraft}
+                        onMessageDraftChange={setMessageDraft}
+                        canEdit={
+                          canWork &&
+                          ["director", "finance"].includes(
+                            organization?.role ?? "",
+                          )
+                        }
+                        busy={Boolean(busy)}
+                        onCommand={command}
+                        onRefresh={() => refresh(scope)}
+                      />
+                    ) : !configured ? (
+                      <Empty title="Your work starts here">
+                        Connect the event to ask Finney a question or upload a
+                        source document.
+                      </Empty>
+                    ) : null}
+                  </div>
+                  <aside className="work-on-file">
+                    <h2>On file</h2>
+                    {caseList()}
+                  </aside>
+                </div>
               )}
-              {caseList()}
-              <SourceRegister snapshot={snapshot} />
+              <details className="all-source-register">
+                <summary>All source records</summary>
+                <SourceRegister snapshot={snapshot} />
+              </details>
             </section>
           )}
           {tab === "approvals" && (
@@ -1251,144 +1480,7 @@ export function Dashboard({
               )}
               {snapshot?.approvals.length ? (
                 <div className="proposal-list">
-                  {snapshot.approvals.map((proposal) => {
-                    const canDecide =
-                      canApprove &&
-                      (proposal.required_approvals !== 1 ||
-                        organization?.role === "director");
-                    const alreadyDecided = proposal.decisions.some(
-                      (row) =>
-                        row.user_id === user?.id ||
-                        row.actor_user_id === user?.id,
-                    );
-                    const expired = Boolean(
-                      proposal.expires_at &&
-                      Date.parse(proposal.expires_at) <= Date.now(),
-                    );
-                    return (
-                      <article className="proposal" key={proposal.id}>
-                        <div className="section-heading">
-                          <h2>
-                            {textValue(
-                              proposal.action.title ??
-                                proposal.action.type ??
-                                proposal.action.action_type,
-                              "Proposed financial action",
-                            )}
-                          </h2>
-                          <Badge
-                            status={expired ? "expired" : proposal.status}
-                          />
-                        </div>
-                        <dl className="action-facts">
-                          {[
-                            "destination",
-                            "asset",
-                            "network",
-                            "amount_minor",
-                            "amount_base_units",
-                            "currency",
-                            "case_id",
-                          ]
-                            .filter((key) => proposal.action[key] !== undefined)
-                            .map((key) => (
-                              <div key={key}>
-                                <dt>{key.replaceAll("_", " ")}</dt>
-                                <dd>{textValue(proposal.action[key])}</dd>
-                              </div>
-                            ))}
-                        </dl>
-                        <RecordDetails
-                          value={proposal.action}
-                          label="Inspect complete exact action"
-                        />
-                        <div className="proposal-meta">
-                          <span>
-                            {proposal.approval_count} of{" "}
-                            {proposal.required_approvals} approvals
-                          </span>
-                          <span>Expires {dateTime(proposal.expires_at)}</span>
-                        </div>
-                        <p className="hash">
-                          Action hash <code>{proposal.action_hash}</code>
-                        </p>
-                        {proposal.decisions.length > 0 && (
-                          <RecordDetails
-                            value={proposal.decisions}
-                            label="Inspect recorded human decisions"
-                          />
-                        )}
-                        {proposal.status === "pending" && !expired && (
-                          <>
-                            <label className="review-check">
-                              <input
-                                type="checkbox"
-                                checked={Boolean(reviewed[proposal.id])}
-                                onChange={(event) =>
-                                  setReviewed({
-                                    ...reviewed,
-                                    [proposal.id]: event.target.checked,
-                                  })
-                                }
-                                disabled={!canDecide || alreadyDecided}
-                              />
-                              I reviewed this exact action and its source
-                              evidence.
-                            </label>
-                            <div className="proposal-actions">
-                              <button
-                                disabled={
-                                  !canDecide || Boolean(busy) || alreadyDecided
-                                }
-                                onClick={() => decide(proposal, "reject")}
-                              >
-                                Reject action
-                              </button>
-                              <button
-                                className="primary"
-                                disabled={
-                                  !canDecide ||
-                                  !reviewed[proposal.id] ||
-                                  Boolean(busy) ||
-                                  alreadyDecided
-                                }
-                                onClick={() => decide(proposal, "approve")}
-                              >
-                                <Check size={16} />
-                                {alreadyDecided
-                                  ? "Decision recorded"
-                                  : "Approve exact action"}
-                              </button>
-                            </div>
-                            {!canDecide && (
-                              <p className="muted">
-                                {proposal.required_approvals === 1
-                                  ? "The event director must make this decision under the director-only policy."
-                                  : "A director or designated approver must make this decision."}
-                              </p>
-                            )}
-                          </>
-                        )}
-                        <PaymentExecution
-                          proposal={proposal}
-                          payments={snapshot.payments}
-                          jobs={snapshot.payment_jobs}
-                          canOperate={
-                            canApprove &&
-                            (proposal.required_approvals !== 1 ||
-                              organization?.role === "director")
-                          }
-                          isDemo={Boolean(selectedRun?.is_demo)}
-                          busy={Boolean(busy)}
-                          onExecute={(proposalId) =>
-                            command("execute_payment", {
-                              proposal_id: proposalId,
-                            })
-                          }
-                        />
-                      </article>
-                    );
-                  })}
+                  {snapshot.approvals.map(renderProposal)}
                 </div>
               ) : (
                 <Empty title="No proposals to approve" icon={ClipboardCheck}>

@@ -28,7 +28,7 @@ async function onCommand(command_type,payload){
 }
 const props={scope,currency:'USD',canEdit:true,onRefresh:async()=>{}};
 createRoot(document.getElementById('root')).render(createElement('main',null,
- createElement(Workbench,{...props,cases:[],busy:false,onCommand}),
+ createElement(Workbench,{...props,cases:window.__TEST_ONLY_CASES__??[],busy:false,onCommand}),
  createElement(BudgetWorkbench,{...props,canDecide:true,budget:{lines:[{id:'TEST-ONLY-line',name:'TEST ONLY food',currency:'USD',allocated_minor:'100000',committed_minor:'20000',remaining_minor:'80000',version:3}],decisions:[{id:'${decisionId}',name:window.__TEST_ONLY_LONG_BUDGET_NAME__??'TEST ONLY supplies',currency:'USD',allocated_minor:'30000',status:'pending',rationale:'TEST ONLY planning proposal'}]}})
 ));`,
     resolveDir: process.cwd(),
@@ -43,8 +43,8 @@ createRoot(document.getElementById('root')).render(createElement('main',null,
   define: { "process.env.NODE_ENV": '"production"' },
 }).outputFiles[0].text;
 
-async function mount(page: Page, longBudgetName?: string) {
-  await page.goto("/");
+async function mount(page: Page, longBudgetName?: string, cases?: unknown[]) {
+  await page.goto("/desk");
   await page.setContent(
     '<!doctype html><html><head></head><body><div id="root"></div><p id="fixture-status" role="status"></p></body></html>',
   );
@@ -57,6 +57,11 @@ async function mount(page: Page, longBudgetName?: string) {
     await page.evaluate((name) => {
       Object.assign(window, { __TEST_ONLY_LONG_BUDGET_NAME__: name });
     }, longBudgetName);
+  if (cases)
+    await page.evaluate(
+      (value) => Object.assign(window, { __TEST_ONLY_CASES__: value }),
+      cases,
+    );
   await page.addScriptTag({ content: script });
   await expect(
     page.getByRole("heading", { name: "Work with Finney" }),
@@ -279,4 +284,48 @@ test("a budget proposal is separate from an explicit director approval", async (
   await expect(
     page.getByText("Budget allocation approved.", { exact: true }),
   ).toBeVisible();
+});
+
+test("a changed document keeps its case and predecessor in the queued upload", async ({
+  page,
+}) => {
+  const caseId = "11111111-1111-4111-8111-111111111111";
+  const sourceId = "22222222-2222-4222-8222-222222222222";
+  let submitted = "";
+  await page.route("**/api/finance/upload", async (route) => {
+    submitted = route.request().postData() ?? "";
+    await route.fulfill({
+      status: 202,
+      json: { job_id: jobId, status: "queued" },
+    });
+  });
+  await mount(page, undefined, [
+    {
+      id: caseId,
+      title: "TEST ONLY revised invoice",
+      data: {
+        source_refs: [{ source_id: sourceId, title: "Original invoice" }],
+      },
+    },
+  ]);
+  await page
+    .getByRole("button", { name: "Upload a document", exact: true })
+    .click();
+  await page.getByLabel("Related case").selectOption(caseId);
+  await page.getByLabel("Document relationship").selectOption(sourceId);
+  await page
+    .getByLabel("Invoice, agreement or receipt")
+    .setInputFiles({
+      name: "revised.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("TEST ONLY revised invoice"),
+    });
+  await page.getByRole("button", { name: "Upload & queue review" }).click();
+  await expect(
+    page.getByText("Document review queued.", { exact: false }),
+  ).toBeVisible();
+  expect(submitted).toContain('name="case_id"');
+  expect(submitted).toContain(caseId);
+  expect(submitted).toContain('name="replaces_source_id"');
+  expect(submitted).toContain(sourceId);
 });

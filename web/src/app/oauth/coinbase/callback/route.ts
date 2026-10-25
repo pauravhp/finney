@@ -21,7 +21,7 @@ export async function GET() {
 <details><summary>Show callback for manual copying</summary><label for="callback">Temporary callback — keep private</label><textarea id="callback" readonly spellcheck="false" autocomplete="off" autocapitalize="off"></textarea></details>
 <p>Keep this value out of chat. Finney will confirm the connection after the secure handoff is processed.</p>
 </section>
-<footer><a href="/" rel="noreferrer">Return to Finney</a></footer>
+<footer><a href="/desk" rel="noreferrer">Return to Finney</a></footer>
 </main><script nonce="${nonce}">
 (() => {
   const callback = window.location.href;

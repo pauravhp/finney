@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import "@fontsource-variable/dm-sans";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Director · Finance",
+  title: "Finney · Your finance teammate",
   description: "Source-backed finance operations for hackathon teams.",
   robots: { index: false, follow: false },
 };
@@ -13,6 +12,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="stylesheet" href="/brand/mascot.css" />
+      </head>
       <body>{children}</body>
     </html>
   );

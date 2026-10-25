@@ -10,11 +10,11 @@ export async function GET(request: Request) {
   if (code && supabase) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error)
-      return NextResponse.redirect(new URL("/", origin), {
+      return NextResponse.redirect(new URL("/desk", origin), {
         headers: { "Cache-Control": "private, no-store" },
       });
   }
-  return NextResponse.redirect(new URL("/?auth_error=1", origin), {
+  return NextResponse.redirect(new URL("/desk?auth_error=1", origin), {
     headers: { "Cache-Control": "private, no-store" },
   });
 }

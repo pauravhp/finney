@@ -1,21 +1,24 @@
-import { Dashboard } from "@/components/dashboard";
-import { publicConfig } from "@/lib/config";
-import { serverSupabase } from "@/lib/supabase/server";
-import { financeApiUrl } from "@/lib/connectors";
+import { Landing } from "@/components/landing";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
-export default async function Home() {
-  const configured = Boolean(publicConfig());
-  const supabase = await serverSupabase();
-  const user = supabase ? (await supabase.auth.getUser()).data.user : null;
-  return (
-    <Dashboard
-      configured={configured}
-      gmailAvailable={Boolean(financeApiUrl())}
-      user={
-        user ? { id: user.id, email: user.email ?? "Signed-in member" } : null
-      }
-    />
-  );
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const search = await searchParams;
+  // Preserve older authenticated event and OAuth links after the landing rollout.
+  if (
+    search.organization_id ||
+    search.run_id ||
+    search.auth_error ||
+    search.signin
+  ) {
+    const query = new URLSearchParams();
+    for (const key of ["organization_id", "run_id", "auth_error"]) {
+      if (typeof search[key] === "string") query.set(key, search[key]);
+    }
+    redirect(`/desk${query.size ? `?${query}` : ""}`);
+  }
+  return <Landing />;
 }

@@ -1,5 +1,10 @@
 # Director Finance web
 
+The approved Organizer’s Desk landing is at `/`. Open `/desk` for the authenticated
+finance workspace and sign-in. Existing links with an event/run scope still work.
+Landing examples illustrate the product; live records and actual learning results
+are shown only in the desk.
+
 Next.js browser workspace for event-owned finance records in Supabase. The app
 shows live scoped snapshots, source evidence, exact-action human approvals,
 activity, recorded procedure improvement, report artifacts, and connection health.
