@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     finance_gmail_query: str = "label:director-finance"
     finance_gmail_backend: Literal["hermes", "api"] = "hermes"
     coinbase_mcp_url: str = ""
+    coinbase_redirect_uri: str = "http://127.0.0.1:8768/oauth/coinbase/callback"
     coinbase_mcp_token: SecretStr = SecretStr("")
     coinbase_sender_address: str = ""
     base_sepolia_rpc_url: str = "https://sepolia.base.org"

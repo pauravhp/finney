@@ -254,7 +254,7 @@ def main() -> None:
     gmail.add_argument("--complete", action="store_true", help="Securely prompt for the full Google redirect URL")
     coinbase = sub.add_parser("coinbase-connect", help="Connect an existing Coinbase Wallet to this private event")
     coinbase.add_argument("--director-user-id", type=UUID, help="Existing event director Auth UUID")
-    coinbase.add_argument("--complete", action="store_true", help="Securely prompt for the full Coinbase loopback redirect")
+    coinbase.add_argument("--complete", action="store_true", help="Securely prompt for the full Coinbase callback URL")
     coinbase.add_argument("--inspect", action="store_true", help="Read connected wallet addresses without financial actions")
     event = sub.add_parser(
         "event-sql",
@@ -354,7 +354,7 @@ def main() -> None:
                     raise ValueError("Complete requires an interactive hidden terminal prompt")
                 import getpass
 
-                callback = getpass.getpass("Paste the full Coinbase loopback redirect URL (hidden): ")
+                callback = getpass.getpass("Paste the full Coinbase callback URL (hidden): ")
                 result = asyncio.run(finish(settings, callback))
             else:
                 if not args.director_user_id:

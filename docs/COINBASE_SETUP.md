@@ -19,13 +19,32 @@ finance coinbase-connect --complete
 finance coinbase-connect --inspect
 ```
 
+For setup from another machine, configure the worker before starting:
+
+```sh
+COINBASE_REDIRECT_URI=https://YOUR_DEPLOYED_FINNEY_HOST/oauth/coinbase/callback
+```
+
+Use the actual deployed hostname, not the placeholder above. The callback route
+must be deployed first. Apply migration020 to support hosted callback receipts.
+The default loopback remains available for local-only setup. Hosted redirects
+require HTTPS, the exact callback path, and no credentials, query or fragment.
+
 The first command registers an app-owned public OAuth client only when Coinbase
 advertises compatible registration, S256 PKCE and public-client token exchange.
 It prints an authorization URL. Open that URL, sign in to the existing Coinbase
 Wallet account and approve the connection. If an account/wallet would need to be
 created, that remains a separate owner action; Finney does not create one.
 
-Coinbase redirects to
+With a hosted callback, Coinbase redirects to your deployed Finney handoff page.
+It clears the temporary code from the address bar and provides a **Copy secure
+callback** button. Paste that value into the worker's hidden `--complete` prompt,
+or the password-manager field agreed with the owner. The callback page does not
+exchange tokens, claim a successful connection or execute payments. Backend keys,
+PKCE verifiers and wallet tokens remain off Vercel; the callback has no external
+resources and disables caching, framing and referrers.
+
+For the default local-only setup, Coinbase redirects to
 `http://127.0.0.1:8768/oauth/coinbase/callback`. A local callback listener is not
 required for this split flow: copy the full resulting address even if the browser
 shows a connection error. Run the second command in an interactive terminal and
