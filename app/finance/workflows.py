@@ -57,11 +57,60 @@ async def ingest_uploaded_document(settings, tools, db, payload: dict, job: dict
     filename = payload.get("filename", "document")
     if not isinstance(filename, str) or not 1 <= len(filename) <= 200:
         raise FinanceError("upload_filename_invalid")
+    case_id, replaces = payload.get("case_id"), payload.get("replaces_source_id")
+    if replaces and not case_id:
+        raise FinanceError("document_revision_requires_case")
+    for identity in (case_id, replaces):
+        if identity is not None:
+            try:
+                UUID(identity)
+            except (ValueError, TypeError, AttributeError):
+                raise FinanceError("upload_evidence_identity_invalid") from None
+    prior = await tools.call("get_case", {"case_id": case_id}) if case_id else None
+    if case_id and (not prior or str(prior.get("id")) != case_id):
+        raise FinanceError("upload_case_outside_scope")
+    source_filters = {"organization_id": "eq." + job["organization_id"],
+                      "run_id": "eq." + job["run_id"]}
+    previous = None
+    if replaces:
+        if replaces not in prior.get("data", {}).get("source_ids", []):
+            raise FinanceError("revision_source_not_in_case")
+        sources = await db.select("source_items", filters={**source_filters, "id": "eq." + replaces}, limit=1)
+        if not sources or not sources[0].get("external_id", "").startswith("document:upload:"):
+            raise FinanceError("revision_requires_uploaded_document")
+        previous = sources[0]
     raw = await db.download("finance-artifacts", path)
     if len(raw) > 3 * 1024 * 1024 or len(raw) != payload.get("size"):
         raise FinanceError("upload_size_invalid")
     documents = DocumentService(tools, db, ocr=ClaudeVisionOCR(ModelConfig.from_settings(settings)))
-    result = await documents.ingest(raw, filename=filename, content_type=payload.get("content_type", ""), external_id="upload:" + path)
+    external_id = previous["external_id"].removeprefix("document:") if previous else "upload:" + path
+    if previous:
+        latest = await db.select("source_items", filters={**source_filters,
+            "external_id": "eq." + previous["external_id"], "order": "version.desc"}, limit=1)
+        # A replay of the same bytes may recover a partially completed intake.
+        # A different newer revision cannot be overwritten by a stale request.
+        if not latest or (latest[0]["id"] != replaces and
+            latest[0].get("metadata", {}).get("document_sha256") != hashlib.sha256(raw).hexdigest()):
+            raise FinanceError("document_revision_changed_reload_case")
+    result = await documents.ingest(
+        raw, filename=filename, content_type=payload.get("content_type", ""),
+        external_id=external_id,
+        **({"expected_current_source_id": replaces} if previous else {}),
+    )
+    if prior:
+        # Recording a new source version invalidates dependent cases in SQL;
+        # read again before the CAS instead of using the pre-ingest version.
+        current = await tools.call("get_case", {"case_id": case_id})
+        data = dict(current.get("data", {}))
+        if result["source_id"] not in data.get("source_ids", []):
+            data["source_ids"] = [*data.get("source_ids", []), result["source_id"]]
+            data["source_refs"] = [*data.get("source_refs", []), result["source_ref"]]
+            data["change_impact"] = {"source_id": result["source_id"],
+                "replaces_source_id": replaces, "reason": "document_revised" if replaces else "evidence_added"}
+            await tools.call("record_case", {"id": case_id, "expected_version": current["version"],
+                "title": current["title"], "status": "needs_review", "data": data,
+                "idempotency_key": "upload-evidence:" + job["id"]})
+        return {**result, "case_id": case_id}
     cases = await db.select("cases", filters={
         "organization_id": "eq." + job["organization_id"], "run_id": "eq." + job["run_id"],
         "data->>uploaded_source_id": "eq." + result["source_id"],

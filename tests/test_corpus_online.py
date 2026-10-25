@@ -115,7 +115,7 @@ class FixtureActor(OpenCodeActor):
                 "evidence": {"api_calls": 1, "latency_seconds": 0.01, "usage": {"fixture": True}}}
 
 
-async def run_fixture(*, global_allowed=True, reject_validation=False, native_denied=False):
+async def run_fixture(*, global_allowed=True, reject_validation=False, native_denied=False, observed_policy=None):
     port = LifecyclePort()
     await ensure_baseline(port)
     baseline = copy.deepcopy(port.versions[port.active])
@@ -136,6 +136,8 @@ async def run_fixture(*, global_allowed=True, reject_validation=False, native_de
     async def search(**kwargs):
         # A declared candidate-search fixture; no corpus cases/answers in inputs.
         assert "suite" not in kwargs and "cases" not in kwargs
+        assert kwargs["policy"] == observed_policy
+        assert kwargs["policy"] != suite.policy
         kwargs["reserve_calls"](1)
         return {"content": replace_procedure(content,
             "ONLINE FIXTURE: inspect each current source and resolve actual payer and remaining liability before preparing any financial action."),
@@ -144,7 +146,7 @@ async def run_fixture(*, global_allowed=True, reject_validation=False, native_de
     engine = ImprovementEngine(actor, LifecycleReviewer(port), LifecycleJev(), candidate_search=search)
     result = await engine.run(trace={"id": str(uuid4()), "output": {"explanation": "Fixture observed defect"}},
         baseline=baseline, baseline_content=content, suite=suite, tools=tools,
-        attempt_id=str(uuid4()), max_model_calls=96)
+        attempt_id=str(uuid4()), max_model_calls=96, observed_policy=observed_policy)
     return result, port, actor, global_calls
 
 
@@ -217,4 +219,12 @@ async def test_suite_route_queue_defaults_and_harness2_service_choice(monkeypatc
     monkeypatch.setattr("app.finance.workflows.queue_automatic_improvement", queued)
     settings = Settings(_env_file=None, finance_actor_runtime="opencode", finance_improvement_method="harness2")
     await service.dispatch_job(settings, job, AsyncMock(), AsyncMock())
-    assert queued.call_args.kwargs["suite_id"] == corpus.CORPUS_ONLINE_SUITE_ID
+    from app.improvement.promotion_suite import PROMOTION_SUITE_ID
+    assert queued.call_args.kwargs["suite_id"] == PROMOTION_SUITE_ID
+
+
+@pytest.mark.asyncio
+async def test_harness_search_receives_observed_policy_not_unseen_evaluation_policy():
+    from app.runtime.operation_policy import runtime_operation_policy
+    result, _port, _actor, _claims = await run_fixture(observed_policy=runtime_operation_policy())
+    assert result["status"] == "promoted", result  # Scripted fixture, not provider evidence.

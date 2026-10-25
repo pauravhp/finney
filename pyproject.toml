@@ -36,6 +36,7 @@ packages = ["app"]
 "skills" = "app/assets/skills"
 "supabase/migrations" = "app/assets/supabase/migrations"
 "data/finance_corpus_v1" = "app/assets/data/finance_corpus_v1"
+"data/finance_promotion_v1" = "app/assets/data/finance_promotion_v1"
 
 [tool.hatch.metadata]
 allow-direct-references = true

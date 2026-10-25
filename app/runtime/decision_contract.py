@@ -32,6 +32,17 @@ REQUIREMENTS = (
 )
 
 
+BLOCKER_SEMANTICS_VERSION = "finance-stage-vocabulary-v1"
+BLOCKER_SEMANTICS = """Protected output vocabulary (interpretation only; never financial authority):
+- A blocker names an actually missing prerequisite at the earliest operation it prevents, not a generic checklist. Do not move a prerequisite to execution if it already prevents approval-request preparation. Do not block a supported reported obligation merely because later payment prerequisites are missing.
+- obligation_recording: establish the remaining liability, creditor/payer, amount and currency from current evidence. approval_request: prepare an exact current payment proposal. execution: obtain the service-required human approvals for that exact action. settlement_claim: assert independently confirmed payment completion.
+- payer_identity: who actually paid and whom the event owes. source_documents: missing or contradictory transaction evidence needed for the stated operation. recipient_destination: verified payment routing, first required for approval_request. current_obligation: a current unsettled obligation/version needed for the payment proposal.
+- exact_payment_terms: missing or conflicting transaction amount, currency, asset or network. policy_clarification: missing/conflicting governing rule or who has authority to decide; it is not a synonym for every missing transaction fact.
+- human_approvals: execution authorization, not permission to record or request approval. independent_payment_verification: evidence needed to claim settlement; do not turn a reported obligation into a settled payment. duplicate_resolution: determine whether the same underlying liability or an earlier unresolved transfer would be paid again; resolve before preparing another payment request.
+- A supporting reference must identify an observed source/version or an actually supplied protected policy/rule. Never invent a policy ID. Unknown policy remains a question for the authorized human; output labels do not confer permission.
+"""
+
+
 def validate_decision_shape(output: dict) -> None:
     if not isinstance(output.get("decision"), str) or not re.fullmatch(
         DECISION_CLASSIFICATION_PATTERN, output["decision"]

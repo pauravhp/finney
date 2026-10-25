@@ -41,16 +41,21 @@ class FinanceDataset:
     reads. The actual actor executor must receive only exported public packets.
     """
 
-    def __init__(self, root: str | Path = DEFAULT_ROOT, *, evaluator: bool = False,
+    dataset_id = DATASET_ID
+    manifest_sha256 = MANIFEST_SHA256
+    case_count = 24
+    default_root = DEFAULT_ROOT
+
+    def __init__(self, root: str | Path | None = None, *, evaluator: bool = False,
                  allow_heldout: bool = False):
-        self.root = Path(root).resolve()
+        self.root = Path(self.default_root if root is None else root).resolve()
         self.evaluator, self.allow_heldout = evaluator, allow_heldout
         self.manifest = json.loads((self.root / 'manifest.json').read_text())
         content = dict(self.manifest)
         declared = content.pop('manifest_content_sha256', None)
-        if declared != MANIFEST_SHA256 or declared != hashlib.sha256(_canonical(content)).hexdigest():
+        if declared != self.manifest_sha256 or declared != hashlib.sha256(_canonical(content)).hexdigest():
             raise DatasetIntegrityError('manifest content digest mismatch')
-        if content.get('dataset_id') != DATASET_ID or content.get('case_count') != 24:
+        if content.get('dataset_id') != self.dataset_id or content.get('case_count') != self.case_count:
             raise DatasetIntegrityError('unsupported dataset identity/count')
         self._entries = {}
         for entry in self.manifest['entries']:
@@ -80,7 +85,7 @@ class FinanceDataset:
             self._packets[cid] = packet
         counts = {s: sum(p['split'] == s for p in self._packets.values())
                   for s in ('development', 'validation', 'heldout')}
-        if len(self._packets) != 24 or counts != self.manifest['split_counts']:
+        if len(self._packets) != self.case_count or counts != self.manifest['split_counts']:
             raise DatasetIntegrityError('split/count mismatch')
 
     def _read(self, relative: str) -> dict:
@@ -118,7 +123,7 @@ class FinanceDataset:
 
     def snapshot(self, case_id: str, scope: Any) -> dict:
         packet = self.public_packet(case_id)
-        case_uuid = str(uuid5(NAMESPACE_URL, f'{scope.run_id}:{DATASET_ID}:{case_id}'))
+        case_uuid = str(uuid5(NAMESPACE_URL, f'{scope.run_id}:{self.dataset_id}:{case_id}'))
         sources = [{**s, 'source_type': 'test_fixture', 'evidence_status': 'test_fixture',
                     'external_id': s['id']} for s in packet['sources']]
         ids = [s['id'] for s in sources]
@@ -157,7 +162,7 @@ class FinanceDataset:
         """
         expected = self.expected(case_id)
         packet = self.public_packet(case_id)
-        base = {'case_id': case_id, 'dataset_id': DATASET_ID,
+        base = {'case_id': case_id, 'dataset_id': self.dataset_id,
                 'manifest_sha256': self.manifest['manifest_content_sha256'],
                 'effects_enabled': False, 'passed': False, 'hard_invariants_passed': False,
                 'correctness_checks_passed': False, 'errors': [], 'correctness_errors': []}

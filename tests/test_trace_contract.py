@@ -167,3 +167,26 @@ def test_policy_rule_reordering_preserves_actual_pointer_provenance():
 def test_malformed_trace_shapes_do_not_get_automatic_contract_verdicts(invalid):
     result=diagnose(invalid)
     assert result["status"]=="blocked" and result["reason"]=="invalid_structured_trace_output" and result["signals"]==[]
+
+
+@pytest.mark.parametrize("kind", ["runtime", "corpus"])
+def test_audited_operation_and_corpus_policies_bind_exact_rules_and_reject_changes(kind):
+    from app.improvement.dataset import FinanceDataset
+    from app.runtime.operation_policy import runtime_operation_policy
+    policy = runtime_operation_policy() if kind == "runtime" else FinanceDataset().public_packet("fc-001")["context"]["policy"]
+    actor = output(("obligation_recording", "recipient_destination"))
+    result = diagnose(actor, policy=policy)
+    assert result["status"] == "review_required"
+    assert result["policy_binding"]["id"] == policy["id"]
+    assert result["signals"][0]["required_from_stage"] == "approval_request"
+    envelope = {"trace": {"output": actor, "contract_signals": result}, "immutable_policy": policy}
+    for ref in result["signals"][0]["trusted_refs"]:
+        assert resolve(envelope, ref["pointer"])
+    changed = copy.deepcopy(policy)
+    changed["rules"][0]["text"] += " Require approval before recording."
+    assert diagnose(actor, policy=changed)["reason"] == "unknown_or_changed_protected_policy"
+    changed = copy.deepcopy(policy)
+    changed["required_payment_approvals"] = 1
+    assert diagnose(actor, policy=changed)["reason"] == "unknown_or_changed_protected_policy"
+    policy["rules"].reverse()
+    assert diagnose(actor, policy=policy)["status"] == "review_required"

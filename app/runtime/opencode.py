@@ -20,6 +20,7 @@ import httpx
 from app.models.providers import ModelConfig, ModelError
 
 from .decision_contract import (
+    BLOCKER_SEMANTICS,
     DECISION_CLASSIFICATION_PATTERN,
     DECISION_CLASSIFICATION_SCHEMA,
     EVIDENCE_REFS_SCHEMA,
@@ -129,7 +130,7 @@ def _system(skill: str, mode: str, conversation: bool, policy: dict | None) -> s
             "Blockers identify a stage, requirement and exact existing nonempty supporting_refs; "
             "never invent policy/source references.\n\n"
         )
-    common += "Procedure:\n" + skill
+    common += BLOCKER_SEMANTICS + "\n\nProcedure:\n" + skill
     if policy:
         common += "\n\nImmutable organization policy from trusted service:\n" + json.dumps(policy, sort_keys=True)
     return common

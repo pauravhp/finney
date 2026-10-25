@@ -99,12 +99,14 @@ async def run_worker(
     from app.scheduler import GmailIntakeScheduler
     from app.service import dispatch_job
     from app.storage.supabase import SupabaseClient, SupabaseError
+    from app.worker_context import WorkerWakeCheck
 
     if not settings.configured()["supabase"]:
         raise RuntimeError("Supabase is required; run finance init")
     install_runtime_environment(settings)
     async with SupabaseClient(settings.supabase_url, settings.backend_key) as client:
         queue = JobQueue(client, settings.finance_worker_id)
+        wake = WorkerWakeCheck()
         scheduler = (
             None
             if once
@@ -169,7 +171,13 @@ async def run_worker(
                 UUID(job["requested_by"]) if job.get("requested_by") else None,
             )
             tools = FinanceToolClient(scope, client)
-            task = asyncio.create_task(dispatch_job(settings, job, tools, client))
+
+            async def dispatch_with_wake(current_job=job, current_tools=tools):
+                if current_job.get("command_type") in {"review_case", "director_message"}:
+                    await wake.check(current_tools)
+                return await dispatch_job(settings, current_job, current_tools, client)
+
+            task = asyncio.create_task(dispatch_with_wake())
             try:
                 while not task.done():
                     await discover_due_mail()

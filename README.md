@@ -13,6 +13,14 @@ Learning results are measured and stored; a selected candidate is not assumed
 to be an improvement. The [first complete comparison](docs/build/LEARNING_ACCEPTANCE.md)
 showed a validation gain, but its candidate failed the final gate and was not activated.
 
+Read the [complete improvement journey](docs/SELF_IMPROVEMENT_JOURNEY.md),
+[current learning loop](docs/SELF_IMPROVEMENT_CURRENT.md), and
+[amended-invoice demo](docs/demo/EXCEPTION_WALKTHROUGH.md).
+Finney autonomously discovers evidence in the connected finance mailbox label
+while its worker runs; directors can also give it work through the desk's prompt
+composer. [Autonomy and wake behavior](docs/build/AUTONOMOUS_INTAKE.md) documents
+the exact scope, catch-up and queue behavior.
+
 The app never substitutes a fake successful Gmail intake, payment, model call,
 or improvement. Missing access is visible as blocked. See
 [validation and current limits](docs/VALIDATION.md) for what has actually been

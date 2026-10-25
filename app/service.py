@@ -371,7 +371,7 @@ async def dispatch_job(
 
             outcome["automatic_improvement"] = await queue_automatic_improvement(
                 db, job, outcome,
-                **({"suite_id": "organizer-expenses-corpus-online-v1"}
+                **({"suite_id": "organizer-expenses-promotion-v1"}
                    if settings.finance_improvement_method == "harness2" else {}),
             )
         elif command == "review_case" and outcome.get("improvement_eligible") is True:
@@ -379,7 +379,7 @@ async def dispatch_job(
 
             outcome["automatic_improvement"] = await queue_automatic_improvement(
                 db, job, outcome,
-                **({"suite_id": "organizer-expenses-corpus-online-v1"}
+                **({"suite_id": "organizer-expenses-promotion-v1"}
                    if settings.finance_improvement_method == "harness2" else {}),
             )
         return outcome
