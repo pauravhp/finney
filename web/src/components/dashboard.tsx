@@ -27,7 +27,9 @@ import { browserSupabase } from "@/lib/supabase/browser";
 import { AuthPanel } from "@/components/auth-panel";
 import { Procedure } from "@/components/procedure";
 import { PaymentExecution } from "@/components/payment-execution";
-import { GuidedDemo } from "@/components/guided-demo";
+import { LockedTutorial, type TutorialCommand } from "@/components/locked-tutorial";
+import { FinneyCompanion } from "@/components/finney-companion";
+
 import { friendlyTitle } from "@/components/readable-text";
 import { CaseWorkspace } from "@/components/case-workspace";
 import { DirectorResponses } from "@/components/director-responses";
@@ -225,6 +227,9 @@ export function Dashboard({
   user: User | null;
 }) {
   const [tab, setTab] = useState<Tab>("cases");
+  const [compactMode, setCompactMode] = useState(true);
+  const [showScope, setShowScope] = useState(false);
+  const [lastCommand, setLastCommand] = useState<TutorialCommand | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scopes, setScopes] = useState<ScopeChoice[]>([]);
@@ -242,6 +247,8 @@ export function Dashboard({
   const [showOpening, setShowOpening] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [resetConfirm, setResetConfirm] = useState(false);
+  const restartDialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => { if (resetConfirm && restartDialog.current && !restartDialog.current.open) restartDialog.current.showModal(); }, [resetConfirm]);
   const [reviewed, setReviewed] = useState<Record<string, boolean>>({});
   const requestSequence = useRef(0);
   const commandKeys = useRef(new Map<string, string>());
@@ -258,6 +265,7 @@ export function Dashboard({
     !error &&
     !loading &&
     snapshot?.run.status === "active" &&
+    (!snapshot.run.scenario || snapshot.run.scenario.status === "ready") &&
     organization?.role !== "viewer",
   );
   const canApprove =
@@ -360,6 +368,7 @@ export function Dashboard({
 
   useEffect(() => {
     setSnapshot(null);
+    setLastCommand(null);
     setMessageDraft("");
     setShowOpening(false);
     if (!scope || !user) return;
@@ -419,6 +428,13 @@ export function Dashboard({
     };
   }, [scope, user, refresh]);
 
+  const activeJob = Boolean(snapshot?.jobs.some(job => ["queued", "running"].includes(String(job.status))));
+  useEffect(() => {
+    if (!scope || !activeJob) return;
+    const timer = window.setInterval(() => void refresh(scope), 2500);
+    return () => clearInterval(timer);
+  }, [scope, activeJob, refresh]);
+
   async function command(type: FinanceCommand, payload: StateRecord = {}) {
     if (!scope || !canWork) return false;
     const requestKey = `${scopeKey}:${type}:${JSON.stringify(payload)}`;
@@ -438,7 +454,8 @@ export function Dashboard({
         }),
       });
       commandKeys.current.delete(requestKey);
-      setNotice("Request queued. Finney will add the result here.");
+      setLastCommand({ jobId: result.job_id, type, caseId: typeof payload.case_id === "string" ? payload.case_id : null });
+      setNotice(null);
       if (type === "intake") {
         setIntake("");
         setShowIntake(false);
@@ -521,7 +538,7 @@ export function Dashboard({
       setBusy(null);
     }
   }
-  async function createDemo() {
+  async function createDemo(previousRunId: string | null = null) {
     setBusy("demo");
     setNotice(null);
     try {
@@ -531,7 +548,7 @@ export function Dashboard({
           method: "POST",
           body: JSON.stringify({
             name: "My finance demo",
-            previous_run_id: null,
+            previous_run_id: previousRunId,
           }),
         },
       );
@@ -539,12 +556,12 @@ export function Dashboard({
       url.searchParams.set("organization_id", next.organization_id);
       url.searchParams.set("run_id", next.run_id);
       window.history.replaceState(null, "", url);
+      setResetConfirm(false);
+      setTab("cases");
+      setExpanded(null);
+      setLastCommand(null);
       await loadScopes();
-      setNotice(
-        ["queued", "running", "ready"].includes(next.seed_status)
-          ? "Your practice event is being prepared. The walkthrough will appear when its records arrive."
-          : "Your practice event was created, but document review could not be queued. You can retry or add a document.",
-      );
+      setNotice(["queued", "running", "ready"].includes(next.seed_status) ? null : "This demo needs attention. Try again.");
     } catch (cause) {
       setNotice(
         cause instanceof Error
@@ -739,9 +756,7 @@ export function Dashboard({
               </span>
               <span className="case-title">
                 <strong>{friendlyTitle(row.title)}</strong>
-                <small>
-                  Version {row.version} · Updated {dateTime(row.updated_at)}
-                </small>
+
               </span>
               <Badge status={row.status} />
               <ChevronRight
@@ -783,7 +798,8 @@ export function Dashboard({
     );
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${compactMode && user ? "companion-experience" : ""} ${compactMode && tab === "cases" && !selectedCase ? "companion-home" : ""}`}>
+      <link rel="stylesheet" href="/brand/companion-shell.css" />
       <a className="skip-link" href="#main">
         Skip to finance workspace
       </a>
@@ -856,8 +872,37 @@ export function Dashboard({
           )}
         </div>
       </aside>
+      {resetConfirm && scope && (
+        <dialog ref={restartDialog} className="companion-restart" aria-labelledby="restart-title" onCancel={() => setResetConfirm(false)}>
+          <div><h2 id="restart-title">Start a fresh demo?</h2>
+            <p>Your current practice run stays in history.</p>
+            {notice && <p role="alert">{notice}</p>}
+            <footer><button onClick={() => setResetConfirm(false)}>Keep this run</button>
+              <button className="primary" disabled={Boolean(busy)} onClick={() => void createDemo(scope.run_id)}>Start fresh</button></footer>
+          </div>
+        </dialog>
+      )}
       <div className="workspace">
-        <header className="topbar">
+        {compactMode && user ? (
+          <header className="companion-topbar">
+            <button className="companion-home-link" onClick={() => {setTab("cases");setExpanded(null);}}>Finney</button>
+            <nav aria-label="Workspace">
+              <button onClick={() => setTab("overview")}>Budget</button>
+              <button onClick={() => setTab("reports")}>Reports</button>
+              <details className="companion-more"><summary>More</summary><div>
+                {tab === "cases" && !selectedCase && <button onClick={() => setTab("reports")}>Reports</button>}
+                <button onClick={() => setTab("approvals")}>Decisions</button>
+                <button onClick={() => setTab("learning")}>Learning</button>
+                <button onClick={() => setTab("connections")}>Connections</button>
+                <button onClick={() => setTab("activity")}>History</button>
+                <button onClick={() => {setCompactMode(false);setTab("cases");}}>Open workspace</button>
+                <button onClick={() => setShowScope(value => !value)}>Switch event</button>
+                {snapshot?.run.scenario && <button onClick={() => {setNotice(null);setResetConfirm(true);}}>Restart demo</button>}
+                <button onClick={signOut}>Sign out</button>
+              </div></details>
+            </nav>
+          </header>
+        ) : <header className="topbar">
           <button
             className="mobile-menu icon-button"
             aria-label="Open navigation"
@@ -911,15 +956,15 @@ export function Dashboard({
               </button>
             )}
           </div>
-        </header>
+        </header>}
         <main id="main">
           <div
-            className={`page-heading ${tab === "cases" && (selectedCase || snapshot?.run.scenario) ? "case-parent-heading" : ""}`}
+            className={`page-heading ${tab === "cases" && (compactMode || selectedCase || snapshot?.run.scenario) ? "case-parent-heading" : ""}`}
           >
             <div>
               <h1>
                 {tab === "overview"
-                  ? "Overview"
+                  ? (compactMode && user ? "Budget" : "Overview")
                   : tabs.find((row) => row.id === tab)?.title}
               </h1>
             </div>
@@ -966,7 +1011,7 @@ export function Dashboard({
               callbackError={authCallbackError}
             />
           )}
-          {user && scopes.length > 0 && (
+          {user && scopes.length > 0 && (!compactMode || showScope) && (
             <details className="scope-switcher">
               <summary>Switch event</summary>
               <div className="scope-bar">
@@ -1091,21 +1136,9 @@ export function Dashboard({
             </div>
           )}
           {snapshot?.run.scenario && (
-            <GuidedDemo
-              key={scopeKey}
-              snapshot={snapshot}
-              busy={Boolean(busy) || !canWork}
-              onRetry={() => void createDemo()}
-              onPrompt={(caseId, message) =>
-                command("director_message", { case_id: caseId, message })
-              }
-              compact={tab !== "cases" || Boolean(selectedCase)}
-              onNavigate={(destination, caseId, prompt) => {
-                setTab(destination);
-                setExpanded(caseId ?? null);
-                if (prompt) setMessageDraft(prompt);
-              }}
-            />
+            <LockedTutorial key={scopeKey} snapshot={snapshot}
+              selectedCaseId={selectedCase?.id ?? null} tab={tab} lastCommand={lastCommand}
+              onNavigate={(destination, caseId) => { if (tabs.some(t => t.id === destination)) setTab(destination as Tab); if (caseId) setExpanded(caseId); }} />
           )}
           {showIntake && (
             <form
@@ -1240,6 +1273,7 @@ export function Dashboard({
                     </div>
                   ))}
                 </div>
+                {compactMode && snapshot && snapshot.position.cash_minor !== null && !snapshot?.position.reconciled_at && !selectedRun?.is_demo && <p>Cash hasn’t been reconciled yet.</p>}
                 <div className="position-footer">
                   <span>
                     Reconciliation cutoff:{" "}
@@ -1272,6 +1306,7 @@ export function Dashboard({
                 )}
               {scope && snapshot && (
                 <>
+                  {!compactMode && <>
                   <Workbench
                     key={`workbench:${scopeKey}`}
                     scope={scope}
@@ -1288,7 +1323,13 @@ export function Dashboard({
                     onCommand={command}
                     onRefresh={() => refresh(scope)}
                   />
-                  <BudgetWorkbench
+                  </>}
+                  {compactMode && !snapshot.budget.decisions.some(row => row.status === "pending") ? (
+                    <section className="companion-budget"><h2>Remaining by category</h2><ul>
+                      {snapshot.budget.lines.map(line => <li key={textValue(line.id)}><span>{textValue(line.name)}</span>
+                        <strong>{formatMoney(typeof line.remaining_minor === "string" ? line.remaining_minor : null, snapshot.run.currency)}</strong></li>)}
+                    </ul><button className="text-button" onClick={() => setCompactMode(false)}>Manage budget</button></section>
+                  ) : <BudgetWorkbench
                     key={`budget:${scopeKey}`}
                     scope={scope}
                     currency={snapshot.run.currency}
@@ -1302,11 +1343,11 @@ export function Dashboard({
                       canWork && !busy && organization?.role === "director"
                     }
                     onRefresh={() => refresh(scope)}
-                  />
+                  />}
                 </>
               )}
-              <Obligations snapshot={snapshot} />
-              <div className="overview-grid">
+              {!compactMode && <Obligations snapshot={snapshot} />}
+              {!compactMode && <><div className="overview-grid">
                 <section>
                   <div className="section-heading">
                     <h2>Work in focus</h2>
@@ -1356,7 +1397,7 @@ export function Dashboard({
                   </button>
                 </div>
                 {activityList(4)}
-              </section>
+              </section></>}
             </>
           )}
           {tab === "cases" && (
@@ -1366,6 +1407,7 @@ export function Dashboard({
                   item={selectedCase}
                   snapshot={snapshot}
                   onBack={() => setExpanded(null)}
+                  onViewBudget={() => setTab("overview")}
                   busy={Boolean(busy)}
                   canWork={canWork}
                   onReview={() =>
@@ -1424,6 +1466,13 @@ export function Dashboard({
                     />
                   }
                 />
+              ) : snapshot && compactMode ? (
+                <FinneyCompanion snapshot={snapshot} lastCommand={lastCommand} busy={Boolean(busy)} canWork={canWork}
+                  onOpenCase={openCase}
+                  onAsk={(message, caseId) => command("director_message", { message, ...(caseId ? {case_id: caseId} : {}) })}
+                  onViewBudget={() => setTab("overview")}
+                  onViewApprovals={() => setTab("approvals")}
+                  onExpand={() => setCompactMode(false)} />
               ) : (
                 <div className="work-intake-layout">
                   <details
@@ -1463,10 +1512,7 @@ export function Dashboard({
                   </aside>
                 </div>
               )}
-              <details className="all-source-register">
-                <summary>All source records</summary>
-                <SourceRegister snapshot={snapshot} />
-              </details>
+
             </section>
           )}
           {tab === "approvals" && (
@@ -1495,7 +1541,7 @@ export function Dashboard({
               )}
             </section>
           )}
-          {tab === "activity" && <section>{activityList()}</section>}
+          {tab === "activity" && <section>{activityList()}<SourceRegister snapshot={snapshot} /></section>}
           {tab === "learning" && (
             <Learning
               snapshot={snapshot}
@@ -1523,15 +1569,7 @@ export function Dashboard({
               onConnectGmail={connectGmail}
             />
           )}
-          <footer className="workspace-footer">
-            <span>
-              <ShieldCheck size={13} />
-              {snapshot
-                ? `${snapshot.run.name} · revision ${snapshot.run.revision}`
-                : "Awaiting connected event records"}
-            </span>
-            <span>Updated {dateTime(snapshot?.updated_at)} · Pacific time</span>
-          </footer>
+
         </main>
       </div>
     </div>
@@ -1880,16 +1918,13 @@ function Reports({
   return (
     <section>
       <div className="section-heading">
-        <h2>Source-linked financial reports</h2>
+        <h2>Reports</h2>
         <button disabled={!canWork} onClick={onGenerate}>
           <FileText size={15} />
           Generate report
         </button>
       </div>
-      <p className="section-description">
-        Reports distinguish confirmed balances, owner-attested records, pending
-        obligations, and unknowns. Private artifacts require authorized access.
-      </p>
+
       {failure && (
         <p role="alert" className="section-description">
           {failure}
@@ -1906,14 +1941,7 @@ function Reports({
               <h3>
                 {textValue(asRecord(row.data).title, "Financial summary")}
               </h3>
-              <p>
-                Created {dateTime(row.created_at)} · Cutoff{" "}
-                {dateTime(row.cutoff)}
-              </p>
-              <RecordDetails
-                value={row.data}
-                label="Inspect report figures and provenance"
-              />
+              {snapshot.reports.length > 1 && <p>{dateTime(row.created_at)}</p>}
             </div>
             {Boolean(row.artifact_path) ? (
               <button
@@ -2048,10 +2076,7 @@ function Connections({
           </div>
         )}
       </div>
-      <p className="section-description">
-        A configured address or API key alone does not prove a live provider
-        call. Connection records and actual worker results determine readiness.
-      </p>
+
     </div>
   );
 }
@@ -2060,13 +2085,13 @@ function Obligations({ snapshot }: { snapshot: FinanceSnapshot | null }) {
   return (
     <section className="obligations">
       <div className="section-heading">
-        <h2>Commitments & receivables</h2>
+        <h2>Money owed and expected</h2>
       </div>
       <div className="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>Obligation</th>
+              <th>For</th>
               <th>Direction</th>
               <th>Amount</th>
               <th>Settled</th>
@@ -2082,15 +2107,12 @@ function Obligations({ snapshot }: { snapshot: FinanceSnapshot | null }) {
                     <Badge status={row.status} />
                   </div>
                 </td>
-                <td>{row.direction}</td>
+                <td>{row.direction === "payable" ? "To pay" : "Expected"}</td>
                 <td>{formatMoney(row.amount_minor, row.currency)}</td>
                 <td>{formatMoney(row.settled_minor, row.currency)}</td>
                 <td>
                   <Badge status={row.evidence_status} />
-                  <RecordDetails
-                    value={row.source_refs}
-                    label="Inspect source references"
-                  />
+
                 </td>
               </tr>
             ))}

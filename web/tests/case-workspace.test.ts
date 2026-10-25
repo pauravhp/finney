@@ -132,9 +132,9 @@ test("a case without a prepared amount does not invent money or completed work",
       evidenceForm: null,
     }),
   );
-  assert.match(html, /Ready for review/);
+  assert.match(html, /Ready when you are/);
   assert.doesNotMatch(html, /\$0\.00|Proposed amount|Payment confirmed/);
-  assert.match(html, /disabled=""[^>]*>Request review/);
+  assert.match(html, /disabled=""[^>]*>Check invoice/);
 });
 
 test("a later stored reply precedes the earlier review without changing its amount or hiding decisions", () => {
@@ -171,21 +171,13 @@ test("a later stored reply precedes the earlier review without changing its amou
       evidenceForm: null,
     }),
   );
-  assert.ok(
-    html.indexOf("TEST ONLY latest:") <
-      html.indexOf("TEST ONLY earlier update failed"),
-  );
-  assert.ok(
-    html.indexOf("TEST ONLY exact approval control") <
-      html.indexOf("Earlier prepared review"),
-  );
-  assert.match(html, /Earlier prepared review · based on case v8/);
-  assert.match(html, /Based on case v12 · Stored agent response/);
-  assert.match(html, /Earlier replies \(1\)/);
+  assert.match(html, /TEST ONLY latest:/);
+  assert.match(html, /TEST ONLY exact approval control/);
   assert.match(html, /TEST ONLY earlier conversation/);
-  assert.match(html, /Earlier proposed amount/);
-  assert.match(html, /\$75\.00/); // Retains the prepared action; never parses money from reply prose.
-  assert.doesNotMatch(html, /\$420\.00|Payment confirmed|>Paid</);
+  assert.doesNotMatch(
+    html,
+    /TEST ONLY earlier update failed|Earlier proposed amount|Based on case|Stored agent response|Source provenance|Decision record|\$75\.00|\$420\.00|Payment confirmed|>Paid</,
+  );
 });
 
 test("a response from an older case version does not demote a newer prepared review", () => {
@@ -208,11 +200,11 @@ test("a response from an older case version does not demote a newer prepared rev
       evidenceForm: null,
     }),
   );
-  assert.ok(
-    html.indexOf("TEST ONLY: the revised amount needs review.") <
-      html.indexOf("TEST ONLY old reply"),
+  assert.match(html, /TEST ONLY: the revised amount needs review/);
+  assert.doesNotMatch(
+    html,
+    /TEST ONLY old reply|Earlier prepared review|Finney’s latest reply/,
   );
-  assert.doesNotMatch(html, /Earlier prepared review|Finney’s latest reply/);
 });
 
 test("privacy-projected source metadata uses the linked case name, not an internal external ID", () => {
@@ -235,8 +227,8 @@ test("privacy-projected source metadata uses the linked case name, not an intern
       evidenceForm: null,
     }),
   );
-  assert.match(html, /<h2>TEST ONLY revised invoice<\/h2>/);
-  assert.match(html, /Practice document/);
+  assert.match(html, /<h2>Invoice<\/h2>/);
+  assert.doesNotMatch(html, /Version|Source provenance|guided_demo/);
   const primary = html.split("Source provenance")[0];
   assert.doesNotMatch(primary, /guided_demo:finney-mid-event-v1:av/);
 });
@@ -258,13 +250,43 @@ test("director requests and email sources never masquerade as the linked invoice
       { source_type: "gmail", metadata: {} },
       "Harbor AV · revised invoice",
     ),
-    "Email · Harbor AV · revised invoice",
+    "Email",
   );
   assert.equal(
     sourceDisplayTitle(
       { source_type: "guided_demo", metadata: {} },
       "Harbor AV · revised invoice",
     ),
-    "Harbor AV · revised invoice",
+    "Invoice",
   );
+});
+
+test("director requests never appear as source tabs and current result keeps its budget action", () => {
+  const state = snapshot();
+  const request = "66666666-6666-4666-8666-666666666666";
+  state.cases[0].data.source_ids = [request, sourceId];
+  state.cases[0].data.director_request = "Please compare the invoices.";
+  state.source_items.push({
+    id: request,
+    source_type: "director_message",
+    metadata: { submitted_by: "DO-NOT-RENDER" },
+  });
+  const html = renderToStaticMarkup(
+    createElement(CaseWorkspace, {
+      item: state.cases[0],
+      snapshot: state,
+      onBack: () => {},
+      onReview: () => {},
+      onViewBudget: () => {},
+      busy: false,
+      canWork: true,
+      decisions: null,
+      evidenceForm: null,
+    }),
+  );
+  assert.doesNotMatch(html, new RegExp(`data-source-id="${request}"`));
+  assert.doesNotMatch(html, /DO-NOT-RENDER|submitted_by|Version 2|Updated/);
+  assert.match(html, /Please compare the invoices/);
+  assert.match(html, /data-tutorial="view-budget"/);
+  assert.match(html, /See budget/);
 });

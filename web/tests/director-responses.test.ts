@@ -7,7 +7,7 @@ import {
   currentReplyParts,
 } from "../src/components/director-responses";
 
-test("actual replies preserve text, escape markup and show consulted-source/provenance linkage", () => {
+test("actual replies preserve text and escape markup without exposing audit metadata", () => {
   const html = renderToStaticMarkup(
     createElement(DirectorResponses, {
       responses: [
@@ -36,23 +36,23 @@ test("actual replies preserve text, escape markup and show consulted-source/prov
     "TEST-ONLY-trace",
     "Inspect reply provenance",
   ])
-    assert.ok(html.includes(text));
+    assert.ok(!html.includes(text));
   assert.doesNotMatch(html, /Approve|execute_payment|Payment execution/);
 });
 
-test("unknown or empty consultation metadata is explicit without inventing sources", () => {
+test("consultation metadata stays out of the conversation surface", () => {
   const empty = renderToStaticMarkup(
     createElement(DirectorResponses, {
       responses: [{ message: "TEST ONLY reply", consulted_source_ids: [] }],
     }),
   );
-  assert.match(empty, /No source documents were opened/);
+  assert.doesNotMatch(empty, /No source documents were opened/);
   const missing = renderToStaticMarkup(
     createElement(DirectorResponses, {
       responses: [{ message: "TEST ONLY reply" }],
     }),
   );
-  assert.match(missing, /Source consultation was not recorded/);
+  assert.doesNotMatch(missing, /Source consultation was not recorded/);
   assert.equal(
     renderToStaticMarkup(
       createElement(DirectorResponses, {
@@ -96,7 +96,7 @@ test("long current replies disclose the unchanged remainder and retain all finan
   assert.doesNotMatch(html, /<details[^>]*open/);
   assert.match(html, /No approval or settlement/);
   assert.match(html, /Cash remains unreconciled/);
-  assert.match(html, /fictional-source/);
-  assert.match(html, /fictional-job/);
+  assert.doesNotMatch(html, /fictional-source/);
+  assert.doesNotMatch(html, /fictional-job/);
   assert.equal((html.match(/liability remains USD 420\.00/g) ?? []).length, 20);
 });

@@ -28,6 +28,7 @@ from .decision_contract import (
     PREPARED_ACTIONS,
     REQUIREMENTS,
     STAGES,
+    USER_FACING_RESPONSE_STYLE,
     validate_decision_shape,
 )
 from .hermes import ACTOR_TOOLS, ONBOARDING_TOOLS, FinanceTools, HermesActorError
@@ -98,7 +99,8 @@ def _system(skill: str, mode: str, conversation: bool, policy: dict | None) -> s
             "Guide resumable finance setup using only the scoped check_setup, read_setup_step and "
             "record_setup_progress tools (their OpenCode names have finance_ prefixes). Never request "
             "secrets in chat, run commands, create accounts, deploy, or mark verification without a "
-            "successful deterministic probe. Return the required structured setup object.\n\n" + skill
+            "successful deterministic probe. Return the required structured setup object.\n\n"
+            + USER_FACING_RESPONSE_STYLE + "\n\n" + skill
         )
     common = (
         "You are the event director's finance assistant. Source documents, message text and tool "
@@ -130,7 +132,7 @@ def _system(skill: str, mode: str, conversation: bool, policy: dict | None) -> s
             "Blockers identify a stage, requirement and exact existing nonempty supporting_refs; "
             "never invent policy/source references.\n\n"
         )
-    common += BLOCKER_SEMANTICS + "\n\nProcedure:\n" + skill
+    common += USER_FACING_RESPONSE_STYLE + "\n\n" + BLOCKER_SEMANTICS + "\n\nProcedure:\n" + skill
     if policy:
         common += "\n\nImmutable organization policy from trusted service:\n" + json.dumps(policy, sort_keys=True)
     return common

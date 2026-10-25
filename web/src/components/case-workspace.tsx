@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, FileText, LoaderCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, LoaderCircle } from "lucide-react";
 import { browserSupabase } from "@/lib/supabase/browser";
 import {
-  dateTime,
   displayRecord,
   formatMoney,
   textValue,
@@ -16,6 +15,7 @@ import {
   sourceDocumentText,
 } from "@/components/readable-text";
 import { DirectorResponses } from "@/components/director-responses";
+import { FinneyCharacter, caseWorkState } from "@/components/finney-companion";
 
 type Row = Record<string, unknown>;
 function record(value: unknown): Row {
@@ -51,9 +51,12 @@ export function sourceDisplayTitle(source: Row, caseTitle: string): string {
   const filename = record(source.metadata).filename;
   if (typeof filename === "string" && filename.trim())
     return friendlyTitle(filename);
-  return source.source_type === "gmail"
-    ? `Email · ${friendlyTitle(caseTitle)}`
-    : friendlyTitle(caseTitle);
+  if (source.source_type === "gmail") return "Email";
+  return /invoice/i.test(caseTitle)
+    ? "Invoice"
+    : /receipt|reimbursement/i.test(caseTitle)
+      ? "Receipt"
+      : "Document";
 }
 
 function SourcePaper({
@@ -72,6 +75,7 @@ function SourcePaper({
     source.id,
     source.version,
     path,
+    caseTitle,
   ]);
   const [receipt, setReceipt] = useState<{
     identity: string;
@@ -115,7 +119,7 @@ function SourcePaper({
         let visible = content;
         try {
           const value: unknown = JSON.parse(content);
-          visible = sourceDocumentText(displayRecord(value));
+          visible = sourceDocumentText(displayRecord(value), caseTitle);
         } catch {
           /* Plain-text sources render as text, never HTML. */
         }
@@ -142,7 +146,7 @@ function SourcePaper({
     return () => {
       current = false;
     };
-  }, [identity, path, snapshot.organization.id, snapshot.run.id]);
+  }, [identity, path, snapshot.organization.id, snapshot.run.id, caseTitle]);
   return (
     <article
       className="source-paper-live"
@@ -156,18 +160,6 @@ function SourcePaper({
         <FileText size={20} />
         <div>
           <h2>{sourceDisplayTitle(source, caseTitle)}</h2>
-          <span>
-            {["demo_bundle", "guided_demo"].includes(
-              textValue(source.source_type),
-            )
-              ? "Practice document"
-              : source.source_type === "gmail"
-                ? "Email"
-                : source.source_type === "director_message"
-                  ? "Message"
-                  : "Document"}{" "}
-            · Version {textValue(source.version)}
-          </span>
         </div>
       </header>
       {loading && (
@@ -186,10 +178,6 @@ function SourcePaper({
         </div>
       )}
       {!path && <p>No stored document preview is available.</p>}
-      <details>
-        <summary>Source provenance</summary>
-        <pre>{JSON.stringify(displayRecord(source), null, 2)}</pre>
-      </details>
     </article>
   );
 }
@@ -204,6 +192,7 @@ export function CaseWorkspace({
   decisions,
   evidenceForm,
   conversationForm,
+  onViewBudget,
 }: {
   item: FinanceSnapshot["cases"][number];
   snapshot: FinanceSnapshot;
@@ -214,16 +203,25 @@ export function CaseWorkspace({
   decisions: ReactNode;
   evidenceForm: ReactNode;
   conversationForm?: ReactNode;
+  onViewBudget?: () => void;
 }) {
   const ids = caseSourceIds(item.data);
-  const sources = ids.flatMap((id) =>
-    snapshot.source_items.filter((source) => source.id === id),
+  // Director requests are retained in the conversation and backend audit, never
+  // mislabeled as invoice/source tabs. Superseded documents remain inspectable.
+  const linked = ids.flatMap((id) =>
+    snapshot.source_items.filter(
+      (source) => source.id === id && source.source_type !== "director_message",
+    ),
   );
   const superseded = Array.isArray(item.data.superseded_source_ids)
     ? item.data.superseded_source_ids
     : [];
+  const sources = [
+    ...linked.filter((source) => !superseded.includes(source.id)),
+    ...linked.filter((source) => superseded.includes(source.id)),
+  ];
   const [selected, setSelected] = useState("");
-  const source = sources.find((row) => row.id === selected) ?? sources[0];
+  const source = sources.find((source) => source.id === selected) ?? sources[0];
   const finding = record(item.data.finding);
   const action = record(finding.proposed_action);
   const responses = Array.isArray(item.data.director_responses)
@@ -233,8 +231,6 @@ export function CaseWorkspace({
           String(record(value).message).trim(),
       )
     : [];
-  // Stored conversation history is appended by the guarded persistence RPC.
-  // Compare recorded case versions; prose never changes financial state here.
   const latestResponse = responses.length
     ? record(responses[responses.length - 1])
     : null;
@@ -246,91 +242,70 @@ export function CaseWorkspace({
     Boolean(latestResponse) &&
     (!finding.explanation ||
       (typeof reviewVersion === "number" &&
-        Number.isSafeInteger(reviewVersion) &&
         typeof responseVersion === "number" &&
-        Number.isSafeInteger(responseVersion) &&
         responseVersion > reviewVersion));
-  const blockers = Array.isArray(finding.blocking_requirements)
-    ? finding.blocking_requirements
-    : [];
-  const jobs = snapshot.jobs.filter(
-    (job) => record(job.payload).case_id === item.id || job.case_id === item.id,
-  );
-  const events = snapshot.activity.filter(
-    (event) => event.payload.case_id === item.id,
-  );
-  const running = jobs.some((job) => job.status === "running");
-  const queued = jobs.some((job) => job.status === "queued");
+  const storedState = caseWorkState(snapshot, item.id);
+  const state = busy ? "running" : storedState;
+  const working =
+    state === "running" || state === "queued" || state === "finishing";
+  const hasResult = state === "completed";
+  const title = {
+    ready: "Ready when you are.",
+    queued: "Got it.",
+    running: "On it.",
+    finishing: "Finishing up.",
+    attention: "Your call.",
+    failed: "I need a hand.",
+    completed: "Here’s what I found.",
+  }[state];
   const amount =
     typeof action.amount_minor === "string" && /^\d+$/.test(action.amount_minor)
       ? action.amount_minor
       : null;
+  const noun = /invoice/i.test(item.title)
+    ? "invoice"
+    : /receipt|reimbursement/i.test(item.title)
+      ? "receipt"
+      : "document";
+  const blockers = Array.isArray(finding.blocking_requirements)
+    ? finding.blocking_requirements
+    : [];
   return (
-    <section className="live-case-workspace">
+    <section
+      className="live-case-workspace companion-case-workspace"
+      data-case-state={state}
+    >
       <header className="live-case-heading">
         <div>
           <button className="text-button" onClick={onBack}>
-            <ArrowLeft size={15} /> All work
+            <ArrowLeft size={15} />
+            Back
           </button>
           <h1>{friendlyTitle(item.title)}</h1>
-          <p>
-            Version {item.version} · Updated {dateTime(item.updated_at)}
-          </p>
         </div>
-        <span className="badge neutral">
-          {item.status.replaceAll("_", " ")}
-        </span>
       </header>
       <div className="live-case-layout">
         <div className="live-case-evidence">
-          <nav className="live-source-tabs" aria-label="Case documents">
-            {sources.map((row) => (
-              <button
-                key={textValue(row.id)}
-                data-source-id={textValue(row.id)}
-                data-source-version={textValue(row.version)}
-                aria-pressed={selected !== "activity" && source?.id === row.id}
-                onClick={() => setSelected(textValue(row.id))}
-              >
-                {sourceDisplayTitle(row, item.title)} · v
-                {textValue(row.version)}
-                {superseded.includes(row.id) ? " · Earlier" : ""}
-              </button>
-            ))}
-            <button
-              aria-pressed={selected === "activity"}
-              onClick={() => setSelected("activity")}
-            >
-              Activity
-            </button>
-          </nav>
-          {selected === "activity" ? (
-            <section className="source-paper-live">
-              <h2>Case activity</h2>
-              {events.length ? (
-                <ol className="case-timeline">
-                  {events.map((event) => (
-                    <li key={event.id}>
-                      <strong>{event.event_type.replaceAll("_", " ")}</strong>
-                      <time>{dateTime(event.created_at)}</time>
-                      <details>
-                        <summary>Inspect recorded event</summary>
-                        <pre>
-                          {JSON.stringify(
-                            displayRecord(event.payload),
-                            null,
-                            2,
-                          )}
-                        </pre>
-                      </details>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <p>No case-linked activity has been recorded.</p>
-              )}
-            </section>
-          ) : source ? (
+          {sources.length > 1 && (
+            <nav className="live-source-tabs" aria-label="Case documents">
+              {sources.map((row, index) => (
+                <button
+                  key={textValue(row.id)}
+                  data-source-id={textValue(row.id)}
+                  data-source-version={textValue(row.version)}
+                  aria-pressed={source?.id === row.id}
+                  onClick={() => setSelected(textValue(row.id))}
+                >
+                  {superseded.includes(row.id)
+                    ? `Previous ${noun}`
+                    : index === 0
+                      ? noun.charAt(0).toUpperCase() + noun.slice(1)
+                      : sourceDisplayTitle(row, item.title)}
+                </button>
+              ))}
+            </nav>
+          )}
+          {source ? (
             <SourcePaper
               key={`${textValue(source.id)}:${textValue(source.version)}`}
               source={source}
@@ -339,8 +314,8 @@ export function CaseWorkspace({
             />
           ) : (
             <section className="source-paper-live">
-              <h2>Source evidence</h2>
-              <p>No document is linked to this case yet. Add evidence below.</p>
+              <h2>No document attached</h2>
+              <p>Add an invoice or receipt to get started.</p>
             </section>
           )}
           <details className="case-evidence-action">
@@ -348,159 +323,152 @@ export function CaseWorkspace({
             {evidenceForm}
           </details>
         </div>
-        <aside className="live-case-decision">
-          <header className="decision-finney-live">
-            <img src="/brand/finney.svg" alt="" />
-            <span>Finney</span>
+        <aside
+          className="live-case-decision companion-case-panel"
+          aria-label="Finney’s work"
+        >
+          <header
+            className="case-character-heading"
+            data-tutorial={working ? "finney-working" : undefined}
+            tabIndex={working ? -1 : undefined}
+          >
+            <FinneyCharacter state={state} />
+            <h2 aria-live="polite">{title}</h2>
           </header>
-          <h2>
-            {running
-              ? "Working on this case."
-              : queued
-                ? "Review queued."
-                : newerResponse
-                  ? "Latest response"
-                  : finding.decision
-                    ? "Review ready"
-                    : "Ready for review"}
-          </h2>
-          {running && (
-            <p className="case-progress" role="status">
-              <LoaderCircle className="spin" size={16} /> The agent is working.
-              You can keep using the desk.
+          {state === "failed" && (
+            <p role="status">
+              I couldn’t finish this request. Please try again.
             </p>
           )}
-          {newerResponse && latestResponse && (
+          {hasResult && newerResponse && latestResponse && (
             <section className="case-latest-response">
-              <p className="case-chronology-label">
-                {typeof responseVersion === "number"
-                  ? `Based on case v${responseVersion} · Stored agent response`
-                  : "Stored agent response"}
-              </p>
               <DirectorResponses
                 responses={[latestResponse]}
-                heading="Finney’s latest reply"
+                heading=""
                 collapseLong
               />
             </section>
           )}
-          {newerResponse && decisions}
-          <section
-            className={
-              newerResponse
-                ? "prepared-case-review earlier-prepared-review"
-                : "prepared-case-review"
-            }
-          >
-            {newerResponse && Boolean(finding.explanation) && (
-              <h3 className="case-chronology-label">
-                Earlier prepared review · based on case v{String(reviewVersion)}
-              </h3>
+          {hasResult &&
+            !newerResponse &&
+            typeof finding.explanation === "string" && (
+              <DirectorResponses
+                responses={[{ message: finding.explanation }]}
+                heading=""
+                collapseLong
+              />
             )}
-            {typeof finding.explanation === "string" && (
-              <details
-                className="case-review-reasoning"
-                open={finding.explanation.length < 600}
-              >
-                <summary>Read Finney’s review</summary>
-                <ReadableText
-                  className="case-explanation"
-                  text={finding.explanation}
-                />
-              </details>
-            )}
-            {amount !== null && (
-              <dl className="case-amount">
+          {hasResult && !newerResponse && amount !== null && (
+            <dl className="case-amount">
+              <div>
+                <dt>Proposed amount</dt>
+                <dd>
+                  {formatMoney(
+                    amount,
+                    textValue(action.currency, snapshot.run.currency),
+                  )}
+                </dd>
+              </div>
+              {Boolean(
+                action.payee || action.recipient || action.destination,
+              ) && (
                 <div>
-                  <dt>
-                    {newerResponse
-                      ? "Earlier proposed amount"
-                      : "Proposed amount"}
-                  </dt>
+                  <dt>To</dt>
                   <dd>
-                    {formatMoney(
-                      amount,
-                      textValue(action.currency, snapshot.run.currency),
+                    {textValue(
+                      action.payee ?? action.recipient ?? action.destination,
                     )}
                   </dd>
                 </div>
-                {Boolean(
-                  action.payee || action.recipient || action.destination,
-                ) && (
-                  <div>
-                    <dt>To</dt>
-                    <dd>
-                      {textValue(
-                        action.payee ?? action.recipient ?? action.destination,
-                      )}
-                    </dd>
-                  </div>
-                )}
-              </dl>
-            )}
-            {typeof finding.clarification === "string" && (
-              <ReadableText
-                className="case-clarification"
-                text={finding.clarification}
-              />
-            )}
-            {blockers.length > 0 && (
-              <section className="case-blockers">
-                <h3>
-                  {newerResponse
-                    ? "Requirements in that review"
-                    : "What needs attention"}
-                </h3>
-                <ul>
-                  {blockers.map((value, index) => {
-                    const row = record(value);
-                    return (
-                      <li key={index}>
-                        <strong>
-                          {textValue(row.stage, "Review").replaceAll("_", " ")}
-                        </strong>
-                        <span>
-                          {textValue(
-                            row.requirement ?? row.reason ?? row.description,
-                            "Inspect the recorded requirement",
-                          ).replaceAll("_", " ")}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            )}
-            {Boolean(finding.verification) && (
-              <p className="muted">Agent review · awaiting verification</p>
-            )}
-          </section>
-          {!newerResponse && decisions}
-          <button
-            className="primary"
-            disabled={!canWork || busy || running || queued}
-            onClick={onReview}
-          >
-            {running || queued ? "Review in progress" : "Request review"}
-          </button>
-          {!newerResponse ? (
-            <DirectorResponses responses={item.data.director_responses} />
-          ) : responses.length > 1 ? (
-            <details className="case-response-history">
-              <summary>Earlier replies ({responses.length - 1})</summary>
-              <DirectorResponses responses={responses.slice(0, -1)} />
-            </details>
-          ) : null}
-          {conversationForm && (
+              )}
+            </dl>
+          )}
+          {hasResult && !newerResponse && blockers.length > 0 && (
+            <section className="case-blockers">
+              <h3>Before we go ahead</h3>
+              <ul>
+                {blockers.map((value, index) => {
+                  const blocker = record(value);
+                  return (
+                    <li key={index}>
+                      <strong>
+                        {textValue(blocker.stage, "Review").replaceAll(
+                          "_",
+                          " ",
+                        )}
+                      </strong>
+                      <span>
+                        {textValue(
+                          blocker.requirement ??
+                            blocker.reason ??
+                            blocker.description,
+                          "More evidence is needed.",
+                        ).replaceAll("_", " ")}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+          {decisions}
+          {hasResult && onViewBudget ? (
+            <button
+              className="primary case-main-action"
+              data-tutorial="view-budget"
+              onClick={onViewBudget}
+            >
+              See budget
+              <ArrowRight size={16} />
+            </button>
+          ) : (
+            <button
+              className="primary case-main-action"
+              data-tutorial="review-case"
+              disabled={!canWork || working}
+              onClick={onReview}
+            >
+              {working
+                ? "Working…"
+                : state === "failed"
+                  ? "Try again"
+                  : hasResult
+                    ? "Review again"
+                    : `Check ${noun}`}
+              <ArrowRight size={16} />
+            </button>
+          )}
+          {hasResult && onViewBudget && (
+            <button
+              className="text-button case-check-again"
+              data-tutorial="review-case"
+              disabled={!canWork || working}
+              onClick={onReview}
+            >
+              Check again
+            </button>
+          )}
+          {(conversationForm ||
+            responses.length > 1 ||
+            typeof item.data.director_request === "string") && (
             <details className="case-conversation">
-              <summary>Ask about this case</summary>
+              <summary>Ask Finney</summary>
+              {typeof item.data.director_request === "string" && (
+                <div className="case-request">
+                  <strong>You</strong>
+                  <p>{item.data.director_request}</p>
+                </div>
+              )}
+              {responses.length > 1 && (
+                <DirectorResponses
+                  responses={responses.slice(0, -1)}
+                  heading="Earlier conversation"
+                  collapseLong
+                />
+              )}
               {conversationForm}
             </details>
           )}
-          <details className="case-provenance">
-            <summary>Decision record and provenance</summary>
-            <pre>{JSON.stringify(displayRecord(item.data), null, 2)}</pre>
-          </details>
         </aside>
       </div>
     </section>

@@ -171,7 +171,9 @@ async function mount(page: Page, status = "ready", response?: string) {
     route.fulfill({ json: state }),
   );
   await page.route("**/api/finance/commands", async (route) => {
-    calls.push(route.request().postDataJSON());
+    const sent = route.request().postDataJSON();
+    calls.push(sent);
+    Object.assign(state, {jobs:[{id:"66666666-6666-4666-8666-666666666666",command_type:sent.command_type,case_id:sent.payload.case_id,status:"queued",created_at:"2026-10-25T10:01:00Z"}]});
     await route.fulfill({
       status: 202,
       json: { job_id: "66666666-6666-4666-8666-666666666666" },
@@ -185,150 +187,67 @@ async function mount(page: Page, status = "ready", response?: string) {
     content: readFileSync(resolve("src/app/globals.css"), "utf8"),
   });
   await page.addScriptTag({ content: script });
-  await expect(
-    page.getByRole("heading", { name: "Hack Harbor", exact: true }),
-  ).toBeVisible();
-  return calls;
+  await expect(page.getByRole("button", { name: "Skip demo", exact: true })).toBeVisible();
+  return {calls,state};
 }
-test("the walkthrough operates real scoped actions, remains optional and never marks learning passed", async ({
-  page,
-}, info) => {
-  const calls = await mount(page);
-  await expect(page.getByText("US$7,800.00", { exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Check the revised invoice" }),
-  ).toBeEnabled();
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
-  mkdirSync(resolve("../.impeccable/review"), { recursive: true });
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-  await page.screenshot({
-    path: resolve(`../.impeccable/review/${info.project.name}-guided-home.png`),
-    fullPage: true,
-  });
-  await page.getByRole("button", { name: "Check the revised invoice" }).click();
-  expect(calls[0]).toMatchObject({
-    organization_id: org,
-    run_id: run,
-    command_type: "director_message",
-    payload: { case_id: av, message: fixture.run.scenario.steps[0].prompt },
-  });
-  await expect(page.locator(".source-content")).toContainText("USD 420.00");
-  await expect(page.locator(".source-content")).toContainText(
-    "No payment has been sent.",
-  );
-  await expect(page.locator(".source-paper-live > header h2")).toHaveText(
-    "Harbor AV · revised invoice",
-  );
-  await expect(page.locator(".source-content")).not.toContainText("Kind:");
-  await expect(page.locator(".source-content")).not.toContainText(
-    "External id:",
-  );
-  await expect(page.locator(".source-content")).not.toContainText("###");
-  await page.getByText("Add a document", { exact: true }).click();
-  await expect(
-    page
-      .locator(".case-evidence-action")
-      .getByText("Related case", { exact: true }),
-  ).toHaveCount(0);
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-  await page.screenshot({
-    path: resolve(
-      `../.impeccable/review/${info.project.name}-contextual-case.png`,
-    ),
-    fullPage: true,
-  });
-  await page.getByRole("button", { name: /Step 2:/ }).click();
-  await page.getByRole("button", { name: "Prepare a budget proposal" }).click();
-  expect(calls[1].payload.message).toBe(fixture.run.scenario.steps[1].prompt);
-  await page.getByRole("button", { name: /Step 3:/ }).click();
-  await page.getByRole("button", { name: "Review Mira’s purchase" }).click();
-  expect(calls[2].payload.case_id).toBe(mira);
-  await expect(
-    page.getByRole("button", { name: "Generate an event report" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Generate an event report" }).click();
-  await expect(
-    page.getByRole("button", { name: "Generate report", exact: true }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Skip walkthrough" }).click();
-  await expect(
-    page.getByRole("button", { name: "Resume walkthrough" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Resume walkthrough" }).click();
-  await expect(page.getByText("Walkthrough · 3 of 4")).toBeVisible();
-  await page.getByRole("button", { name: /Step 4:/ }).click();
-  await page
-    .getByRole("button", { name: "Inspect the learning evidence" })
-    .click();
-  await expect(
-    page.getByRole("heading", { name: "No learned change is active yet" }),
-  ).toBeVisible();
-  expect(calls).toHaveLength(3);
-});
-test("partially seeded scenarios cannot begin agent work", async ({ page }) => {
-  const calls = await mount(page, "initialized");
-  await expect(
-    page.getByRole("button", { name: "Preparing documents…" }),
-  ).toBeDisabled();
-  expect(calls).toHaveLength(0);
+
+test("companion tutorial locks to real actions and waits for the exact persisted review", async ({page},info) => {
+  const {calls,state} = await mount(page);
+  await expect(page.getByText("You’re organizing Hack Harbor. Five days to go. Finney has an update.")).toBeVisible();
+  await expect(page.getByRole("button",{name:"Skip demo",exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"Let’s go",exact:true}).click();
+  mkdirSync(resolve("../.impeccable/companion-review"),{recursive:true});
+  await page.screenshot({path:resolve(`../.impeccable/companion-review/${info.project.name}-alert.png`),fullPage:true});
+  await page.locator('[data-tutorial="open-alert"]').click();
+  const workspace=page.locator('.live-case-workspace');
+  await expect(workspace.locator('.source-content')).toContainText('USD 420.00');
+  await expect(workspace).not.toContainText(/Version |Stored agent response|Submitted by|provenance/);
+  await page.locator('[data-tutorial="review-case"]').click();
+  await expect.poll(()=>calls.length).toBe(1);
+  expect(calls[0]).toMatchObject({command_type:'review_case',payload:{case_id:av},organization_id:org,run_id:run});
+  const jobId='66666666-6666-4666-8666-666666666666';
+  Object.assign(state,{jobs:[{id:jobId,command_type:'review_case',case_id:av,status:'running',created_at:'2026-10-25T10:01:00Z'}]});
+  // Trigger the real fallback poll after the post-command snapshot first reports queued.
+  await expect(page.locator('[data-tutorial-phase="waiting"]')).toBeVisible();
+  await expect(workspace.locator('[data-pose="working"]')).toBeVisible();
+  await page.screenshot({path:resolve(`../.impeccable/companion-review/${info.project.name}-working.png`),fullPage:true});
+  Object.assign((state as any).jobs[0],{status:'completed'});
+  await page.waitForTimeout(2800);
+  await expect(page.locator('[data-tutorial-phase="waiting"]')).toBeVisible();
+  Object.assign(state.cases[0].data,{finding:{kind:'prepared_agent_review',verification:'unverified_model_recommendation',decision:'reported_liability',explanation:'The new invoice is $420, down from $480. Nothing has been paid.',provenance:{job_id:jobId,actor_trace_id:'recorded-trace',source_case_version:2}}});
+  // A completed job with delayed persistence still needs a refresh. Reload tests actual saved phase restoration.
+  await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+  await expect(page.locator('[data-tutorial-phase="budget"]')).toBeVisible({timeout:10000});
+  await page.screenshot({path:resolve(`../.impeccable/companion-review/${info.project.name}-result.png`),fullPage:true});
+  await page.locator('[data-tutorial="view-budget"]').click();
+  await expect(page.getByText('You’re ready.',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Done',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Skip demo',exact:true})).toHaveCount(0);
+  await expect(page.getByText('US$7,800.00',{exact:true})).toBeVisible();
+  expect(calls).toHaveLength(1);
 });
 
-test("actual captured response formats adjacent Markdown blocks inside the case", async ({
-  page,
-}, info) => {
-  const { message } = JSON.parse(
-    readFileSync(resolve("tests/fixtures/catch-response.json"), "utf8"),
-  );
-  await mount(page, "ready", message);
-  await page
-    .getByRole("button", { name: "Open the case", exact: true })
-    .click();
-  const reply = page.locator(".case-latest-response .director-response-text");
-  await expect(reply.locator(".reply-full-response")).not.toHaveAttribute(
-    "open",
-    "",
-  );
-  await expect(
-    reply.getByText("Read full response", { exact: true }),
-  ).toBeVisible();
-  await expect(reply.locator("table")).not.toBeVisible();
-  await expect(reply.locator(":scope > .readable-text")).toHaveText(
-    "We should owe Harbor AV USD 420.00, not USD 480.00, and I've revised the existing payable to that amount.",
-  );
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-  await page.screenshot({
-    path: resolve(
-      `../.impeccable/review/${info.project.name}-actual-response-closed.png`,
-    ),
-    fullPage: true,
-  });
-  await reply.getByText("Read full response", { exact: true }).click();
+test("skip unlocks the actual app; internal fields stay out of the case",async({page},info)=>{
+ const {calls}=await mount(page);
+ await page.getByRole('button',{name:'Skip demo',exact:true}).click();
+ await page.locator('[data-tutorial="open-alert"]').click();
+ await expect(page.locator('.source-content')).toContainText('No payment has been sent.');
+ await expect(page.locator('.live-case-workspace')).not.toContainText(/Version |provenance|Submitted by|Stored agent response/);
+ await page.getByText('Add a document',{exact:true}).click();
+ await expect(page.locator('.case-evidence-action').getByText('Related case',{exact:true})).toHaveCount(0);
+ await page.evaluate(()=>scrollTo(0,0));
+ await page.screenshot({path:resolve(`../.impeccable/companion-review/${info.project.name}-clean-case.png`),fullPage:true});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ expect(calls).toHaveLength(0);
+});
 
-  await expect(
-    reply.getByRole("heading", { name: "What changed", exact: true }),
-  ).toBeVisible();
-  await expect(reply.locator("table")).toBeVisible();
-  await expect(reply.locator("tbody tr")).toHaveCount(4);
-  await expect(reply.locator("ul")).toHaveCount(3);
-  await expect(reply.locator("em")).toHaveText("reported");
-  await expect(reply).toContainText("USD 420.00");
-  await expect(reply).toContainText("rather than a tool result");
-  await expect(reply).not.toContainText("##");
-  await expect(reply).not.toContainText("|---|");
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-  await page.screenshot({
-    path: resolve(
-      `../.impeccable/review/${info.project.name}-actual-response.png`,
-    ),
-    fullPage: true,
-  });
+test("partially prepared events cannot enqueue a review",async({page})=>{
+ const {calls}=await mount(page,'initialized');
+ await page.getByRole('button',{name:'Skip demo',exact:true}).click();
+ const button=page.locator('[data-tutorial="open-alert"]');
+ if(await button.isEnabled()){
+   await button.click();
+   await expect(page.locator('[data-tutorial="review-case"]')).toBeDisabled();
+ }
+ expect(calls).toHaveLength(0);
 });

@@ -46,6 +46,7 @@ def main() -> None:
                 DECISION_CLASSIFICATION_PATTERN,
                 REQUIREMENTS,
                 STAGES,
+                USER_FACING_RESPONSE_STYLE,
             )
             from run_agent import AIAgent
             from tool_schemas import schema_for
@@ -125,6 +126,7 @@ def main() -> None:
                     "Keep existing findings intact. The final answer can use Markdown; no financial decision JSON envelope is required.\n\nTask guidance:\n"
                     + request["skill"]
                 )
+            system += "\n\n" + USER_FACING_RESPONSE_STYLE
             stage = "initialization"
             agent = AIAgent(
                 **config,

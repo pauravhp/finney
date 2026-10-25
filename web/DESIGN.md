@@ -28,6 +28,12 @@ rounded:
   panel: "10px"
 ---
 
+Current operating direction: [Companion experience](COMPANION_EXPERIENCE.md).
+The owner explicitly replaced the dashboard-first walkthrough with the approved
+macOS companion and a locked interaction tutorial. This supersedes earlier
+operating-screen refinements below; the landing identity remains intact.
+
+
 # Finney Organizer’s Desk
 
 The owner-approved v7 design is the visual authority: Albert Sans, ink and mint,

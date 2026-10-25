@@ -1,0 +1,57 @@
+.finney-companion,.companion-case-panel { --mint:#a7ff9c; --ease:cubic-bezier(.22,1,.36,1); color:#111311; font-family:"Albert Sans",sans-serif; }
+.finney-companion { position:relative; width:355px; max-width:100%; background:#fff; border-radius:17px; padding:18px 20px 14px; box-shadow:0 18px 46px rgba(24,36,17,.12); }
+.finney-companion::before { content:""; position:absolute; width:17px; height:17px; background:#fff; right:60px; top:-7px; transform:rotate(45deg); }
+.companion-header { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:14px; min-height:32px; }
+.companion-header small { color:#65705c; font-size:12px; }
+.finney-companion .companion-expand { background:none; border:0; padding:4px; width:32px; min-height:32px; }
+.companion-character { display:flex; justify-content:center; height:174px; align-items:center; padding-top:15px; }
+.companion-mascot { --mint:#a7ff9c; --ease:cubic-bezier(.22,1,.36,1); width:162px; flex-shrink:0; }
+.finney-companion .companion-title { text-align:center; font-size:25px; font-weight:500; line-height:1.2; margin:0 0 24px; letter-spacing:-.025em; }
+.companion-task { background:#f0f3eb; border-radius:8px; padding:15px 16px 16px; margin-bottom:17px; }
+.companion-task-heading { display:flex; justify-content:space-between; gap:14px; align-items:center; margin-bottom:17px; font-size:15px; line-height:1.45; }
+.companion-task-heading span { min-width:0; overflow-wrap:anywhere; }
+.companion-task-heading strong { font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.finney-companion .companion-primary { width:100%; justify-content:space-between; border:0; border-radius:6px; background:#111311; color:#fff; padding:10px 15px; font-size:14px; min-height:40px; }
+.finney-companion .companion-primary:hover { background:#30392b; }
+.finney-companion .companion-composer { display:flex; gap:8px; align-items:center; border:1px solid #d8dfd0; border-radius:8px; padding:5px; background:#fff; }
+.finney-companion .companion-composer:focus-within { border-color:#557746; outline:2px solid #dce8d3; }
+.finney-companion .companion-composer input { flex:1; min-width:0; width:0; min-height:34px; border:0; outline:none; background:transparent; padding:5px 8px; font-size:14px; }
+.finney-companion .companion-composer input::placeholder { color:#65705c; }
+.finney-companion .companion-composer button { background:#111311; color:#fff; border:0; border-radius:5px; width:34px; min-height:34px; padding:5px; }
+.finney-companion .companion-shortcuts { display:flex; align-items:center; justify-content:center; gap:18px; margin-top:5px; }
+.finney-companion .companion-shortcuts button { background:none; border:0; min-height:30px; padding:4px 0; font-size:12px; color:#65705c; }
+.finney-companion .companion-error { font-size:14px; margin:10px 0; color:#923c24; }
+.finney-companion button:focus-visible { outline:2px solid #3d702e; outline-offset:3px; }
+.finney-companion button:active:not(:disabled) { transform:scale(.98); }
+.finney-companion button:disabled { opacity:.45; }
+.companion-case-panel { margin-top:0; background:#fff; border-radius:16px; padding:24px; min-width:0; align-self:start; }
+.companion-case-panel .case-character-heading { display:flex; align-items:center; gap:12px; margin-bottom:15px; }
+.companion-case-panel .case-character-heading .companion-mascot { width:82px; }
+.companion-case-panel .case-character-heading h2 { font-size:24px; font-weight:500; line-height:1.2; margin:0; }
+.companion-case-panel .director-responses { margin:0; }
+.companion-case-panel .director-responses>h3 { display:none; }
+.companion-case-panel .director-response { padding:0; border:0; }
+.companion-case-panel .director-response-text { margin:0; }
+.companion-case-panel .case-amount { margin:18px 0; }
+.companion-case-panel .case-main-action { width:100%; justify-content:space-between; margin-top:22px; }
+.companion-case-panel .case-conversation { margin-top:22px; padding-top:16px; }
+.companion-case-panel .case-conversation>summary { cursor:pointer; }
+.companion-case-panel .case-conversation .director-responses { margin-top:18px; }
+.companion-case-panel .case-request { padding:12px 14px; border-radius:8px; background:#f0f3eb; font-size:15px; margin:16px 0; }
+.companion-case-panel .case-request strong { display:block; font-size:13px; margin-bottom:6px; color:#58654f; }
+.companion-case-panel .case-request p { margin:0; white-space:pre-wrap; }
+.companion-case-workspace .live-case-layout { grid-template-columns:minmax(0,1.15fr) minmax(330px,.85fr); }
+.companion-case-workspace .live-case-heading h1 { font-size:27px; margin-top:12px; }
+.companion-case-workspace .source-paper-live { margin-top:0; }
+.companion-case-workspace .live-source-tabs { margin-bottom:12px; }
+@media(max-width:1000px){.companion-case-workspace .live-case-layout{grid-template-columns:minmax(0,1fr)}.companion-case-panel{grid-row:1}}
+@media(max-width:600px){.finney-companion{width:min(355px,100%);padding:16px 18px 12px}.companion-case-panel{padding:22px}.companion-character{height:160px}}
+@media(prefers-reduced-motion:reduce){.companion-mascot *{animation:none!important;transition:none!important}.finney-companion button:active:not(:disabled){transform:none}}
+.companion-case-panel .case-check-again { display:flex; margin:10px auto 0; }
+.finney-companion .companion-conversation { margin-bottom:16px; }
+.finney-companion .companion-back { border:0; background:none; min-height:32px; padding:4px 0; color:#58654f; font-size:13px; margin-bottom:10px; }
+.finney-companion .companion-answer { max-height:280px; overflow:auto; scrollbar-gutter:stable; }
+.finney-companion .companion-answer .director-responses,.finney-companion .companion-answer .director-response,.finney-companion .companion-answer .director-response-text { margin:0; padding:0; border:0; }
+.finney-companion .companion-question { font-size:15px; line-height:1.5; margin:0; overflow-wrap:anywhere; }
+/* Keep the accessible name without duplicating the visible placeholder. */
+.finney-companion .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; padding:0; border:0; }

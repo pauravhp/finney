@@ -1,5 +1,12 @@
 # How Finney's self-improvement loop evolved
 
+Latest interface direction: the owner rejected the dashboard-oriented walkthrough
+and chose the existing macOS companion with a locked, skippable interaction
+tutorial. Native response prompts now prefer brief personal-agent language while
+preserving required financial facts and structured references. This is a product
+and engineering change, not a learned promotion. The changed protected context
+requires a fresh runtime preflight before any subsequent learning study.
+
 This is the engineering and experimental history, including failed attempts.
 For the current mechanism, see [the current loop](SELF_IMPROVEMENT_CURRENT.md).
 Synthetic examples, scripted tests, real model executions and production effects
