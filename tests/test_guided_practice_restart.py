@@ -36,7 +36,7 @@ async def test_restart_preserves_prior_records_and_shared_limits_then_seeds_one_
     fresh = restart(conn, old_run)
     assert fresh["run_id"] != str(old_run) and fresh["organization_id"] == str(org)
     assert fresh["previous_run_id"] == str(old_run) and fresh["seed_status"] == "queued"
-    assert fresh["experience_version"] == "finney-companion-v1"
+    assert fresh["experience_version"] == "finney-photo-booth-v1"
     # Normal entry resumes the fresh practice; it does not create another run.
     assert conn.execute("select create_finance_guided_demo()").fetchone()[0]["run_id"] == fresh["run_id"]
     with pytest.raises(psycopg.errors.ObjectNotInPrerequisiteState):
@@ -57,8 +57,8 @@ async def test_restart_preserves_prior_records_and_shared_limits_then_seeds_one_
                "payload": {"source": "demo_bundle", "bundle_version": GUIDED_SCENARIO_VERSION}}
     await seed_guided_scenario(Settings(_env_file=None), new_tools, db, new_job)
     position = await new_tools.call("get_financial_position", {})
-    assert position["available_minor"] == "412000" and position["cash_minor"] == "780000"
-    assert (await new_tools.call("get_finance_snapshot", {}))["run"]["scenario"]["experience_version"] == "finney-companion-v1"
+    assert position["available_minor"] == "70000" and position["cash_minor"] == "620000"
+    assert (await new_tools.call("get_finance_snapshot", {}))["run"]["scenario"]["experience_version"] == "finney-photo-booth-v1"
 
 
 def test_running_job_refuses_restart_even_with_expired_lease_and_does_not_cancel_work(state):

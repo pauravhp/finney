@@ -1,5 +1,7 @@
 "use client";
 
+import { photoBoothContext } from "@/lib/photo-booth-scenario";
+
 import { useEffect, useState, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, FileText, LoaderCircle } from "lucide-react";
 import { browserSupabase } from "@/lib/supabase/browser";
@@ -65,10 +67,12 @@ function SourcePaper({
   source,
   snapshot,
   caseTitle,
+  displayTitle,
 }: {
   source: Row;
   snapshot: FinanceSnapshot;
   caseTitle: string;
+  displayTitle?: string;
 }) {
   const path = textValue(source.artifact_path, "");
   const identity = JSON.stringify([
@@ -161,7 +165,7 @@ function SourcePaper({
       <header>
         <FileText size={20} />
         <div>
-          <h2>{sourceDisplayTitle(source, caseTitle)}</h2>
+          <h2>{displayTitle ?? sourceDisplayTitle(source, caseTitle)}</h2>
         </div>
       </header>
       {loading && (
@@ -262,6 +266,7 @@ export function CaseWorkspace({
   conversationForm?: ReactNode;
   onViewBudget?: () => void;
 }) {
+  const isEventReview = photoBoothContext(snapshot)?.caseId === item.id;
   const ids = caseSourceIds(item.data);
   // Director requests are retained in the conversation and backend audit, never
   // mislabeled as invoice/source tabs. Superseded documents remain inspectable.
@@ -323,33 +328,70 @@ export function CaseWorkspace({
     finding.blocking_requirements,
     typeof finding.explanation === "string" ? finding.explanation : "",
   );
+  const documentTitle = (source: Row) => {
+    if (
+      superseded.includes(source.id) &&
+      String(source.external_id).endsWith(":catering")
+    )
+      return "Catering order";
+    const linkedCase = snapshot.cases.find(
+      (other) =>
+        other.id !== item.id &&
+        caseSourceIds(other.data).includes(String(source.id)),
+    );
+    return linkedCase
+      ? friendlyTitle(linkedCase.title)
+      : String(source.external_id).endsWith(":event")
+        ? "Event spending question"
+        : sourceDisplayTitle(source, item.title);
+  };
   const documents = (
     <div className="live-case-evidence">
-      {sources.length > 1 && (
-        <nav className="live-source-tabs" aria-label="Case documents">
-          {sources.map((row, index) => (
-            <button
-              key={textValue(row.id)}
-              data-source-id={textValue(row.id)}
-              data-source-version={textValue(row.version)}
-              aria-pressed={source?.id === row.id}
-              onClick={() => setSelected(textValue(row.id))}
-            >
-              {superseded.includes(row.id)
-                ? `Previous ${noun}`
-                : index === 0
-                  ? noun.charAt(0).toUpperCase() + noun.slice(1)
-                  : sourceDisplayTitle(row, item.title)}
-            </button>
-          ))}
-        </nav>
+      {sources.length > 4 ? (
+        <label className="event-document-picker">
+          Document
+          <select
+            aria-label="Document"
+            value={String(source?.id ?? "")}
+            onChange={(event) => setSelected(event.target.value)}
+          >
+            {sources.map((row) => (
+              <option key={String(row.id)} value={String(row.id)}>
+                {superseded.includes(row.id)
+                  ? `Previous · ${documentTitle(row)}`
+                  : documentTitle(row)}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : (
+        sources.length > 1 && (
+          <nav className="live-source-tabs" aria-label="Case documents">
+            {sources.map((row, index) => (
+              <button
+                key={textValue(row.id)}
+                data-source-id={textValue(row.id)}
+                data-source-version={textValue(row.version)}
+                aria-pressed={source?.id === row.id}
+                onClick={() => setSelected(textValue(row.id))}
+              >
+                {superseded.includes(row.id)
+                  ? `Previous ${noun}`
+                  : index === 0
+                    ? noun.charAt(0).toUpperCase() + noun.slice(1)
+                    : sourceDisplayTitle(row, item.title)}
+              </button>
+            ))}
+          </nav>
+        )
       )}
       {source ? (
         <SourcePaper
           key={`${textValue(source.id)}:${textValue(source.version)}`}
           source={source}
           snapshot={snapshot}
-          caseTitle={item.title}
+          caseTitle={isEventReview ? documentTitle(source) : item.title}
+          displayTitle={isEventReview ? documentTitle(source) : undefined}
         />
       ) : (
         <section className="source-paper-live">
@@ -473,7 +515,9 @@ export function CaseWorkspace({
                   ? "Try again"
                   : hasResult
                     ? "Review again"
-                    : `Check ${noun}`}
+                    : isEventReview
+                      ? "Review event"
+                      : `Check ${noun}`}
               <ArrowRight size={16} />
             </button>
           )}
@@ -484,7 +528,7 @@ export function CaseWorkspace({
               disabled={!canWork || working}
               onClick={onReview}
             >
-              Check again
+              {isEventReview ? "Review event again" : "Check again"}
             </button>
           )}
           {(conversationForm ||

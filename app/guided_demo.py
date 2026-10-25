@@ -10,8 +10,11 @@ from uuid import UUID
 
 from app.connectors.intake import persist_evidence
 from app.finance.types import FinanceError
+from app.photo_booth_demo import PHOTO_INITIAL, PHOTO_REVISED, PHOTO_SCENARIO_VERSION
 
-GUIDED_SCENARIO_VERSION = "finney-mid-event-v1"
+LEGACY_GUIDED_SCENARIO_VERSION = "finney-mid-event-v1"
+GUIDED_SCENARIO_VERSION = PHOTO_SCENARIO_VERSION
+GUIDED_SCENARIO_VERSIONS = (LEGACY_GUIDED_SCENARIO_VERSION, GUIDED_SCENARIO_VERSION)
 _INITIAL = (
     {
         "provider": "guided_demo",
@@ -114,8 +117,8 @@ _REVISED = {
 }
 
 
-def guided_source_bundle() -> tuple[dict, ...]:
-    return copy.deepcopy(_INITIAL)
+def guided_source_bundle(version: str = GUIDED_SCENARIO_VERSION) -> tuple[dict, ...]:
+    return copy.deepcopy(PHOTO_INITIAL if version == GUIDED_SCENARIO_VERSION else _INITIAL)
 
 
 async def seed_guided_scenario(settings, tools, db, job: dict) -> dict:
@@ -131,13 +134,16 @@ async def seed_guided_scenario(settings, tools, db, job: dict) -> dict:
         raise FinanceError("authenticated_scoped_demo_job_required") from None
     if org != tools.scope.organization_id or run != tools.scope.run_id:
         raise FinanceError("demo_job_scope_mismatch")
-    if job.get("command_type") != "intake" or job.get("payload") != {
+    version = job.get("payload", {}).get("bundle_version")
+    if version not in GUIDED_SCENARIO_VERSIONS or job.get("command_type") != "intake" or job.get("payload") != {
         "source": "demo_bundle",
-        "bundle_version": GUIDED_SCENARIO_VERSION,
+        "bundle_version": version,
     }:
         raise FinanceError("guided_scenario_payload_invalid")
     args = {"p_organization_id": str(org), "p_run_id": str(run), "p_actor_id": str(actor)}
     state = await db.rpc("assert_finance_guided_owner", args)
+    if state.get("id") != version:
+        raise FinanceError("guided_scenario_version_mismatch")
     if state["status"] == "ready":
         return {
             "status": "completed",
@@ -148,13 +154,13 @@ async def seed_guided_scenario(settings, tools, db, job: dict) -> dict:
     # Initial source persistence is idempotent. Once initialized, never replay v1
     # over the amendment, reset a review or overwrite a visitor's later edits.
     if state["status"] == "preparing":
-        for evidence in guided_source_bundle():
+        for evidence in guided_source_bundle(version):
             await db.rpc("assert_finance_guided_owner", args)
             await persist_evidence(tools, db, evidence)
         state = await db.rpc("initialize_finance_guided_scenario", args)
     # This is a real second immutable source version. The existing payable remains
     # at 480 until the actual actor reviews the correction and updates it.
-    revised = await persist_evidence(tools, db, copy.deepcopy(_REVISED))
+    revised = await persist_evidence(tools, db, copy.deepcopy(PHOTO_REVISED if version == GUIDED_SCENARIO_VERSION else _REVISED))
     state = await db.rpc("finish_finance_guided_scenario", args)
     return {
         "status": "completed",

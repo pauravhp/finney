@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { FinanceSnapshot } from "@/lib/contracts";
+import { PHOTO_BOOTH_SCENARIO_ID } from "@/lib/photo-booth-scenario";
 
 export const LOCKED_TUTORIAL_VERSION = "alert-review-v1";
 export type TutorialCommand = {
@@ -137,7 +138,9 @@ export function LockedTutorial({
 }) {
   const key = snapshot ? tutorialStorageKey(snapshot) : "";
   const eligible = Boolean(
-    snapshot?.run.scenario?.synthetic && snapshot.run.status === "active",
+    snapshot?.run.scenario?.synthetic &&
+    snapshot.run.scenario.id !== PHOTO_BOOTH_SCENARIO_ID &&
+    snapshot.run.status === "active",
   );
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const progress = receipt?.key === key ? receipt.progress : null;

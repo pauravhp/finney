@@ -13,7 +13,8 @@ from test_finance_postgres import state as state  # noqa: PLC0414
 from app.config import Settings
 from app.finance.tools import FinanceToolClient
 from app.finance.types import Scope
-from app.guided_demo import GUIDED_SCENARIO_VERSION, seed_guided_scenario
+from app.guided_demo import LEGACY_GUIDED_SCENARIO_VERSION as GUIDED_SCENARIO_VERSION
+from app.guided_demo import seed_guided_scenario
 
 
 class GuidedDB(DemoPostgresWithFixtureStorage):
@@ -50,12 +51,14 @@ def create(state, owner=None):
     conn, org, _old_run, users = state
     owner = owner or users[0]
     conn.execute("reset role")
+    # Disposable-DB compatibility checks for the retired, private legacy entrypoint.
+    conn.execute("grant execute on function create_finance_guided_demo_v26() to authenticated")
     conn.execute(
         "update memberships set role='director' where organization_id=%s and user_id=%s",
         (org, owner),
     )
     identity(conn, owner)
-    result = conn.execute("select create_finance_guided_demo()").fetchone()[0]
+    result = conn.execute("select create_finance_guided_demo_v26()").fetchone()[0]
     identity(conn, service=True)
     db = GuidedDB(conn)
     tools = FinanceToolClient(
@@ -147,7 +150,7 @@ async def test_real_initial_state_amendment_resume_and_no_fabricated_outcomes(st
     assert again["source_results"] == []
     assert (await tools.call("get_financial_position", {}))["committed_minor"] == "362000"
     identity(conn, state[3][0])
-    resumed = conn.execute("select create_finance_guided_demo()").fetchone()[0]
+    resumed = conn.execute("select create_finance_guided_demo_v26()").fetchone()[0]
     assert resumed["run_id"] == scope["run_id"] and resumed["seed_job_id"] == scope["seed_job_id"]
 
 
@@ -295,11 +298,11 @@ def test_guided_creation_denies_anonymous_and_service_bypass(state):
     conn, _org, _run, users = state
     identity(conn, service=True)
     with pytest.raises(psycopg.errors.InsufficientPrivilege):
-        conn.execute("select create_finance_guided_demo()")
+        conn.execute("select create_finance_guided_demo_v26()")
     identity(conn, users[0])
     conn.execute("select set_config('request.jwt.claims','{\"is_anonymous\":true}',false)")
     with pytest.raises(psycopg.errors.InsufficientPrivilege):
-        conn.execute("select create_finance_guided_demo()")
+        conn.execute("select create_finance_guided_demo_v26()")
     conn.execute("select set_config('request.jwt.claims','{}',false)")
 
 
@@ -318,19 +321,19 @@ async def test_failed_seed_explicit_retry_preserves_failure_and_reaches_ready(st
     ).fetchone()[0]
     assert before["run"]["scenario"]["seed_status"] == "failed"
     assert before["run"]["scenario"]["seed_retry_available"] is True
-    retried = conn.execute("select create_finance_guided_demo()").fetchone()[0]
+    retried = conn.execute("select create_finance_guided_demo_v26()").fetchone()[0]
     assert retried["run_id"] == scope["run_id"]
     assert retried["seed_job_id"] != original_job
     assert retried["seed_attempts"] == 2 and retried["seed_status"] == "queued"
     assert retried["seed_retry_available"] is False
-    again = conn.execute("select create_finance_guided_demo()").fetchone()[0]
+    again = conn.execute("select create_finance_guided_demo_v26()").fetchone()[0]
     assert again["seed_job_id"] == retried["seed_job_id"]
     identity(conn, service=True)
     await seed_guided_scenario(
         Settings(_env_file=None), tools, db, {**job, "id": retried["seed_job_id"]}
     )
     identity(conn, state[3][0])
-    ready = conn.execute("select create_finance_guided_demo()").fetchone()[0]
+    ready = conn.execute("select create_finance_guided_demo_v26()").fetchone()[0]
     assert ready["seed_status"] == "ready" and ready["seed_attempts"] == 2
     assert ready["seed_retry_available"] is False
     conn.execute("reset role")
@@ -359,7 +362,7 @@ def test_seed_recovery_bound_and_concurrent_resumes(state, database):
     def resume():
         with psycopg.connect(database, autocommit=True) as separate:
             identity(separate, state[3][0])
-            return separate.execute("select create_finance_guided_demo()").fetchone()[0]
+            return separate.execute("select create_finance_guided_demo_v26()").fetchone()[0]
 
     with ThreadPoolExecutor(max_workers=2) as pool:
         results = list(pool.map(lambda _: resume(), range(2)))

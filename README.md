@@ -7,12 +7,13 @@ agent work; Jev reviews actual traces. Payment support uses Coinbase Wallet MCP 
 Sepolia test funds, with exact-action human approvals and receipt verification.
 
 [Open the guided practice event](https://finney-beta.vercel.app/desk?demo=guided)
-after signing in. You enter a fictional hackathon five days before doors open,
-with existing cash, budgets, vendor commitments and an unpaid sponsor pledge.
-Finney opens as a small personal companion. The optional tutorial guides you
-from its latest alert through a real invoice review and into your budget, with
-Skip demo always available. Ask follow-up questions in the same window.
-See the [companion experience](docs/build/COMPANION_TUTORIAL.md) and
+after signing in. You enter Harbor Hacks five days before opening: $6,200 recorded
+cash, $5,500 outstanding commitments, and a team asking for a $900 photo booth.
+Catering revisions, duplicate receipts, uncertain sponsorship and competing quotes
+await the real agent. Finney opens as a personal companion with an editable
+starting prompt; evidence and financial records remain accessible.
+See the [new situation](docs/demo/PHOTO_BOOTH_SCENARIO.md),
+[companion experience](docs/build/COMPANION_TUTORIAL.md), and
 [earlier full-workflow acceptance](docs/demo/GUIDED_DEMO_ACCEPTANCE.md).
 
 The [OpenCode + Harness2 integration](docs/HARNESS2_LEARNING.md) adds a pinned
