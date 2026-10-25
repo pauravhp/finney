@@ -14,6 +14,7 @@ from .failure_intake import (
     failed_improvement_request,
     failure_observations,
     private_failure_artifact,
+    rejected_review_improvement_request,
 )
 from .hermes import FinanceTools, HermesActor
 from .skills import runtime_skill_context
@@ -27,13 +28,16 @@ DEFAULT_SKILL = resource_path("skills/finance/organizer-expenses.md")
 def automatic_improvement_request(job: dict, outcome: dict, *, suite_id: str) -> dict | None:
     """A trusted scheduling hint, never a verdict or an inference authorization.
 
-    The service persists the case review first, then inserts this job using the
+    The service checks operating review persistence first, then inserts this job using the
     trace-specific key. Atomic attempt/run-budget guards still execute before
     inference. A reviewer must establish a supported defect to generate a skill.
     """
     failed_request = failed_improvement_request(job, outcome, suite_id=suite_id)
     if failed_request is not None:
         return failed_request
+    rejected_request = rejected_review_improvement_request(job, outcome, suite_id=suite_id)
+    if rejected_request is not None:
+        return rejected_request
     if (
         job.get("command_type") not in {"review_case", "director_message"}
         or outcome.get("status") != "completed"

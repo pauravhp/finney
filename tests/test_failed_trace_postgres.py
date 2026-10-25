@@ -100,7 +100,7 @@ def test_failed_trace_admission_requires_exact_scoped_provenance(state, mutation
     ("evaluation_model_call_budget_exhausted", 8, True),
     ("evaluation_model_call_budget_exhausted", 0, False),
     ("provider_http_error", 1, False),
-    ("opencode_timeout", 3, False),
+    ("opencode_timeout", 3, True),
 ])
 def test_opencode_runtime_observation_admission_remains_bounded(state, reason, calls, eligible):
     conn, org, run, _ = state

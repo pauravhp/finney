@@ -35,7 +35,7 @@ def oracle(dataset, cid):
     if key["amount_minor"] is not None:
         action.update(amount_minor=key["amount_minor"], currency=key["currency"],
                       recipient_name=key["recipient_name"], evidence_refs=key["required_source_refs"])
-    out = {"decision": "Scripted fixture only", "explanation": "No real inference or payment.",
+    out = {"decision": "scripted_fixture_only", "explanation": "No real inference or payment.",
            "evidence_source_ids": [r["id"] for r in key["required_source_refs"]],
            "proposed_action": action, "clarification": "Who owns the payment card?" if key["clarification_required"] else None,
            "blocking_requirements": [{"stage": s, "requirement": r,

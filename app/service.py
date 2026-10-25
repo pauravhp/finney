@@ -367,14 +367,13 @@ async def dispatch_job(
                 outcome.update(
                     {"status": "blocked", "actor_status": "completed", "reason": prepared["reason"]}
                 )
-            if outcome.get("status") == "completed":
-                from app.finance.workflows import queue_automatic_improvement
+            from app.finance.workflows import queue_automatic_improvement
 
-                outcome["automatic_improvement"] = await queue_automatic_improvement(
-                    db, job, outcome,
-                    **({"suite_id": "organizer-expenses-corpus-online-v1"}
-                       if settings.finance_improvement_method == "harness2" else {}),
-                )
+            outcome["automatic_improvement"] = await queue_automatic_improvement(
+                db, job, outcome,
+                **({"suite_id": "organizer-expenses-corpus-online-v1"}
+                   if settings.finance_improvement_method == "harness2" else {}),
+            )
         elif command == "review_case" and outcome.get("improvement_eligible") is True:
             from app.finance.workflows import queue_automatic_improvement
 
